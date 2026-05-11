@@ -117,22 +117,23 @@ export default function Home() {
 
       {/* BOTTOM NAV */}
       <nav className="sticky bottom-0 border-t border-white/10 bg-[#080808] grid grid-cols-4">
-        <button className="flex flex-col items-center gap-1 py-4 text-[#C6F135]">
+        <a href="/" className="flex flex-col items-center gap-1 py-4 text-[#C6F135]">
           <span className="text-xl">🏃</span>
           <span className="font-mono text-[8px] tracking-widest uppercase">Run</span>
-        </button>
-        <button className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
+        </a>
+        <a href="/journey" className="flex flex-col items-center gap-1 py-4 text-white/30">
           <span className="text-xl">🗺️</span>
           <span className="font-mono text-[8px] tracking-widest uppercase">Journey</span>
-        </button>
-        <button className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
+        </a>
+        <a href="/leaderboard" className="flex flex-col items-center gap-1 py-4 text-white/30">
           <span className="text-xl">🏆</span>
           <span className="font-mono text-[8px] tracking-widest uppercase">Board</span>
-        </button>
-        <button className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
+        </a>
+        <a href="/profile" className="flex flex-col items-center gap-1 py-4 text-white/30">
           <span className="text-xl">👤</span>
           <span className="font-mono text-[8px] tracking-widest uppercase">Profile</span>
-        </button>
+        </a>
+      </nav>
       </nav>
 
     </main>
