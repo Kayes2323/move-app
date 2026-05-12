@@ -1,152 +1,169 @@
 "use client";
 import Link from "next/link";
 
-const levels = [
-  { num: 1, name: "Run The BD", flag: "🇧🇩", unlocked: true, badge: "Son of Soil" },
-  { num: 2, name: "Subcontinent", flag: "🌏", unlocked: false, badge: "Subcontinent Legend" },
-  { num: 3, name: "Silk Road", flag: "⚔️", unlocked: false, badge: "Silk Road Warrior" },
-  { num: 4, name: "Run The World", flag: "🌍", unlocked: false, badge: "World Runner" },
+const achievements = [
+  { name: "First Mile", icon: "👟", unlocked: true },
+  { name: "10km Club", icon: "🏃", unlocked: true },
+  { name: "50km Hero", icon: "⚡", unlocked: false },
+  { name: "Streak x3", icon: "🔥", unlocked: true },
+  { name: "Streak x7", icon: "🔥", unlocked: false },
+  { name: "Chandpur\nConqueror", icon: "🏆", unlocked: false },
+  { name: "Cox's Bazar", icon: "🏖️", unlocked: false },
+  { name: "Sylhet Run", icon: "🍃", unlocked: false },
+  { name: "100km Club", icon: "💪", unlocked: false },
+];
+
+const activityGrid = [
+  1,0,1,1,0,1,0,
+  0,1,1,0,1,1,0,
+  1,1,0,1,0,0,1,
+  0,0,1,1,1,0,1,
+  1,0,0,0,1,1,0,
 ];
 
 export default function Profile() {
   return (
-    <main className="min-h-screen bg-[#080808] text-[#F5F5F0] pb-24">
+    <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
 
-      {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 border-b border-white/10 bg-[#080808]/90 backdrop-blur-xl">
-        <span className="text-[#C6F135] text-2xl font-black tracking-[8px]">MOVE</span>
-        <span className="font-mono text-[10px] tracking-[3px] uppercase text-white/40">Profile</span>
-      </nav>
-
-      <div className="pt-20 px-4 max-w-md mx-auto">
-
-        {/* PROFILE HEADER */}
-        <div className="border border-white/10 bg-[#181818] p-5 mb-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#C6F135] to-[#FF5C1A] flex items-center justify-center text-2xl font-black text-black">
-              R
-            </div>
-            <div>
-              <p className="font-black text-xl">Rahul Ahmed</p>
-              <p className="font-mono text-[10px] text-white/30 mt-1">📍 Dhaka, Bangladesh</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="font-mono text-[8px] tracking-wider uppercase border border-[#C6F135]/40 text-[#C6F135] px-2 py-1">🇧🇩 Run The BD</span>
-              </div>
+      {/* HEADER */}
+      <div style={{ background: "#FFFFFF", padding: "56px 20px 24px", borderBottom: "1px solid #F3F4F6" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ color: "#9CA3AF", fontSize: "10px", letterSpacing: "3px", marginBottom: "6px" }}>ATHLETE PROFILE</p>
+            <h1 style={{ color: "#0F0F0F", fontSize: "24px", fontWeight: 900, marginBottom: "2px" }}>Abdul Kayes</h1>
+            <p style={{ color: "#9CA3AF", fontSize: "12px", fontFamily: "system-ui" }}>kayes@gmail.com</p>
+            <div style={{ marginTop: "10px", display: "inline-flex", alignItems: "center", gap: "6px", background: "#EEF2FF", borderRadius: "10px", padding: "4px 10px" }}>
+              <span style={{ fontSize: "12px" }}>🇧🇩</span>
+              <span style={{ color: "#4F6EF7", fontSize: "10px", fontWeight: 700, letterSpacing: "1px" }}>Run The BD</span>
             </div>
           </div>
+          <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "24px", fontWeight: 900, border: "3px solid #22C55E", boxShadow: "0 0 0 2px rgba(34,197,94,0.2)" }}>
+            AK
+          </div>
+        </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 border border-white/10">
-            <div className="p-3 text-center border-r border-white/10">
-              <p className="font-black text-2xl text-[#C6F135]" style={{ fontFamily: "Impact, sans-serif" }}>245</p>
-              <p className="font-mono text-[8px] text-white/30 uppercase tracking-wider mt-1">Total KM</p>
+        {/* Two main stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "20px" }}>
+          {[
+            { label: "TOTAL DISTANCE", value: "0.1", unit: "km", color: "#4F6EF7" },
+            { label: "BEST STREAK", value: "1", unit: "days", color: "#22C55E" },
+          ].map((s) => (
+            <div key={s.label} style={{ background: "#F8F9FA", borderRadius: "14px", padding: "14px" }}>
+              <p style={{ color: "#9CA3AF", fontSize: "9px", letterSpacing: "2px", marginBottom: "6px", fontFamily: "system-ui" }}>{s.label}</p>
+              <p style={{ color: s.color, fontSize: "26px", fontWeight: 900, lineHeight: 1 }}>
+                {s.value}<span style={{ fontSize: "13px", color: "#9CA3AF", marginLeft: "3px", fontWeight: 400 }}>{s.unit}</span>
+              </p>
             </div>
-            <div className="p-3 text-center border-r border-white/10">
-              <p className="font-black text-2xl text-[#FF5C1A]" style={{ fontFamily: "Impact, sans-serif" }}>🔥18</p>
-              <p className="font-mono text-[8px] text-white/30 uppercase tracking-wider mt-1">Day Streak</p>
+          ))}
+        </div>
+
+        {/* Three pill stats */}
+        <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+          {[
+            { label: "RUNS", value: "1" },
+            { label: "JOURNEYS", value: "1" },
+            { label: "AVG PACE", value: "8.17" },
+          ].map((s) => (
+            <div key={s.label} style={{ flex: 1, background: "#F8F9FA", borderRadius: "12px", padding: "10px 8px", textAlign: "center" }}>
+              <p style={{ color: "#0F0F0F", fontSize: "16px", fontWeight: 900 }}>{s.value}</p>
+              <p style={{ color: "#9CA3AF", fontSize: "8px", letterSpacing: "1px", fontFamily: "system-ui", marginTop: "2px" }}>{s.label}</p>
             </div>
-            <div className="p-3 text-center">
-              <p className="font-black text-2xl text-white" style={{ fontFamily: "Impact, sans-serif" }}>#2</p>
-              <p className="font-mono text-[8px] text-white/30 uppercase tracking-wider mt-1">Friends Rank</p>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 16px 0" }}>
+
+        {/* ACTIVITY GRID */}
+        <div style={{ background: "#FFFFFF", borderRadius: "16px", padding: "16px", marginBottom: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+          <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, marginBottom: "14px" }}>ACTIVITY</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px" }}>
+            {activityGrid.map((active, i) => (
+              <div key={i} style={{
+                aspectRatio: "1",
+                borderRadius: "4px",
+                background: active ? "#4F6EF7" : "#F3F4F6",
+                opacity: active ? (0.5 + (i % 3) * 0.25) : 1
+              }} />
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: "12px", marginTop: "10px", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <div style={{ width: "10px", height: "10px", borderRadius: "2px", background: "#F3F4F6" }} />
+              <span style={{ color: "#9CA3AF", fontSize: "9px", fontFamily: "system-ui" }}>Rest</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <div style={{ width: "10px", height: "10px", borderRadius: "2px", background: "#4F6EF7" }} />
+              <span style={{ color: "#9CA3AF", fontSize: "9px", fontFamily: "system-ui" }}>Active</span>
             </div>
           </div>
         </div>
 
-        {/* CURRENT JOURNEY MINI */}
-        <div className="border border-white/10 bg-[#181818] p-5 mb-4">
-          <div className="font-mono text-[9px] tracking-[3px] uppercase text-white/30 mb-3">Current Journey</div>
-          <div className="flex justify-between items-center mb-3">
-            <p className="font-black">Dhaka → Cox's Bazar</p>
-            <p className="font-black text-[#C6F135]">59%</p>
-          </div>
-          <div className="relative h-1 bg-white/10">
-            <div className="absolute left-0 top-0 bottom-0 w-[59%] bg-gradient-to-r from-[#C6F135] to-[#FF5C1A]"
-              style={{ boxShadow: "0 0 10px rgba(198,241,53,0.5)" }}></div>
-          </div>
-          <div className="flex justify-between font-mono text-[9px] mt-2">
-            <span className="text-[#C6F135]">📍 Now in Comilla</span>
-            <span className="text-white/30">169 km left</span>
-          </div>
-        </div>
-
-        {/* WEEKLY STATS */}
-        <div className="border border-white/10 bg-[#181818] p-5 mb-4">
-          <div className="font-mono text-[9px] tracking-[3px] uppercase text-white/30 mb-3">This Week</div>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Mon", km: 3.2 },
-              { label: "Tue", km: 4.5 },
-              { label: "Wed", km: 0 },
-              { label: "Thu", km: 5.1 },
-              { label: "Fri", km: 3.8 },
-              { label: "Sat", km: 4.5 },
-              { label: "Sun", km: 0 },
-            ].map((d, i) => (
-              <div key={i} className={`flex justify-between items-center px-3 py-2 border ${d.km > 0 ? "border-[#C6F135]/20 bg-[#C6F135]/5" : "border-white/5"}`}>
-                <span className="font-mono text-[10px] text-white/40 uppercase">{d.label}</span>
-                <span className={`font-black text-sm ${d.km > 0 ? "text-[#C6F135]" : "text-white/20"}`}>
-                  {d.km > 0 ? `${d.km}km` : "—"}
+        {/* ACHIEVEMENTS */}
+        <div style={{ background: "#FFFFFF", borderRadius: "16px", padding: "16px", marginBottom: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+          <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, marginBottom: "14px" }}>ACHIEVEMENTS</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+            {achievements.map((a, i) => (
+              <div key={i} style={{
+                background: a.unlocked ? "#EEF2FF" : "#F9FAFB",
+                borderRadius: "14px", padding: "14px 8px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
+                border: a.unlocked ? "1px solid #C7D2FE" : "1px solid #F3F4F6",
+                opacity: a.unlocked ? 1 : 0.5
+              }}>
+                <span style={{ fontSize: "22px", filter: a.unlocked ? "none" : "grayscale(100%)" }}>
+                  {a.unlocked ? a.icon : "🔒"}
                 </span>
+                <p style={{
+                  color: a.unlocked ? "#4F6EF7" : "#9CA3AF",
+                  fontSize: "9px", fontWeight: 700, textAlign: "center",
+                  lineHeight: 1.3, letterSpacing: "0.5px"
+                }}>
+                  {a.name}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* LEVELS */}
-        <div className="font-mono text-[9px] tracking-[3px] uppercase text-white/30 mb-3">Level Progression</div>
-        <div className="flex flex-col gap-2 mb-4">
-          {levels.map((l, i) => (
-            <div key={i} className={`border p-4 flex items-center gap-4 transition-all
-              ${l.unlocked ? "border-[#C6F135]/40 bg-[#C6F135]/5" : i === 1 ? "border-white/10 bg-[#181818] opacity-60" : "border-white/5 bg-[#181818] opacity-30"}
-            `}>
-              <span className="text-2xl">{l.flag}</span>
-              <div className="flex-1">
-                <p className={`font-black text-sm ${l.unlocked ? "text-white" : "text-white/40"}`}>
-                  Level {l.num} — {l.name}
-                </p>
-                <p className={`font-mono text-[9px] mt-1 ${l.unlocked ? "text-[#C6F135]" : "text-white/20"}`}>
-                  {l.unlocked ? `✅ ${l.badge}` : `🔒 ${i === 1 ? "Complete BD to unlock" : "???"}`}
-                </p>
-              </div>
-              {l.unlocked && (
-                <div className="font-mono text-[8px] border border-[#C6F135]/40 text-[#C6F135] px-2 py-1 uppercase tracking-wider">
-                  Active
-                </div>
-              )}
+        {/* SETTINGS */}
+        <div style={{ background: "#FFFFFF", borderRadius: "16px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+          <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, padding: "16px 16px 12px" }}>SETTINGS</p>
+          {[
+            { label: "Reset Progress", color: "#0F0F0F", icon: "↺" },
+            { label: "Sign Out", color: "#EF4444", icon: "→" },
+          ].map((item, i) => (
+            <div key={i} style={{
+              padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+              borderTop: "1px solid #F3F4F6", cursor: "pointer"
+            }}>
+              <span style={{ color: item.color, fontSize: "14px", fontWeight: 700 }}>{item.label}</span>
+              <span style={{ color: "#9CA3AF", fontSize: "16px" }}>{item.icon}</span>
             </div>
           ))}
         </div>
-
-        {/* SHARE BUTTON */}
-        <button className="w-full bg-[#C6F135] text-black font-black text-sm tracking-wider uppercase py-4 hover:bg-white transition-all mb-2"
-          style={{ clipPath: "polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))" }}>
-          📸 Share My Progress Card
-        </button>
-
-        <button className="w-full border border-white/10 text-white/30 font-mono text-[10px] tracking-[2px] uppercase py-3 hover:border-white/30 hover:text-white transition-all">
-          Sign Out
-        </button>
-
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-[#080808] grid grid-cols-4">
-        <Link href="/" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🏃</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Run</span>
-        </Link>
-        <Link href="/journey" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🗺️</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Journey</span>
-        </Link>
-        <Link href="/leaderboard" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🏆</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Board</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 py-4 text-[#C6F135]">
-          <span className="text-xl">👤</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Profile</span>
-        </Link>
+      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #F3F4F6", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", zIndex: 50 }}>
+        {[
+          { href: "/", icon: "home", label: "Home", active: false },
+          { href: "/journey", icon: "map", label: "Routes", active: false },
+          { href: "/leaderboard", icon: "trophy", label: "Ranks", active: false },
+          { href: "/profile", icon: "user", label: "Profile", active: true },
+        ].map((item) => (
+          <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0 8px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={item.active ? "#4F6EF7" : "none"} stroke={item.active ? "#4F6EF7" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {item.icon === "home" && <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
+              {item.icon === "map" && <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>}
+              {item.icon === "trophy" && <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="18" width="12" height="4"/></>}
+              {item.icon === "user" && <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>}
+            </svg>
+            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>
+              {item.label}
+            </span>
+          </Link>
+        ))}
       </nav>
 
     </main>

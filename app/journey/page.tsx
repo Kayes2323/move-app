@@ -1,127 +1,219 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 
-const destinations = [
-  { name: "Chandpur", km: 105, emoji: "🌊" },
-  { name: "Cox's Bazar", km: 414, emoji: "🏖️" },
-  { name: "Sylhet", km: 244, emoji: "🍃" },
-  { name: "Rajshahi", km: 253, emoji: "🌾" },
-  { name: "Khulna", km: 332, emoji: "🐯" },
-  { name: "Chittagong", km: 264, emoji: "⛵" },
+const routes = [
+  {
+    name: "Chandpur",
+    tagline: "Riverlands of Bangladesh",
+    km: 105,
+    active: true,
+    completed: 0,
+    image: "https://images.unsplash.com/photo-1596402184320-417e7178b2cd?w=600&q=80",
+    flag: "🇧🇩",
+  },
+  {
+    name: "Cox's Bazar",
+    tagline: "World's Longest Sea Beach",
+    km: 414,
+    active: false,
+    completed: 0,
+    image: "https://images.unsplash.com/photo-1590579491624-f98f36d4c763?w=600&q=80",
+    flag: "🇧🇩",
+  },
+  {
+    name: "Sylhet",
+    tagline: "Land of Tea Gardens",
+    km: 244,
+    active: false,
+    completed: 0,
+    image: "https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=600&q=80",
+    flag: "🇧🇩",
+  },
+  {
+    name: "Rajshahi",
+    tagline: "City of Mangoes & Silk",
+    km: 253,
+    active: false,
+    completed: 0,
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+    flag: "🇧🇩",
+  },
+  {
+    name: "Khulna",
+    tagline: "Gateway to Sundarbans",
+    km: 332,
+    active: false,
+    completed: 0,
+    image: "https://images.unsplash.com/photo-1549366021-9f761d450615?w=600&q=80",
+    flag: "🇧🇩",
+  },
+  {
+    name: "Chittagong",
+    tagline: "Port City of the Bay",
+    km: 264,
+    active: false,
+    completed: 0,
+    image: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&q=80",
+    flag: "🇧🇩",
+  },
 ];
 
-const milestones = [
-  { city: "Dhaka", km: 0, done: true },
-  { city: "Narayanganj", km: 16, done: true },
-  { city: "Comilla", km: 96, done: true },
-  { city: "Chandpur", km: 105, done: false },
+const worldRoutes = [
+  {
+    name: "London → Paris",
+    tagline: "The Classic European Run",
+    km: 450,
+    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80",
+    flag: "🌍",
+    locked: true,
+  },
+  {
+    name: "NYC → Boston",
+    tagline: "The East Coast Trail",
+    km: 346,
+    image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80",
+    flag: "🌍",
+    locked: true,
+  },
+  {
+    name: "Tokyo → Osaka",
+    tagline: "Heart of Japan",
+    km: 500,
+    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",
+    flag: "🌍",
+    locked: true,
+  },
 ];
 
 export default function Journey() {
-  const totalKm = 414;
-  const completedKm = 245;
-  const percent = Math.round((completedKm / totalKm) * 100);
-
   return (
-    <main className="min-h-screen bg-[#080808] text-[#F5F5F0] pb-24">
+    <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
 
-      {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 border-b border-white/10 bg-[#080808]/90 backdrop-blur-xl">
-        <span className="text-[#C6F135] text-2xl font-black tracking-[8px]">MOVE</span>
-        <span className="font-mono text-[10px] tracking-[3px] uppercase text-white/40">My Journey</span>
-      </nav>
+      {/* HEADER */}
+      <div style={{ background: "#FFFFFF", padding: "56px 20px 20px", borderBottom: "1px solid #F3F4F6" }}>
+        <h1 style={{ color: "#0F0F0F", fontSize: "28px", fontWeight: 900, marginBottom: "4px" }}>Routes</h1>
+        <p style={{ color: "#6B7280", fontSize: "13px", fontFamily: "system-ui" }}>Pick your next conquest</p>
+      </div>
 
-      <div className="pt-20 px-4 max-w-md mx-auto">
+      <div style={{ padding: "20px 16px 0" }}>
 
-        {/* CURRENT JOURNEY */}
-        <div className="border border-white/10 bg-[#181818] p-5 mb-4">
-          <div className="font-mono text-[9px] tracking-[3px] uppercase text-[#C6F135] mb-3">Current Journey</div>
-
-          <div className="flex justify-between items-end mb-4">
-            <div>
-              <p className="font-black text-xl">Dhaka → Cox's Bazar</p>
-              <p className="font-mono text-[10px] text-white/30 mt-1">414 km total</p>
-            </div>
-            <p className="font-black text-3xl text-[#C6F135]">{percent}%</p>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="relative h-1 bg-white/10 mb-8">
-            <div
-              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#C6F135] to-[#FF5C1A]"
-              style={{ width: `${percent}%`, boxShadow: "0 0 10px rgba(198,241,53,0.5)" }}
-            ></div>
-            <div className="absolute top-[-22px]" style={{ left: `${percent}%`, transform: "translateX(-50%)" }}>
-              <div className="bg-[#C6F135] text-black font-black text-[9px] px-2 py-1 whitespace-nowrap"
-                style={{ clipPath: "polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))" }}>
-                📍 Comilla
-              </div>
-              <div className="w-2 h-2 rounded-full bg-[#C6F135] mx-auto mt-1 shadow-[0_0_8px_#C6F135]"></div>
-            </div>
-          </div>
-
-          <div className="flex justify-between font-mono text-[10px] mb-4">
-            <span className="text-[#C6F135]">✅ {completedKm} km done</span>
-            <span className="text-white/30">{totalKm - completedKm} km left 🏁</span>
-          </div>
+        {/* BANGLADESH SECTION */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+          <span style={{ fontSize: "18px" }}>🇧🇩</span>
+          <span style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900 }}>BANGLADESH</span>
         </div>
 
-        {/* MILESTONES */}
-        <div className="border border-white/10 bg-[#181818] p-5 mb-4">
-          <div className="font-mono text-[9px] tracking-[3px] uppercase text-white/30 mb-4">Milestones</div>
-          <div className="flex flex-col gap-0">
-            {milestones.map((m, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${m.done ? "bg-[#C6F135] border-[#C6F135]" : "border-white/20 bg-transparent"}`}>
-                    {m.done && <div className="w-1.5 h-1.5 rounded-full bg-black"></div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "28px" }}>
+          {routes.map((route, i) => (
+            <div key={i} style={{ position: "relative", borderRadius: "20px", overflow: "hidden", height: "140px", cursor: "pointer" }}>
+              {/* Background image */}
+              <Image
+                src={route.image}
+                alt={route.name}
+                fill
+                style={{ objectFit: "cover" }}
+                unoptimized
+              />
+
+              {/* Dark overlay */}
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, transparent 50%, rgba(0,0,0,0.7) 100%)" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)" }} />
+
+              {/* Top left badge */}
+              <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", borderRadius: "12px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.2)" }}>
+                <span style={{ fontSize: "11px" }}>{route.flag}</span>
+                <span style={{ color: "white", fontSize: "9px", letterSpacing: "2px", fontWeight: 700 }}>
+                  {route.active ? "ACTIVE" : "AVAILABLE"}
+                </span>
+                {route.active && <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 6px #22C55E" }} />}
+              </div>
+
+              {/* Top right arrow */}
+              <div style={{ position: "absolute", top: "12px", right: "12px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                  <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+                </svg>
+              </div>
+
+              {/* Bottom content */}
+              <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
+                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "10px", fontFamily: "system-ui", marginBottom: "2px" }}>{route.tagline}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                  <p style={{ color: "white", fontSize: "22px", fontWeight: 900, lineHeight: 1 }}>{route.name}</p>
+                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px", fontFamily: "system-ui" }}>{route.km} km</p>
+                </div>
+
+                {/* Progress bar if active */}
+                {route.active && (
+                  <div style={{ marginTop: "8px", background: "rgba(255,255,255,0.2)", borderRadius: "4px", height: "3px" }}>
+                    <div style={{ width: `${(route.completed / route.km) * 100}%`, height: "100%", background: "#22C55E", borderRadius: "4px" }} />
                   </div>
-                  {i < milestones.length - 1 && (
-                    <div className={`w-0.5 h-8 ${m.done ? "bg-[#C6F135]/40" : "bg-white/10"}`}></div>
-                  )}
-                </div>
-                <div className="pb-6">
-                  <p className={`font-black text-sm ${m.done ? "text-white" : "text-white/30"}`}>{m.city}</p>
-                  <p className="font-mono text-[9px] text-white/20">{m.km} km from Dhaka</p>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CHOOSE DESTINATION */}
-        <div className="font-mono text-[9px] tracking-[3px] uppercase text-white/30 mb-3">Choose Next Destination</div>
-        <div className="grid grid-cols-2 gap-2">
-          {destinations.map((d, i) => (
-            <div key={i} className={`border p-4 cursor-pointer transition-all hover:border-[#C6F135]/50 hover:bg-[#C6F135]/5 ${i === 1 ? "border-[#C6F135]/40 bg-[#C6F135]/5" : "border-white/10 bg-[#181818]"}`}>
-              <div className="text-2xl mb-2">{d.emoji}</div>
-              <p className="font-black text-sm">{d.name}</p>
-              <p className="font-mono text-[9px] text-white/30 mt-1">{d.km} km</p>
-              {i === 1 && <p className="font-mono text-[8px] text-[#C6F135] mt-1 tracking-wider">ACTIVE ✓</p>}
             </div>
           ))}
         </div>
 
+        {/* WORLD SECTION */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+          <span style={{ fontSize: "18px" }}>🌍</span>
+          <span style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900 }}>WORLD ROUTES</span>
+          <div style={{ background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: "8px", padding: "2px 8px", marginLeft: "4px" }}>
+            <span style={{ color: "#D97706", fontSize: "9px", fontWeight: 700, letterSpacing: "1px" }}>LOCKED</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {worldRoutes.map((route, i) => (
+            <div key={i} style={{ position: "relative", borderRadius: "20px", overflow: "hidden", height: "120px", cursor: "not-allowed", opacity: 0.7 }}>
+              <Image
+                src={route.image}
+                alt={route.name}
+                fill
+                style={{ objectFit: "cover", filter: "grayscale(40%)" }}
+                unoptimized
+              />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)" }} />
+
+              {/* Lock badge */}
+              <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", borderRadius: "12px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <span style={{ fontSize: "10px" }}>🔒</span>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "9px", letterSpacing: "2px" }}>LOCKED</span>
+              </div>
+
+              <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", fontFamily: "system-ui", marginBottom: "2px" }}>{route.tagline}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "20px", fontWeight: 900, lineHeight: 1 }}>{route.name}</p>
+                  <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", fontFamily: "system-ui" }}>{route.km} km</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-[#080808] grid grid-cols-4">
-        <Link href="/" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🏃</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Run</span>
-        </Link>
-        <Link href="/journey" className="flex flex-col items-center gap-1 py-4 text-[#C6F135]">
-          <span className="text-xl">🗺️</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Journey</span>
-        </Link>
-        <Link href="/leaderboard" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🏆</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Board</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">👤</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Profile</span>
-        </Link>
+      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #F3F4F6", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", zIndex: 50 }}>
+        {[
+          { href: "/", icon: "home", label: "Home", active: false },
+          { href: "/journey", icon: "map", label: "Routes", active: true },
+          { href: "/leaderboard", icon: "trophy", label: "Ranks", active: false },
+          { href: "/profile", icon: "user", label: "Profile", active: false },
+        ].map((item) => (
+          <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0 8px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={item.active ? "#4F6EF7" : "none"} stroke={item.active ? "#4F6EF7" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {item.icon === "home" && <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
+              {item.icon === "map" && <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>}
+              {item.icon === "trophy" && <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="18" width="12" height="4"/></>}
+              {item.icon === "user" && <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>}
+            </svg>
+            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>
+              {item.label}
+            </span>
+          </Link>
+        ))}
       </nav>
 
     </main>

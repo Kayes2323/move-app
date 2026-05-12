@@ -2,150 +2,163 @@
 import Link from "next/link";
 import { useState } from "react";
 
+const friends = [
+  { rank: 1, name: "Kayes", km: 184.2, color: "#4F6EF7" },
+  { rank: 2, name: "Afif", km: 162.8, color: "#38BDF8" },
+  { rank: 3, name: "Hasib", km: 144.5, color: "#F97316" },
+  { rank: 4, name: "Redwan", km: 121.3 },
+  { rank: 5, name: "Jalish", km: 102.6 },
+  { rank: 6, name: "Tanjid", km: 88.0 },
+  { rank: 7, name: "Nafiz", km: 71.4 },
+  { rank: 8, name: "Tahmid", km: 54.2 },
+];
+
 const weekly = [
-  { rank: 1, name: "Rakib Hassan", loc: "Mirpur, Dhaka", km: 58.3, pin: "Comilla", top: true },
-  { rank: 2, name: "Siam Ahmed", loc: "Dhanmondi, Dhaka", km: 51.7, pin: "Narayanganj", top: true },
-  { rank: 3, name: "Farhan Islam", loc: "Uttara, Dhaka", km: 44.2, pin: "Tongi", top: true },
-  { rank: 4, name: "Nadia Rahman", loc: "Gulshan, Dhaka", km: 38.9, pin: "Dhaka", top: false },
-  { rank: 5, name: "You", loc: "Your location", km: 0, pin: "Join!", top: false, you: true },
+  { rank: 1, name: "Kayes", km: 58.3, color: "#4F6EF7" },
+  { rank: 2, name: "Redwan", km: 51.7, color: "#38BDF8" },
+  { rank: 3, name: "Nafiz", km: 44.2, color: "#F97316" },
+  { rank: 4, name: "Afif", km: 38.9 },
+  { rank: 5, name: "Tahmid", km: 31.2 },
+  { rank: 6, name: "Jalish", km: 24.5 },
 ];
 
 const monthly = [
-  { rank: 1, name: "Rakib Hassan", loc: "Mirpur, Dhaka", km: 210.3, pin: "Cox's Bazar", top: true },
-  { rank: 2, name: "Nadia Rahman", loc: "Gulshan, Dhaka", km: 189.5, pin: "Comilla", top: true },
-  { rank: 3, name: "Siam Ahmed", loc: "Dhanmondi, Dhaka", km: 175.1, pin: "Chandpur", top: true },
-  { rank: 4, name: "Farhan Islam", loc: "Uttara, Dhaka", km: 160.8, pin: "Narayanganj", top: false },
-  { rank: 5, name: "You", loc: "Your location", km: 0, pin: "Join!", top: false, you: true },
+  { rank: 1, name: "Afif", km: 210.3, color: "#4F6EF7" },
+  { rank: 2, name: "Kayes", km: 189.5, color: "#38BDF8" },
+  { rank: 3, name: "Tanjid", km: 175.1, color: "#F97316" },
+  { rank: 4, name: "Hasib", km: 160.8 },
+  { rank: 5, name: "Jalish", km: 143.2 },
+  { rank: 6, name: "Nafiz", km: 121.0 },
+];
+
+const initials = (name: string) => name.slice(0, 2).toUpperCase();
+
+const avatarColors = [
+  "#4F6EF7", "#7C3AED", "#22C55E", "#F97316",
+  "#38BDF8", "#EC4899", "#EAB308", "#14B8A6"
 ];
 
 export default function Leaderboard() {
-  const [tab, setTab] = useState("weekly");
-  const data = tab === "weekly" ? weekly : monthly;
+  const [tab, setTab] = useState("friends");
+  const data = tab === "friends" ? friends : tab === "weekly" ? weekly : monthly;
+  const top3 = data.slice(0, 3);
+  const rest = data.slice(3);
 
   return (
-    <main className="min-h-screen bg-[#080808] text-[#F5F5F0] pb-24">
+    <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
 
-      {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 border-b border-white/10 bg-[#080808]/90 backdrop-blur-xl">
-        <span className="text-[#C6F135] text-2xl font-black tracking-[8px]">MOVE</span>
-        <span className="font-mono text-[10px] tracking-[3px] uppercase text-white/40">Leaderboard</span>
-      </nav>
+      {/* HEADER */}
+      <div style={{ background: "#FFFFFF", padding: "56px 20px 20px", borderBottom: "1px solid #F3F4F6" }}>
+        <h1 style={{ color: "#0F0F0F", fontSize: "28px", fontWeight: 900, marginBottom: "4px" }}>Leaderboard</h1>
+        <p style={{ color: "#6B7280", fontSize: "13px", fontFamily: "system-ui" }}>Compete with athletes worldwide</p>
+      </div>
 
-      <div className="pt-20 px-4 max-w-md mx-auto">
+      <div style={{ padding: "20px 16px 0" }}>
 
-        {/* TABS */}
-        <div className="flex mb-4">
-          <button
-            onClick={() => setTab("weekly")}
-            className={`flex-1 py-3 font-mono text-[10px] tracking-[2px] uppercase border transition-all ${tab === "weekly" ? "bg-[#C6F135] text-black border-[#C6F135] font-medium" : "bg-transparent text-white/30 border-white/10"}`}
-          >
-            This Week
-          </button>
-          <button
-            onClick={() => setTab("monthly")}
-            className={`flex-1 py-3 font-mono text-[10px] tracking-[2px] uppercase border border-l-0 transition-all ${tab === "monthly" ? "bg-[#C6F135] text-black border-[#C6F135] font-medium" : "bg-transparent text-white/30 border-white/10"}`}
-          >
-            This Month
-          </button>
-        </div>
-
-        {/* RESET INFO */}
-        <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#FF5C1A]"></div>
-          <span className="font-mono text-[9px] text-white/30 tracking-wider uppercase">
-            {tab === "weekly" ? "Resets every Monday" : "Resets every 1st"}
-          </span>
-        </div>
-
-        {/* LEADERBOARD TABLE */}
-        <div className="border border-white/10">
-          {data.map((user, i) => (
-            <div
-              key={i}
-              className={`grid grid-cols-[40px_1fr_auto] items-center gap-3 px-4 py-4 border-b border-white/10 last:border-b-0 transition-all
-                ${user.you ? "bg-[#C6F135]/8 border-l-2 border-l-[#C6F135]" : ""}
-                ${!user.you ? "hover:bg-white/5" : ""}
-              `}
-            >
-              {/* Rank */}
-              <div className={`font-black text-2xl text-center ${user.top ? "text-[#C6F135]" : "text-white/20"}`}
-                style={{ fontFamily: "Impact, sans-serif" }}>
-                {user.rank}
-              </div>
-
-              {/* User Info */}
-              <div>
-                <p className={`font-black text-sm ${user.you ? "text-[#C6F135]" : "text-white"}`}>
-                  {user.name}
-                </p>
-                <p className="font-mono text-[9px] text-white/30 mt-0.5">{user.loc}</p>
-                <p className={`font-mono text-[9px] mt-0.5 ${user.you ? "text-[#C6F135]" : "text-white/20"}`}>
-                  📍 {user.pin}
-                </p>
-              </div>
-
-              {/* KM */}
-              <div className="text-right">
-                <p className={`font-black text-lg ${user.you ? "text-[#C6F135]" : "text-white"}`}
-                  style={{ fontFamily: "Impact, sans-serif" }}>
-                  {user.km > 0 ? `${user.km}` : "—"}
-                </p>
-                <p className="font-mono text-[8px] text-white/20 uppercase tracking-wider">km</p>
-              </div>
-            </div>
+        {/* 3-TAB TOGGLE */}
+        <div style={{ background: "#F3F4F6", borderRadius: "16px", padding: "4px", display: "flex", gap: "4px", marginBottom: "24px" }}>
+          {["friends", "weekly", "monthly"].map((t) => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              flex: 1, padding: "10px 0", borderRadius: "12px", border: "none", cursor: "pointer",
+              background: tab === t ? "#FFFFFF" : "transparent",
+              boxShadow: tab === t ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+              color: tab === t ? "#0F0F0F" : "#9CA3AF",
+              fontSize: "11px", fontWeight: 900, letterSpacing: "1px",
+              transition: "all 0.2s ease"
+            }}>
+              {t === "friends" ? "FRIENDS" : t === "weekly" ? "WEEKLY" : "MONTHLY"}
+            </button>
           ))}
         </div>
 
-        {/* JOIN CTA */}
-        <div className="border border-[#C6F135]/20 bg-[#C6F135]/5 p-5 mt-4 text-center">
-          <p className="font-black text-lg mb-1">Rakib is already ahead.</p>
-          <p className="font-mono text-[10px] text-white/40 tracking-wider mb-4">Start running to claim your spot.</p>
-          <Link href="/">
-            <button className="bg-[#C6F135] text-black font-black text-sm tracking-wider uppercase px-8 py-3 hover:bg-white transition-all"
-              style={{ clipPath: "polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))" }}>
-              🏃 Start Moving
-            </button>
-          </Link>
-        </div>
+        {/* PODIUM */}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: "12px", marginBottom: "32px", paddingTop: "16px" }}>
 
-        {/* BOARDS INFO */}
-        <div className="mt-4 grid grid-cols-1 gap-2">
-          <div className="border border-white/10 p-4 flex gap-3 items-start">
-            <span className="text-lg">👥</span>
-            <div>
-              <p className="font-black text-sm">Friends Board</p>
-              <p className="font-mono text-[10px] text-white/30 mt-1">Only people you know. Jealousy hits harder.</p>
+          {/* #2 */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: avatarColors[1], display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "18px", fontWeight: 900, marginBottom: "6px" }}>
+              {initials(top3[1]?.name || "")}
+            </div>
+            <p style={{ color: "#0F0F0F", fontSize: "13px", fontWeight: 900, marginBottom: "2px" }}>{top3[1]?.name}</p>
+            <p style={{ color: "#6B7280", fontSize: "11px", fontFamily: "system-ui", marginBottom: "8px" }}>{top3[1]?.km} km</p>
+            <div style={{ width: "100%", background: "linear-gradient(180deg, #38BDF8, #0EA5E9)", borderRadius: "12px 12px 0 0", height: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "white", fontSize: "32px", fontWeight: 900 }}>2</span>
             </div>
           </div>
-          <div className="border border-white/10 p-4 flex gap-3 items-start">
-            <span className="text-lg">🌏</span>
-            <div>
-              <p className="font-black text-sm">Global Board</p>
-              <p className="font-mono text-[10px] text-white/30 mt-1">Unlocks after 30 days of running.</p>
+
+          {/* #1 — tallest */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+            <div style={{ width: "68px", height: "68px", borderRadius: "50%", background: avatarColors[0], display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "22px", fontWeight: 900, marginBottom: "6px", border: "3px solid #22C55E", boxShadow: "0 0 0 2px rgba(34,197,94,0.2)" }}>
+              {initials(top3[0]?.name || "")}
+            </div>
+            <p style={{ color: "#0F0F0F", fontSize: "14px", fontWeight: 900, marginBottom: "2px" }}>{top3[0]?.name}</p>
+            <p style={{ color: "#6B7280", fontSize: "11px", fontFamily: "system-ui", marginBottom: "8px" }}>{top3[0]?.km} km</p>
+            <div style={{ width: "100%", background: "linear-gradient(180deg, #4F6EF7, #7C3AED)", borderRadius: "12px 12px 0 0", height: "110px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "white", fontSize: "40px", fontWeight: 900 }}>1</span>
+            </div>
+          </div>
+
+          {/* #3 */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: avatarColors[3], display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "18px", fontWeight: 900, marginBottom: "6px" }}>
+              {initials(top3[2]?.name || "")}
+            </div>
+            <p style={{ color: "#0F0F0F", fontSize: "13px", fontWeight: 900, marginBottom: "2px" }}>{top3[2]?.name}</p>
+            <p style={{ color: "#6B7280", fontSize: "11px", fontFamily: "system-ui", marginBottom: "8px" }}>{top3[2]?.km} km</p>
+            <div style={{ width: "100%", background: "linear-gradient(180deg, #FB923C, #F97316)", borderRadius: "12px 12px 0 0", height: "60px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "white", fontSize: "28px", fontWeight: 900 }}>3</span>
             </div>
           </div>
         </div>
 
+        {/* RANKINGS */}
+        <p style={{ color: "#0F0F0F", fontSize: "13px", letterSpacing: "2px", fontWeight: 900, marginBottom: "12px" }}>RANKINGS</p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {rest.map((user, i) => (
+            <div key={i} style={{
+              background: "#FFFFFF", borderRadius: "16px", padding: "14px 16px",
+              display: "flex", alignItems: "center", gap: "12px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+            }}>
+              <span style={{ color: "#9CA3AF", fontSize: "14px", fontWeight: 700, width: "24px", textAlign: "center", fontFamily: "system-ui" }}>
+                {user.rank}
+              </span>
+              <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: avatarColors[i % avatarColors.length], display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px", fontWeight: 900, flexShrink: 0 }}>
+                {initials(user.name)}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ color: "#0F0F0F", fontSize: "14px", fontWeight: 900 }}>{user.name}</p>
+                <p style={{ color: "#9CA3AF", fontSize: "11px", fontFamily: "system-ui" }}>Friend · MOVE</p>
+              </div>
+              <p style={{ color: "#0F0F0F", fontSize: "16px", fontWeight: 900 }}>
+                {user.km} <span style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 400 }}>km</span>
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-[#080808] grid grid-cols-4">
-        <Link href="/" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🏃</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Run</span>
-        </Link>
-        <Link href="/journey" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">🗺️</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Journey</span>
-        </Link>
-        <Link href="/leaderboard" className="flex flex-col items-center gap-1 py-4 text-[#C6F135]">
-          <span className="text-xl">🏆</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Board</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 py-4 text-white/30 hover:text-white transition-colors">
-          <span className="text-xl">👤</span>
-          <span className="font-mono text-[8px] tracking-widest uppercase">Profile</span>
-        </Link>
+      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #F3F4F6", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", zIndex: 50 }}>
+        {[
+          { href: "/", icon: "home", label: "Home", active: false },
+          { href: "/journey", icon: "map", label: "Routes", active: false },
+          { href: "/leaderboard", icon: "trophy", label: "Ranks", active: true },
+          { href: "/profile", icon: "user", label: "Profile", active: false },
+        ].map((item) => (
+          <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0 8px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={item.active ? "#4F6EF7" : "none"} stroke={item.active ? "#4F6EF7" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {item.icon === "home" && <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
+              {item.icon === "map" && <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>}
+              {item.icon === "trophy" && <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="18" width="12" height="4"/></>}
+              {item.icon === "user" && <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>}
+            </svg>
+            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>
+              {item.label}
+            </span>
+          </Link>
+        ))}
       </nav>
 
     </main>
