@@ -24,10 +24,8 @@ export default function RunPage() {
   };
 
   useEffect(() => {
-    // Timer
     intervalRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
 
-    // GPS
     if (navigator.geolocation) {
       watchId.current = navigator.geolocation.watchPosition(
         (pos) => {
@@ -35,7 +33,7 @@ export default function RunPage() {
           const { latitude, longitude } = pos.coords;
           if (lastPos.current) {
             const d = calcDistance(lastPos.current.lat, lastPos.current.lng, latitude, longitude);
-            if (d > 0.005) { // filter noise — min 5 meters
+            if (d > 0.005) {
               setDistance(prev => {
                 const newDist = prev + d;
                 setCalories(Math.round(newDist * 60));
@@ -47,10 +45,7 @@ export default function RunPage() {
             lastPos.current = { lat: latitude, lng: longitude };
           }
         },
-        (err) => {
-          console.error(err);
-          setGpsStatus("error");
-        },
+        (err) => { console.error(err); setGpsStatus("error"); },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
       );
     } else {
@@ -75,7 +70,6 @@ export default function RunPage() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
 
-    // Save to Firestore
     try {
       const { auth, db } = await import("../firebase");
       const { doc, updateDoc, arrayUnion, increment, getDoc } = await import("firebase/firestore");
@@ -93,11 +87,25 @@ export default function RunPage() {
           date: new Date().toISOString(),
         };
 
+        const today = new Date().toDateString();
+        const lastRunDate = userData?.lastRun ? new Date(userData.lastRun).toDateString() : null;
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+        let newStreak = userData?.streak || 0;
+        if (lastRunDate === today) {
+          newStreak = newStreak;
+        } else if (lastRunDate === yesterday) {
+          newStreak = newStreak + 1;
+        } else {
+          newStreak = 1;
+        }
+
         await updateDoc(userRef, {
           totalKm: increment(parseFloat(distance.toFixed(2))),
           completedKm: increment(parseFloat(distance.toFixed(2))),
           runs: arrayUnion(run),
           lastRun: new Date().toISOString(),
+          streak: newStreak,
         });
       }
     } catch (err) {
