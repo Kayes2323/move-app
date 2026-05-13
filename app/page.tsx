@@ -48,15 +48,15 @@ export default function Home() {
           }
           const snap = await getDoc(doc(db, "users", firebaseUser.uid));
           if (snap.exists()) {
-  const data = snap.data();
-  // পুরনো user যার weight নেই — onboarding এ পাঠাও
-  if (!data.weight || !data.onboarded) {
-    window.location.href = "/onboarding";
-    return;
-  }
-  setUser(data as UserData);
-}
-setLoading(false);
+            const data = snap.data();
+            if (!data.weight || !data.onboarded) {
+              window.location.href = "/onboarding";
+              return;
+            }
+            setUser(data as UserData);
+          }
+          setLoading(false);
+        });
       } catch (err) {
         console.error(err);
         setLoading(false);
@@ -122,7 +122,6 @@ setLoading(false);
         {/* JOURNEY CARD */}
         <div style={{ background: "linear-gradient(135deg, #4F6EF7 0%, #6D28D9 60%, #7C3AED 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "180px", height: "180px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: "20px", padding: "5px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
               <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 6px #22C55E" }} />
@@ -130,14 +129,12 @@ setLoading(false);
             </div>
             <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600 }}>{rank}</span>
           </div>
-
           <h2 style={{ color: "white", fontSize: "26px", fontWeight: 900, lineHeight: 1.1, marginBottom: "4px" }}>
             Dhaka → {currentRoute}
           </h2>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", fontStyle: "italic", marginBottom: "20px", fontFamily: "system-ui" }}>
             {routeTotal} km total route
           </p>
-
           <div style={{ display: "flex", gap: "0", marginBottom: "16px" }}>
             <div style={{ flex: 1 }}>
               <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "9px", letterSpacing: "2px", marginBottom: "4px", fontFamily: "system-ui" }}>COMPLETED</p>
@@ -153,7 +150,6 @@ setLoading(false);
               </p>
             </div>
           </div>
-
           <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: "4px", height: "6px", marginBottom: "8px" }}>
             <div style={{ width: `${percent}%`, height: "100%", background: "white", borderRadius: "4px", minWidth: percent > 0 ? "8px" : "0" }} />
           </div>
