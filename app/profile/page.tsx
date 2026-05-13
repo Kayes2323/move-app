@@ -194,18 +194,22 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* SETTINGS */}
-        <div style={{ background: "#FFFFFF", borderRadius: "16px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-          <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, padding: "16px 16px 12px" }}>SETTINGS</p>
-          <div style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
-            <span style={{ color: "#0F0F0F", fontSize: "14px", fontWeight: 700 }}>Reset Progress</span>
-            <span style={{ color: "#9CA3AF", fontSize: "16px" }}>↺</span>
-          </div>
-          <div onClick={handleSignOut} style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
-            <span style={{ color: "#EF4444", fontSize: "14px", fontWeight: 700 }}>Sign Out</span>
-            <span style={{ color: "#9CA3AF", fontSize: "16px" }}>→</span>
-          </div>
-        </div>
+       {/* SETTINGS */}
+<div style={{ background: "#FFFFFF", borderRadius: "16px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+  <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, padding: "16px 16px 12px" }}>SETTINGS</p>
+  <div onClick={() => window.location.href = "/onboarding"} style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
+    <span style={{ color: "#0F0F0F", fontSize: "14px", fontWeight: 700 }}>Update Weight</span>
+    <span style={{ color: "#9CA3AF", fontSize: "16px" }}>⚖️</span>
+  </div>
+  <div style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
+    <span style={{ color: "#6B7280", fontSize: "14px", fontWeight: 700 }}>Reset Progress</span>
+    <span style={{ color: "#9CA3AF", fontSize: "16px" }}>↺</span>
+  </div>
+  <div onClick={handleSignOut} style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
+    <span style={{ color: "#EF4444", fontSize: "14px", fontWeight: 700 }}>Sign Out</span>
+    <span style={{ color: "#9CA3AF", fontSize: "16px" }}>→</span>
+  </div>
+</div>
       </div>
 
       {/* BOTTOM NAV */}
