@@ -29,21 +29,24 @@ export default function Login() {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      // New user — create profile
-      await setDoc(userRef, {
-        uid: user.uid,
-        name: user.displayName,
-        email: user.email,
-        photo: user.photoURL,
-        createdAt: serverTimestamp(),
-        totalKm: 0,
-        streak: 0,
-        currentRoute: "Chandpur",
-        completedKm: 0,
-        runs: [],
-      });
-    }
-
+  await setDoc(userRef, {
+    uid: user.uid,
+    name: user.displayName,
+    email: user.email,
+    photo: user.photoURL,
+    createdAt: serverTimestamp(),
+    totalKm: 0,
+    streak: 0,
+    currentRoute: "Chandpur",
+    completedKm: 0,
+    runs: [],
+    weight: 0,
+    onboarded: false,
+  });
+  window.location.href = "/onboarding";
+} else {
+  window.location.href = "/";
+}
     window.location.href = "/";
   } catch (err) {
     console.error(err);
