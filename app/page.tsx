@@ -48,10 +48,15 @@ export default function Home() {
           }
           const snap = await getDoc(doc(db, "users", firebaseUser.uid));
           if (snap.exists()) {
-            setUser(snap.data() as UserData);
-          }
-          setLoading(false);
-        });
+  const data = snap.data();
+  // পুরনো user যার weight নেই — onboarding এ পাঠাও
+  if (!data.weight || !data.onboarded) {
+    window.location.href = "/onboarding";
+    return;
+  }
+  setUser(data as UserData);
+}
+setLoading(false);
       } catch (err) {
         console.error(err);
         setLoading(false);
