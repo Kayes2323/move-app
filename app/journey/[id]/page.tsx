@@ -155,7 +155,7 @@ function MapComponent({ route, completedKm }: { route: RouteConfig; completedKm:
       }).addTo(map);
 
       // Fit Bangladesh
-      map.fitBounds([[20.3, 88.0], [26.7, 92.7]], { padding: [20, 20] });
+      map.setView([23.5, 90.3], 7);
 
       // Full route dashed
       L.polyline(route.checkpoints.map(c => c.coords), {
