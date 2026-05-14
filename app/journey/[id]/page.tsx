@@ -237,8 +237,7 @@ if (mapInstance.current) {
         mapInstance.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // eslint-disable-line
+  }, [route, completedKm]);
 
   return (
     <>
