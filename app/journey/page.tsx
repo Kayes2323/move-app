@@ -1,61 +1,77 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
+interface UserData {
+  completedKm: number;
+  currentRoute: string;
+}
 
 const routes = [
   {
+    id: "chandpur",
     name: "Chandpur",
-    tagline: "Riverlands of Bangladesh",
+    tagline: "Home of the Hilsha",
     km: 105,
+    image: "/images/chandpur.jpg",
     active: true,
-    completed: 0,
-    image: "https://images.unsplash.com/photo-1596402184320-417e7178b2cd?w=600&q=80",
-    flag: "🇧🇩",
   },
   {
+    id: "coxsbazar",
     name: "Cox's Bazar",
-    tagline: "World's Longest Sea Beach",
-    km: 414,
+    tagline: "World's longest natural sea beach",
+    km: 399,
+    image: "/images/coxsbazar.jpg",
     active: false,
-    completed: 0,
-    image: "https://images.unsplash.com/photo-1590579491624-f98f36d4c763?w=600&q=80",
-    flag: "🇧🇩",
   },
   {
+    id: "sylhet",
     name: "Sylhet",
-    tagline: "Land of Tea Gardens",
-    km: 244,
+    tagline: "Misty land of tea gardens",
+    km: 317,
+    image: "/images/sylhet.jpg",
     active: false,
-    completed: 0,
-    image: "https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=600&q=80",
-    flag: "🇧🇩",
   },
   {
+    id: "rajshahi",
     name: "Rajshahi",
-    tagline: "City of Mangoes & Silk",
-    km: 253,
+    tagline: "Cleanest city in South Asia",
+    km: 262,
+    image: "/images/rajshahi.jpg",
     active: false,
-    completed: 0,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
-    flag: "🇧🇩",
   },
   {
+    id: "rangpur",
+    name: "Rangpur",
+    tagline: "Where Kanchenjunga meets the horizon",
+    km: 318,
+    image: "/images/rangpur.jpg",
+    active: false,
+  },
+  {
+    id: "khulna",
     name: "Khulna",
-    tagline: "Gateway to Sundarbans",
-    km: 332,
+    tagline: "Where the Royal Bengal Tiger roams",
+    km: 333,
+    image: "/images/khulna.jpg",
     active: false,
-    completed: 0,
-    image: "https://images.unsplash.com/photo-1549366021-9f761d450615?w=600&q=80",
-    flag: "🇧🇩",
   },
   {
+    id: "chittagong",
     name: "Chittagong",
-    tagline: "Port City of the Bay",
+    tagline: "Port city of hills & sea",
     km: 264,
+    image: "/images/chittagong.jpg",
     active: false,
-    completed: 0,
-    image: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&q=80",
-    flag: "🇧🇩",
+  },
+  {
+    id: "barisal",
+    name: "Barisal",
+    tagline: "Countryside of canals & rivers",
+    km: 270,
+    image: "/images/barisal.jpg",
+    active: false,
   },
 ];
 
@@ -64,29 +80,41 @@ const worldRoutes = [
     name: "London → Paris",
     tagline: "The Classic European Run",
     km: 450,
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80",
-    flag: "🌍",
-    locked: true,
-  },
-  {
-    name: "NYC → Boston",
-    tagline: "The East Coast Trail",
-    km: 346,
-    image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80",
-    flag: "🌍",
     locked: true,
   },
   {
     name: "Tokyo → Osaka",
     tagline: "Heart of Japan",
     km: 500,
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",
-    flag: "🌍",
     locked: true,
   },
 ];
 
 export default function Journey() {
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { auth, db } = await import("../firebase");
+        const { doc, getDoc } = await import("firebase/firestore");
+        const { onAuthStateChanged } = await import("firebase/auth");
+        onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+            if (snap.exists()) setUser(snap.data() as UserData);
+          }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    load();
+  }, []);
+
+  const completedKm = user?.completedKm || 0;
+  const currentRoute = user?.currentRoute || "Chandpur";
+
   return (
     <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
 
@@ -98,90 +126,86 @@ export default function Journey() {
 
       <div style={{ padding: "20px 16px 0" }}>
 
-        {/* BANGLADESH SECTION */}
+        {/* BANGLADESH */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
           <span style={{ fontSize: "18px" }}>🇧🇩</span>
-          <span style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900 }}>BANGLADESH</span>
+          <span style={{ color: "#0F0F0F", fontSize: "11px", letterSpacing: "2px", fontWeight: 900 }}>BANGLADESH</span>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "28px" }}>
-          {routes.map((route, i) => (
-            <div key={i} style={{ position: "relative", borderRadius: "20px", overflow: "hidden", height: "140px", cursor: "pointer" }}>
-              {/* Background image */}
-              <Image
-                src={route.image}
-                alt={route.name}
-                fill
-                style={{ objectFit: "cover" }}
-                unoptimized
-              />
+          {routes.map((route) => {
+            const isActive = route.name === currentRoute;
+            const routePercent = isActive ? Math.min((completedKm / route.km) * 100, 100) : 0;
 
-              {/* Dark overlay */}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, transparent 50%, rgba(0,0,0,0.7) 100%)" }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)" }} />
+            return (
+              <Link key={route.id} href={`/journey/${route.id}`} style={{ textDecoration: "none" }}>
+                <div style={{ position: "relative", borderRadius: "20px", overflow: "hidden", height: "140px", cursor: "pointer" }}>
 
-              {/* Top left badge */}
-              <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", borderRadius: "12px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.2)" }}>
-                <span style={{ fontSize: "11px" }}>{route.flag}</span>
-                <span style={{ color: "white", fontSize: "9px", letterSpacing: "2px", fontWeight: 700 }}>
-                  {route.active ? "ACTIVE" : "AVAILABLE"}
-                </span>
-                {route.active && <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 6px #22C55E" }} />}
-              </div>
+                  {/* Image */}
+                  <Image
+                    src={route.image}
+                    alt={route.name}
+                    fill
+                    style={{ objectFit: "cover" }}
+                  />
 
-              {/* Top right arrow */}
-              <div style={{ position: "absolute", top: "12px", right: "12px" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                  <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-                </svg>
-              </div>
+                  {/* Overlay */}
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.25) 0%, transparent 50%, rgba(0,0,0,0.65) 100%)" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 60%)" }} />
 
-              {/* Bottom content */}
-              <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
-                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "10px", fontFamily: "system-ui", marginBottom: "2px" }}>{route.tagline}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                  <p style={{ color: "white", fontSize: "22px", fontWeight: 900, lineHeight: 1 }}>{route.name}</p>
-                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px", fontFamily: "system-ui" }}>{route.km} km</p>
-                </div>
-
-                {/* Progress bar if active */}
-                {route.active && (
-                  <div style={{ marginTop: "8px", background: "rgba(255,255,255,0.2)", borderRadius: "4px", height: "3px" }}>
-                    <div style={{ width: `${(route.completed / route.km) * 100}%`, height: "100%", background: "#22C55E", borderRadius: "4px" }} />
+                  {/* Badge */}
+                  <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", borderRadius: "12px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.2)" }}>
+                    {isActive && <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 6px #22C55E" }} />}
+                    <span style={{ color: "white", fontSize: "9px", letterSpacing: "2px", fontWeight: 700 }}>
+                      {isActive ? "ACTIVE" : "AVAILABLE"}
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
+
+                  {/* Arrow */}
+                  <div style={{ position: "absolute", top: "12px", right: "12px", opacity: 0.7 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+                    </svg>
+                  </div>
+
+                  {/* Bottom content */}
+                  <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
+                    <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "10px", fontFamily: "system-ui", marginBottom: "2px" }}>{route.tagline}</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                      <p style={{ color: "white", fontSize: "22px", fontWeight: 900, lineHeight: 1 }}>{route.name}</p>
+                      <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px", fontFamily: "system-ui" }}>{route.km} km</p>
+                    </div>
+
+                    {/* Progress bar — active route only */}
+                    {isActive && (
+                      <div style={{ marginTop: "8px", background: "rgba(255,255,255,0.2)", borderRadius: "4px", height: "3px" }}>
+                        <div style={{ width: `${routePercent}%`, height: "100%", background: "#22C55E", borderRadius: "4px", minWidth: routePercent > 0 ? "6px" : "0" }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
-        {/* WORLD SECTION */}
+        {/* WORLD ROUTES */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
           <span style={{ fontSize: "18px" }}>🌍</span>
-          <span style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900 }}>WORLD ROUTES</span>
-          <div style={{ background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: "8px", padding: "2px 8px", marginLeft: "4px" }}>
+          <span style={{ color: "#0F0F0F", fontSize: "11px", letterSpacing: "2px", fontWeight: 900 }}>WORLD ROUTES</span>
+          <div style={{ background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: "8px", padding: "2px 8px" }}>
             <span style={{ color: "#D97706", fontSize: "9px", fontWeight: 700, letterSpacing: "1px" }}>LOCKED</span>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {worldRoutes.map((route, i) => (
-            <div key={i} style={{ position: "relative", borderRadius: "20px", overflow: "hidden", height: "120px", cursor: "not-allowed", opacity: 0.7 }}>
-              <Image
-                src={route.image}
-                alt={route.name}
-                fill
-                style={{ objectFit: "cover", filter: "grayscale(40%)" }}
-                unoptimized
-              />
+            <div key={i} style={{ position: "relative", borderRadius: "20px", overflow: "hidden", height: "110px", background: "#1a1a2e", opacity: 0.6 }}>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)" }} />
-
-              {/* Lock badge */}
-              <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", borderRadius: "12px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(0,0,0,0.4)", borderRadius: "12px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{ fontSize: "10px" }}>🔒</span>
                 <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "9px", letterSpacing: "2px" }}>LOCKED</span>
               </div>
-
               <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
                 <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", fontFamily: "system-ui", marginBottom: "2px" }}>{route.tagline}</p>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
@@ -209,13 +233,10 @@ export default function Journey() {
               {item.icon === "trophy" && <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="18" width="12" height="4"/></>}
               {item.icon === "user" && <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>}
             </svg>
-            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>
-              {item.label}
-            </span>
+            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>{item.label}</span>
           </Link>
         ))}
       </nav>
-
     </main>
   );
 }
