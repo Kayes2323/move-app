@@ -264,6 +264,7 @@ export default function JourneyDetail() {
   const [activeJourney, setActiveJourney] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [selectedCp, setSelectedCp] = useState<number | null>(null);
+  const mapSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -332,6 +333,12 @@ export default function JourneyDetail() {
     }
   };
 
+  const handleScrollToMap = () => {
+    if (mapSectionRef.current) {
+      mapSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F8FAFF" }}>
@@ -389,20 +396,6 @@ export default function JourneyDetail() {
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
           <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>{completedKm.toFixed(2)} km done</span>
           <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>Goal: {route.name}</span>
-        </div>
-      </div>
-
-      {/* MAP */}
-      <div style={{ padding: "16px 16px 0" }}>
-        <div style={{ background: "white", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 20px rgba(79,110,247,0.10)", border: "1px solid #EFF6FF" }}>
-          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #F8FAFF" }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4F6EF7", boxShadow: "0 0 6px rgba(79,110,247,0.6)" }} />
-            <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1.5px", color: "#0F172A" }}>LIVE ROUTE MAP</span>
-            <span style={{ fontSize: 10, color: "#94A3B8", fontFamily: "system-ui", marginLeft: "auto" }}>Tap checkpoint for details</span>
-          </div>
-          <div style={{ height: 460 }}>
-            <MapComponent route={route} completedKm={completedKm} />
-          </div>
         </div>
       </div>
 
@@ -464,18 +457,36 @@ export default function JourneyDetail() {
         </div>
       </div>
 
-      {/* FIXED CTA */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "14px 16px 30px", background: "linear-gradient(to top, white 70%, transparent)", zIndex: 50 }}>
+      {/* CTAs */}
+      <div style={{ padding: "20px 16px 0" }}>
         {activeJourney ? (
-          <button onClick={() => router.push("/run")} style={{ width: "100%", padding: 17, background: "#0F0F0F", color: "white", border: "none", borderRadius: 18, fontSize: 15, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+          <button onClick={() => router.push("/run")} style={{ width: "100%", padding: 17, background: "#0F0F0F", color: "white", border: "none", borderRadius: 18, fontSize: 15, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 12 }}>
             <div style={{ width: 0, height: 0, borderTop: "7px solid transparent", borderBottom: "7px solid transparent", borderLeft: "12px solid #22C55E" }} />
             <span style={{ color: "#22C55E" }}>CONTINUE RUNNING</span>
           </button>
         ) : (
-          <button onClick={handleStart} style={{ width: "100%", padding: 17, background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", color: "white", border: "none", borderRadius: 18, fontSize: 15, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 24px rgba(79,110,247,0.35)" }}>
+          <button onClick={handleStart} style={{ width: "100%", padding: 17, background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", color: "white", border: "none", borderRadius: 18, fontSize: 15, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 24px rgba(79,110,247,0.35)", marginBottom: 12 }}>
             Start Journey → {route.name}
           </button>
         )}
+        <button onClick={handleScrollToMap} style={{ width: "100%", padding: 16, background: "white", color: "#4F6EF7", border: "2px solid #4F6EF7", borderRadius: 16, fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "system-ui", boxShadow: "0 4px 16px rgba(79,110,247,0.12)" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          See Where You Are
+        </button>
+      </div>
+
+      {/* MAP */}
+      <div ref={mapSectionRef} style={{ padding: "20px 16px 100px" }}>
+        <div style={{ background: "white", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 20px rgba(79,110,247,0.10)", border: "1px solid #EFF6FF" }}>
+          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #F8FAFF" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4F6EF7", boxShadow: "0 0 6px rgba(79,110,247,0.6)" }} />
+            <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1.5px", color: "#0F172A" }}>LIVE ROUTE MAP</span>
+            <span style={{ fontSize: 10, color: "#94A3B8", fontFamily: "system-ui", marginLeft: "auto" }}>Tap checkpoint for details</span>
+          </div>
+          <div style={{ height: 460 }}>
+            <MapComponent route={route} completedKm={completedKm} />
+          </div>
+        </div>
       </div>
     </main>
   );
