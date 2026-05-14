@@ -135,7 +135,11 @@ function MapComponent({ route, completedKm }: { route: RouteConfig; completedKm:
   const mapInstance = useRef<unknown>(null);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return;
+    if (!mapRef.current) return;
+if (mapInstance.current) {
+  (mapInstance.current as { remove: () => void }).remove();
+  mapInstance.current = null;
+}
 
     const init = async () => {
       const L = (await import("leaflet")).default;
@@ -234,7 +238,7 @@ function MapComponent({ route, completedKm }: { route: RouteConfig; completedKm:
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route.id]);
+  }, []); // eslint-disable-line
 
   return (
     <>
