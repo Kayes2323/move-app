@@ -205,6 +205,10 @@ export default function Profile() {
     <span style={{ color: "#6B7280", fontSize: "14px", fontWeight: 700 }}>Reset Progress</span>
     <span style={{ color: "#9CA3AF", fontSize: "16px" }}>↺</span>
   </div>
+  <div onClick={() => window.location.href = "/share"} style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: "4px", borderTop: "1px solid #F3F4F6", cursor: "pointer", transition: "background 0.2s ease" }} onMouseEnter={(e) => e.currentTarget.style.background = "#F8F9FA"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+    <span style={{ color: "#4F6EF7", fontSize: "14px", fontWeight: 700 }}>Share Your Journey</span>
+    <span style={{ color: "#9CA3AF", fontSize: "11px", fontFamily: "system-ui" }}>Create your MOVE share card</span>
+  </div>
   <div onClick={handleSignOut} style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
     <span style={{ color: "#EF4444", fontSize: "14px", fontWeight: 700 }}>Sign Out</span>
     <span style={{ color: "#9CA3AF", fontSize: "16px" }}>→</span>
