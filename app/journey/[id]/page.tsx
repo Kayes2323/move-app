@@ -15,14 +15,13 @@ interface RouteConfig {
   totalKm: number;
   image: string;
   tagline: string;
-  color: string;
   checkpoints: Checkpoint[];
 }
 
 const ROUTES: Record<string, RouteConfig> = {
   chandpur: {
     id: "chandpur", name: "Chandpur", totalKm: 105,
-    image: "/images/chandpur.jpg", tagline: "Home of the Hilsha", color: "#4F6EF7",
+    image: "/images/chandpur.jpg", tagline: "Home of the Hilsha",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Narayanganj", km: 20, coords: [23.6238, 90.4988], desc: "Industrial city" },
@@ -32,7 +31,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   coxsbazar: {
     id: "coxsbazar", name: "Cox's Bazar", totalKm: 399,
-    image: "/images/coxsbazar.jpg", tagline: "World's longest sea beach", color: "#4F6EF7",
+    image: "/images/coxsbazar.jpg", tagline: "World's longest sea beach",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Comilla", km: 95, coords: [23.4607, 91.1809], desc: "City of heritage" },
@@ -43,7 +42,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   sylhet: {
     id: "sylhet", name: "Sylhet", totalKm: 317,
-    image: "/images/sylhet.jpg", tagline: "Misty land of tea gardens", color: "#4F6EF7",
+    image: "/images/sylhet.jpg", tagline: "Misty land of tea gardens",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Narsingdi", km: 60, coords: [23.9326, 90.7150], desc: "River town" },
@@ -54,7 +53,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   rajshahi: {
     id: "rajshahi", name: "Rajshahi", totalKm: 262,
-    image: "/images/rajshahi.jpg", tagline: "Cleanest city in South Asia", color: "#4F6EF7",
+    image: "/images/rajshahi.jpg", tagline: "Cleanest city in South Asia",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Manikganj", km: 55, coords: [23.8624, 90.0024], desc: "River crossing" },
@@ -65,7 +64,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   rangpur: {
     id: "rangpur", name: "Rangpur", totalKm: 318,
-    image: "/images/rangpur.jpg", tagline: "Northern gateway of Bangladesh", color: "#4F6EF7",
+    image: "/images/rangpur.jpg", tagline: "Where Kanchenjunga meets the horizon",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Tangail", km: 90, coords: [24.2513, 89.9167], desc: "Historic weaving town" },
@@ -76,7 +75,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   khulna: {
     id: "khulna", name: "Khulna", totalKm: 333,
-    image: "/images/khulna.jpg", tagline: "Where the Royal Bengal Tiger roams", color: "#4F6EF7",
+    image: "/images/khulna.jpg", tagline: "Where the Royal Bengal Tiger roams",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Faridpur", km: 100, coords: [23.6070, 89.8429], desc: "Padma riverside" },
@@ -87,7 +86,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   chittagong: {
     id: "chittagong", name: "Chittagong", totalKm: 264,
-    image: "/images/chittagong.jpg", tagline: "Port city of hills & sea", color: "#4F6EF7",
+    image: "/images/chittagong.jpg", tagline: "Port city of hills & sea",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Comilla", km: 116, coords: [23.4607, 91.1809], desc: "City of Heritage" },
@@ -97,7 +96,7 @@ const ROUTES: Record<string, RouteConfig> = {
   },
   barisal: {
     id: "barisal", name: "Barisal", totalKm: 270,
-    image: "/images/barisal.jpg", tagline: "Countryside of canals & rivers", color: "#4F6EF7",
+    image: "/images/barisal.jpg", tagline: "Countryside of canals & rivers",
     checkpoints: [
       { name: "Dhaka", km: 0, coords: [23.8103, 90.4125], desc: "Journey begins" },
       { name: "Munshiganj", km: 50, coords: [23.5422, 90.5288], desc: "River delta" },
@@ -121,10 +120,7 @@ function interpolatePos(route: RouteConfig, completedKm: number): [number, numbe
     const a = pts[i], b = pts[i + 1];
     if (completedKm >= a.km && completedKm <= b.km) {
       const t = (completedKm - a.km) / (b.km - a.km);
-      return [
-        a.coords[0] + (b.coords[0] - a.coords[0]) * t,
-        a.coords[1] + (b.coords[1] - a.coords[1]) * t,
-      ];
+      return [a.coords[0] + (b.coords[0] - a.coords[0]) * t, a.coords[1] + (b.coords[1] - a.coords[1]) * t];
     }
   }
   return pts[pts.length - 1].coords;
@@ -136,37 +132,27 @@ function MapComponent({ route, completedKm }: { route: RouteConfig; completedKm:
 
   useEffect(() => {
     if (!mapRef.current) return;
-if (mapInstance.current) {
-  (mapInstance.current as { remove: () => void }).remove();
-  mapInstance.current = null;
-}
+    if (mapInstance.current) {
+      (mapInstance.current as { remove: () => void }).remove();
+      mapInstance.current = null;
+    }
 
     const init = async () => {
       const L = (await import("leaflet")).default;
-
       const map = L.map(mapRef.current!, {
-        zoomControl: true,
-        attributionControl: false,
-        minZoom: 6,
-        maxZoom: 14,
+        zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 14,
       });
-
       mapInstance.current = map;
-
       L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        subdomains: "abcd",
-        maxZoom: 19,
+        subdomains: "abcd", maxZoom: 19,
       }).addTo(map);
 
-      // Fit Bangladesh
       map.setView([23.5, 90.3], 7);
 
-      // Full route dashed
       L.polyline(route.checkpoints.map(c => c.coords), {
         color: "#C7D2FE", weight: 4, dashArray: "8 6",
       }).addTo(map);
 
-      // Completed route
       const prog: [number, number][] = [];
       for (let i = 0; i < route.checkpoints.length - 1; i++) {
         const a = route.checkpoints[i], b = route.checkpoints[i + 1];
@@ -176,77 +162,60 @@ if (mapInstance.current) {
         } else if (completedKm > a.km) {
           const t = (completedKm - a.km) / (b.km - a.km);
           if (!prog.length) prog.push(a.coords);
-          prog.push([
-            a.coords[0] + (b.coords[0] - a.coords[0]) * t,
-            a.coords[1] + (b.coords[1] - a.coords[1]) * t,
-          ]);
+          prog.push([a.coords[0] + (b.coords[0] - a.coords[0]) * t, a.coords[1] + (b.coords[1] - a.coords[1]) * t]);
           break;
         }
       }
-      if (prog.length >= 2) {
-        L.polyline(prog, { color: "#4F6EF7", weight: 5, lineCap: "round" }).addTo(map);
-      }
+      if (prog.length >= 2) L.polyline(prog, { color: "#4F6EF7", weight: 5, lineCap: "round" }).addTo(map);
 
-      // Checkpoint markers
       const currentIdx = getCurrentCpIndex(route, completedKm);
       route.checkpoints.forEach((cp, i) => {
         const isCompleted = completedKm >= cp.km;
         const isNext = i === currentIdx + 1;
         const isLast = i === route.checkpoints.length - 1;
-
         const size = (i === 0 || isLast) ? 32 : 24;
         const bg = isCompleted ? "#4F6EF7" : isNext ? "#FFFFFF" : "#F1F5F9";
         const border = isNext ? "#4F6EF7" : isCompleted ? "#4F6EF7" : "#D1D5DB";
-        const shadow = isNext ? "0 0 0 5px rgba(79,110,247,0.2)" : "0 2px 8px rgba(0,0,0,0.15)";
         const label = isCompleted ? "✓" : i === 0 ? "S" : isLast ? "🎯" : String(i);
         const color = isCompleted ? "white" : isNext ? "#4F6EF7" : "#9CA3AF";
 
         const icon = L.divIcon({
-          html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:2px solid ${border};box-shadow:${shadow};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${color};font-family:system-ui;">${label}</div>`,
-          className: "",
-          iconSize: [size, size],
-          iconAnchor: [size / 2, size / 2],
+          html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:2px solid ${border};box-shadow:${isNext ? "0 0 0 5px rgba(79,110,247,0.2)" : "0 2px 8px rgba(0,0,0,0.15)"};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${color};font-family:system-ui;">${label}</div>`,
+          className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2],
         });
-
         const status = isCompleted ? "✅ Completed" : isNext ? "📍 Next target" : `🔒 ${(cp.km - completedKm).toFixed(0)} km away`;
-
         L.marker(cp.coords, { icon }).addTo(map).bindPopup(
           `<div style="font-family:system-ui;min-width:140px"><b style="font-size:14px">${cp.name}</b><br><span style="font-size:11px;color:#64748B">${cp.desc} · ${cp.km} km</span><br><br><b style="color:${isCompleted ? "#22C55E" : isNext ? "#4F6EF7" : "#94A3B8"};font-size:12px">${status}</b></div>`,
           { maxWidth: 200 }
         );
       });
 
-      // User position
       if (completedKm > 0) {
         const pos = interpolatePos(route, completedKm);
         const userIcon = L.divIcon({
           html: `<div style="position:relative;width:40px;height:40px"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(79,110,247,0.25);animation:pulse 2s infinite"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#4F6EF7;border:3px solid white;box-shadow:0 3px 10px rgba(79,110,247,0.5);display:flex;align-items:center;justify-content:center;font-size:12px">🏃</div></div>`,
-          className: "",
-          iconSize: [40, 40],
-          iconAnchor: [20, 20],
+          className: "", iconSize: [40, 40], iconAnchor: [20, 20],
         });
         L.marker(pos, { icon: userIcon }).addTo(map);
       }
     };
 
     init();
-
     return () => {
       if (mapInstance.current) {
         (mapInstance.current as { remove: () => void }).remove();
         mapInstance.current = null;
       }
     };
-  }, [route, completedKm]);
+  }, [route.id, completedKm]);
 
   return (
     <>
       <style>{`
-        @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(2.2);opacity:0} }
-        .leaflet-popup-content-wrapper { border-radius:14px!important; box-shadow:0 8px 24px rgba(0,0,0,0.12)!important; }
-        .leaflet-popup-tip { display:none!important; }
-        .leaflet-control-zoom { border:none!important; box-shadow:0 2px 12px rgba(0,0,0,0.1)!important; }
-        .leaflet-control-zoom a { border-radius:8px!important; font-size:18px!important; }
+        @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(2.2);opacity:0}}
+        .leaflet-popup-content-wrapper{border-radius:14px!important;box-shadow:0 8px 24px rgba(0,0,0,0.12)!important;}
+        .leaflet-popup-tip{display:none!important;}
+        .leaflet-control-zoom{border:none!important;box-shadow:0 2px 12px rgba(0,0,0,0.1)!important;}
       `}</style>
       <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
     </>
@@ -272,13 +241,9 @@ export default function JourneyDetail() {
         const firebaseModule = await import("../../firebase");
         const { doc, getDoc } = await import("firebase/firestore");
         const { onAuthStateChanged } = await import("firebase/auth");
-
-        const db = firebaseModule.db;
-        const auth = firebaseModule.auth;
-
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(firebaseModule.auth, async (user) => {
           if (user) {
-            const snap = await getDoc(doc(db, "users", user.uid));
+            const snap = await getDoc(doc(firebaseModule.db, "users", user.uid));
             if (snap.exists()) {
               const d = snap.data();
               if (d.currentRoute === route.name) {
@@ -289,10 +254,7 @@ export default function JourneyDetail() {
           }
           setLoading(false);
         });
-      } catch (e) {
-        console.error(e);
-        setLoading(false);
-      }
+      } catch (e) { console.error(e); setLoading(false); }
     };
     load();
   }, [route.name]);
@@ -301,55 +263,36 @@ export default function JourneyDetail() {
     try {
       const firebaseModule = await import("../../firebase");
       const { doc, setDoc } = await import("firebase/firestore");
-      const auth = firebaseModule.auth;
-      const db = firebaseModule.db;
-      const user = auth.currentUser;
+      const user = firebaseModule.auth.currentUser;
       if (user) {
-        await setDoc(doc(db, "users", user.uid), {
-          currentRoute: route.name,
-          completedKm: 0,
+        await setDoc(doc(firebaseModule.db, "users", user.uid), {
+          currentRoute: route.name, completedKm: 0,
         }, { merge: true });
         setActiveJourney(true);
         setCompletedKm(0);
         router.push("/");
-      } else {
-        router.push("/login");
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      } else router.push("/login");
+    } catch (e) { console.error(e); }
   };
 
   const handleShare = async () => {
     const currentIdx = getCurrentCpIndex(route, completedKm);
     const currentCity = route.checkpoints[currentIdx].name;
     const text = `🏃 আমি এখন ${currentCity} তে আছি!\nDhaka → ${route.name} — ${completedKm.toFixed(1)} km done\nmoverunbd.vercel.app`;
-    if (navigator.share) {
-      await navigator.share({ title: "MOVE", text });
-    } else {
+    if (navigator.share) await navigator.share({ title: "MOVE", text });
+    else {
       await navigator.clipboard.writeText(text);
       setShareToast(true);
       setTimeout(() => setShareToast(false), 2500);
     }
   };
 
-  const handleScrollToMap = () => {
-    if (mapSectionRef.current) {
-      mapSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F8FAFF" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid #4F6EF7", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-          <p style={{ color: "#94A3B8", fontFamily: "system-ui", fontSize: 13 }}>Loading route...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F8FAFF" }}>
+      <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid #4F6EF7", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   const percent = Math.min((completedKm / route.totalKm) * 100, 100);
   const toGo = Math.max(route.totalKm - completedKm, 0);
@@ -358,147 +301,129 @@ export default function JourneyDetail() {
   const nextCp = route.checkpoints[currentIdx + 1];
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080808", fontFamily: "'Archivo Black', sans-serif", display: "flex", justifyContent: "center", alignItems: "center", padding: 20 }}>
+    <main style={{ minHeight: "100vh", background: "#F8FAFF", fontFamily: "'Archivo Black', sans-serif", paddingBottom: 100 }}>
 
-      {/* STORY CARD CONTAINER */}
-      <div style={{ width: "100%", maxWidth: 400, aspectRatio: "9/16", background: "#080808", borderRadius: 24, overflow: "hidden", position: "relative", boxShadow: "0 25px 80px rgba(0,0,0,0.5)" }}>
+      {/* HERO */}
+      <div style={{ position: "relative", height: 210, overflow: "hidden" }}>
+        <img src={route.image} alt={route.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 100%)" }} />
 
-        {/* BACKGROUND IMAGE */}
-        <img src={route.image} alt={route.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        
-        {/* SUBTLE OVERLAY - Reduced darkness by 30% */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.75) 100%)" }} />
+        <button onClick={() => router.push("/journey")} style={{ position: "absolute", top: 52, left: 16, width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        </button>
 
-        {/* CONTENT LAYER */}
-        <div style={{ position: "relative", zIndex: 10, height: "100%", display: "flex", flexDirection: "column", padding: 24 }}>
-          
-          {/* TOP BAR - Logo & Floating Buttons */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-            {/* MOVE Logo */}
-            <div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: "white", letterSpacing: 2, lineHeight: 1 }}>MOVE</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: 1, fontFamily: "system-ui" }}>Run. Conquer. Repeat.</div>
-            </div>
+        <button onClick={handleShare} style={{ position: "absolute", top: 52, right: 16, padding: "7px 16px", borderRadius: 20, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span style={{ color: "white", fontSize: 12, fontWeight: 600, fontFamily: "system-ui" }}>Share</span>
+        </button>
 
-            {/* SAVE & SHARE Buttons */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => {
-                // Save functionality - download as image
-                const element = document.querySelector('[data-story-card]');
-                if (element) {
-                  // For now, just show a toast
-                  setShareToast(true);
-                  setTimeout(() => setShareToast(false), 2000);
-                }
-              }} style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              </button>
-              <button onClick={handleShare} style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(79,110,247,0.25)", backdropFilter: "blur(12px)", border: "1px solid rgba(79,110,247,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              </button>
-            </div>
-          </div>
-
-          {/* ROUTE TITLE */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#4F6EF7", letterSpacing: 2, marginBottom: 8, fontFamily: "system-ui" }}>JOURNEY</div>
-            <h1 style={{ color: "white", fontSize: 36, fontWeight: 900, margin: "0 0 8px", lineHeight: 1.1, letterSpacing: -1 }}>Dhaka → {route.name}</h1>
-            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontFamily: "system-ui", fontWeight: 500 }}>{route.totalKm} km total</span>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,0.5)" }} />
-              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontFamily: "system-ui", fontWeight: 500 }}>{percent.toFixed(1)}% conquered</span>
-            </div>
-          </div>
-
-          {/* STATS GRID */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 40 }}>
-            <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: 1, marginBottom: 6, fontFamily: "system-ui" }}>TODAY'S RUN</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: "white", lineHeight: 1 }}>{completedKm.toFixed(2)}<span style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}> km</span></div>
-            </div>
-            <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: 1, marginBottom: 6, fontFamily: "system-ui" }}>TOTAL JOURNEY</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: "white", lineHeight: 1 }}>{route.totalKm}<span style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}> km</span></div>
-            </div>
-          </div>
-
-          {/* VERTICAL ROUTE MAP */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              {/* Route Line */}
-              <div style={{ position: "relative", width: 3, height: 280, background: "rgba(255,255,255,0.2)", borderRadius: 2 }}>
-                {/* Progress Line */}
-                <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: `${percent}%`, background: "linear-gradient(to bottom, #4F6EF7, #7C3AED)", borderRadius: 2, transition: "height 0.6s ease" }} />
-                
-                {/* Glowing Badge at Current Position */}
-                <div style={{ position: "absolute", top: `${percent}%`, left: "50%", transform: "translate(-50%, -50%)", width: 20, height: 20, borderRadius: "50%", background: "#4F6EF7", border: "3px solid white", boxShadow: "0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)", zIndex: 10 }}>
-                  <div style={{ position: "absolute", inset: -8, borderRadius: "50%", background: "rgba(79,110,247,0.3)", animation: "pulse 2s infinite" }} />
-                </div>
-              </div>
-
-              {/* Checkpoints */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 0, height: 280, justifyContent: "space-between", padding: "8px 0" }}>
-                {route.checkpoints.map((cp, i) => {
-                  const isCompleted = completedKm >= cp.km;
-                  const isCurrent = i === currentIdx;
-                  const isNext = i === currentIdx + 1;
-                  
-                  return (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ 
-                        width: isCurrent ? 10 : 6, 
-                        height: isCurrent ? 10 : 6, 
-                        borderRadius: "50%", 
-                        background: isCompleted || isCurrent ? "#4F6EF7" : "rgba(255,255,255,0.3)",
-                        boxShadow: isCurrent ? "0 0 12px rgba(79,110,247,0.8)" : "none",
-                        transition: "all 0.3s"
-                      }} />
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ 
-                          fontSize: isCurrent ? 15 : 13, 
-                          fontWeight: isCurrent ? 800 : 600, 
-                          color: isCompleted || isCurrent ? "white" : "rgba(255,255,255,0.5)",
-                          fontFamily: "system-ui"
-                        }}>{cp.name}</span>
-                        {isCurrent && (
-                          <span style={{ fontSize: 11, fontWeight: 600, color: "#4F6EF7", fontFamily: "system-ui" }}>I'm here</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* BOTTOM SECTION - Hashtag & Photo Button */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 24 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "white", letterSpacing: 0.5 }}>#RunYourWorld</div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.6)", fontFamily: "system-ui", marginTop: 4 }}>moverunbd.vercel.app</div>
-            </div>
-            
-            {/* Small Photo Icon Button */}
-            <button onClick={() => router.push("/journey")} style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Toast Notification */}
         {shareToast && (
-          <div style={{ position: "absolute", bottom: 80, left: "50%", transform: "translateX(-50%)", background: "rgba(79,110,247,0.95)", backdropFilter: "blur(12px)", color: "white", borderRadius: 12, padding: "10px 20px", fontSize: 13, fontWeight: 600, fontFamily: "system-ui", whiteSpace: "nowrap", boxShadow: "0 8px 24px rgba(79,110,247,0.3)", zIndex: 100 }}>
-            ✓ Saved to gallery
+          <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", color: "white", borderRadius: 20, padding: "7px 18px", fontSize: 12, fontFamily: "system-ui", whiteSpace: "nowrap" }}>✓ Copied!</div>
+        )}
+
+        <div style={{ position: "absolute", bottom: 18, left: 20, right: 20 }}>
+          <h1 style={{ color: "white", fontSize: 24, fontWeight: 900, margin: "0 0 4px" }}>Dhaka → {route.name}</h1>
+          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "system-ui", margin: 0 }}>{route.totalKm} km · {percent.toFixed(1)}% conquered</p>
+        </div>
+      </div>
+
+      {/* PROGRESS */}
+      <div style={{ background: "white", padding: "14px 20px", borderBottom: "1px solid #EFF6FF" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#4F6EF7", fontFamily: "system-ui" }}>📍 Now in {currentCity}</span>
+          <span style={{ fontSize: 12, color: "#94A3B8", fontFamily: "system-ui" }}>{toGo.toFixed(1)} km to go</span>
+        </div>
+        <div style={{ height: 8, borderRadius: 8, background: "#EFF6FF" }}>
+          <div style={{ height: "100%", borderRadius: 8, background: "linear-gradient(90deg, #4F6EF7, #7C3AED)", width: `${Math.max(percent, completedKm > 0 ? 1.5 : 0)}%`, transition: "width 0.6s ease" }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
+          <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>{completedKm.toFixed(2)} km done</span>
+          <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>Goal: {route.name}</span>
+        </div>
+      </div>
+
+      <div style={{ padding: "16px 16px 0" }}>
+
+        {/* MOTIVATION */}
+        {nextCp && (
+          <div style={{ background: "#EEF2FF", borderRadius: 16, padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#4F6EF7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎯</div>
+            <div>
+              <p style={{ color: "#4F6EF7", fontSize: 13, fontWeight: 900, margin: "0 0 2px" }}>{nextCp.name} is calling you!</p>
+              <p style={{ color: "#6B7280", fontSize: 12, fontFamily: "system-ui", margin: 0 }}>
+                {(nextCp.km - completedKm).toFixed(1)} km left to conquer {nextCp.name}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Pulse Animation */}
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.8); opacity: 0; }
-          }
-        `}</style>
+        {/* CHECKPOINTS */}
+        <p style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1.5px", color: "#0F172A", margin: "0 0 12px" }}>CHECKPOINTS</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          {route.checkpoints.map((cp, i) => {
+            const isCompleted = completedKm >= cp.km;
+            const isNext = i === currentIdx + 1;
+            const sel = selectedCp === i;
+            return (
+              <button key={i} onClick={() => setSelectedCp(sel ? null : i)}
+                style={{ display: "flex", alignItems: "center", gap: 12, background: "white", border: sel ? "2px solid #4F6EF7" : "1.5px solid #EFF6FF", borderRadius: 16, padding: "13px 16px", cursor: "pointer", textAlign: "left", boxShadow: sel ? "0 4px 16px rgba(79,110,247,0.15)" : "0 2px 8px rgba(0,0,0,0.04)", transition: "all 0.2s", width: "100%" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: isCompleted ? "#4F6EF7" : isNext ? "#EEF2FF" : "#F8F9FA", border: isNext ? "2px solid #4F6EF7" : "none", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: isNext ? "0 0 0 4px rgba(79,110,247,0.12)" : "none" }}>
+                  {isCompleted
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    : <div style={{ width: 8, height: 8, borderRadius: "50%", background: isNext ? "#4F6EF7" : "#D1D5DB" }} />
+                  }
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: isCompleted ? "#0F172A" : isNext ? "#4F6EF7" : "#CBD5E1" }}>
+                      {cp.name} {isNext ? "🎯" : ""}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>{cp.km} km</p>
+                  </div>
+                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>
+                    {isNext ? `${(cp.km - completedKm).toFixed(1)} km away · ${cp.desc}` : cp.desc}
+                  </p>
+                  {sel && isCompleted && cp.km > 0 && (
+                    <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4, background: "#DCFCE7", borderRadius: 10, padding: "3px 10px" }}>
+                      <span style={{ fontSize: 11 }}>🏅</span>
+                      <span style={{ color: "#16A34A", fontSize: 11, fontWeight: 700 }}>{cp.name} Conqueror Badge</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* CTA BUTTONS */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+          {activeJourney ? (
+            <button onClick={() => router.push("/run")} style={{ flex: 1, padding: "15px", background: "#0F0F0F", color: "white", border: "none", borderRadius: 16, fontSize: 14, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <div style={{ width: 0, height: 0, borderTop: "6px solid transparent", borderBottom: "6px solid transparent", borderLeft: "10px solid #22C55E" }} />
+              <span style={{ color: "#22C55E" }}>CONTINUE RUNNING</span>
+            </button>
+          ) : (
+            <button onClick={handleStart} style={{ flex: 1, padding: "15px", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", color: "white", border: "none", borderRadius: 16, fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 24px rgba(79,110,247,0.35)" }}>
+              Start Journey → {route.name}
+            </button>
+          )}
+          <button onClick={() => router.push("/share")} style={{ padding: "15px 16px", background: "#EEF2FF", border: "none", borderRadius: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" strokeWidth="2.5" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span style={{ color: "#4F6EF7", fontSize: 12, fontWeight: 700 }}>Share</span>
+          </button>
+        </div>
+
+        {/* MAP */}
+        <div ref={mapSectionRef} style={{ background: "white", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 20px rgba(79,110,247,0.10)", border: "1px solid #EFF6FF", marginBottom: 16 }}>
+          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #F8FAFF" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4F6EF7", boxShadow: "0 0 6px rgba(79,110,247,0.6)" }} />
+            <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1.5px", color: "#0F172A" }}>LIVE ROUTE MAP</span>
+            <span style={{ fontSize: 10, color: "#94A3B8", fontFamily: "system-ui", marginLeft: "auto" }}>Tap checkpoint for details</span>
+          </div>
+          <div style={{ height: 420 }}>
+            <MapComponent route={route} completedKm={completedKm} />
+          </div>
+        </div>
       </div>
     </main>
   );
