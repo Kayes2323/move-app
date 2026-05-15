@@ -1,6 +1,7 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
+import html2canvas from "html2canvas";
 
 interface UserData {
   name: string;
@@ -25,6 +26,7 @@ function ResultContent() {
   const time = params.get("time") || "00:00";
   const pace = params.get("pace") || "0.00";
   const [user, setUser] = useState<UserData | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -48,6 +50,42 @@ function ResultContent() {
   const completedKm = user?.completedKm || 0;
   const percent = Math.min((completedKm / routeTotal) * 100, 100);
   const toGo = Math.max(routeTotal - completedKm, 0);
+
+  const handleShare = async () => {
+    if (!cardRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        
+        const file = new File([blob], "move-card.png", { type: "image/png" });
+        
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: "MOVE Run",
+            text: `I just ran ${km} km in ${time}! 🏃`,
+            files: [file],
+          });
+        } else {
+          // Fallback: copy to clipboard or download
+          const url = canvas.toDataURL("image/png");
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "move-card.png";
+          link.click();
+        }
+      }, "image/png");
+    } catch (err) {
+      console.error("Share failed:", err);
+    }
+  };
 
   return (
     <main style={{
@@ -79,7 +117,7 @@ function ResultContent() {
       </p>
 
       {/* RESULT CARD */}
-      <div style={{ background: "linear-gradient(135deg, #4F6EF7 0%, #6D28D9 60%, #7C3AED 100%)", borderRadius: "20px", padding: "24px", marginBottom: "32px", position: "relative", overflow: "hidden" }}>
+      <div ref={cardRef} style={{ background: "linear-gradient(135deg, #4F6EF7 0%, #6D28D9 60%, #7C3AED 100%)", borderRadius: "20px", padding: "24px", marginBottom: "32px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
 
         {/* Card top */}
@@ -134,7 +172,7 @@ function ResultContent() {
 
       {/* BUTTONS */}
       <div style={{ display: "flex", gap: "12px" }}>
-        <button style={{ flex: 1, padding: "16px", borderRadius: "16px", background: "#0F0F0F", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+        <button onClick={handleShare} style={{ flex: 1, padding: "16px", borderRadius: "16px", background: "#0F0F0F", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
