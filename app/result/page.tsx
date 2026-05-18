@@ -327,6 +327,9 @@ function ResultContent() {
   const km = params.get("km") || "0.00";
   const time = params.get("time") || "00:00";
   const pace = params.get("pace") || "0.00";
+  const calories = params.get("calories") || "0";
+  const steps = params.get("steps") || "0";
+  const activity = params.get("activity") || "running";
   const [user, setUser] = useState<UserData | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -405,9 +408,11 @@ function ResultContent() {
             { label: "KM TODAY", value: km },
             { label: "DURATION", value: time },
             { label: "PACE", value: pace },
+            { label: "KCAL", value: calories },
+            { label: activity === "cycling" ? "SPEED" : "STEPS", value: parseInt(steps) >= 1000 ? `${(parseInt(steps)/1000).toFixed(1)}k` : steps },
           ].map((s, i) => (
-            <div key={i} style={{ flex: 1, borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.15)" : "none", paddingLeft: i > 0 ? "16px" : "0" }}>
-              <p style={{ color: "white", fontSize: "22px", fontWeight: 900, lineHeight: 1 }}>{s.value}</p>
+            <div key={i} style={{ flex: 1, borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.15)" : "none", paddingLeft: i > 0 ? "10px" : "0" }}>
+              <p style={{ color: "white", fontSize: "18px", fontWeight: 900, lineHeight: 1 }}>{s.value}</p>
               <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "9px", letterSpacing: "2px", marginTop: "4px", fontFamily: "system-ui" }}>{s.label}</p>
             </div>
           ))}
