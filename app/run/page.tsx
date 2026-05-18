@@ -239,7 +239,12 @@ export default function RunPage() {
     return `${m}:${sec}`;
   };
 
-  const pace = distance > 0.01 ? ((seconds / 60) / distance).toFixed(2) : "--";
+  const paceValue = distance > 0.01 && seconds > 0
+  ? Math.round((seconds / 60) / distance * 10) / 10
+  : 0;
+const pace = paceValue > 0
+  ? `${Math.floor(paceValue)}:${String(Math.round((paceValue % 1) * 60)).padStart(2, "0")}`
+  : "--";
 
   // ── ACTIVITY SELECTOR ──────────────────────────────────────────
   if (!started) {
