@@ -396,9 +396,16 @@ export default function JourneyDetail() {
               <span style={{ color: "#22C55E" }}>CONTINUE RUNNING</span>
             </button>
           ) : (
-            <button onClick={() => setShowPopup(userCoords !== null && !activeJourney ? true : false) || saveRoute(0)} style={{ flex: 1, padding: "15px", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", color: "white", border: "none", borderRadius: 16, fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 24px rgba(79,110,247,0.35)" }}>
-              Start Journey → {route.name}
-            </button>
+            <button onClick={() => {
+  if (userCoords !== null && !activeJourney) {
+    setShowPopup(true);
+  } else {
+    saveRoute(0);
+  }
+  }}
+  style={{ flex: 1, padding: "15px", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", color: "white", border: "none", borderRadius: 16, fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 24px rgba(79,110,247,0.35)" }}>
+  Start Journey → {route.name}
+</button>
           )}
           <button onClick={() => router.push("/share")} style={{ padding: "15px 16px", background: "#EEF2FF", border: "none", borderRadius: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" strokeWidth="2.5" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
