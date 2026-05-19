@@ -1,76 +1,25 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState, useRef } from "react";
+import { ROUTES as ROUTE_LIST } from "../data/routes";
 
+const ROUTES: Record<string, number> = Object.fromEntries(
+  ROUTE_LIST.map(r => [r.name, r.totalKm])
+);
+
+const ROUTE_CHECKPOINTS: Record<string, { name: string; position: number }[]> =
+  Object.fromEntries(
+    ROUTE_LIST.map(r => [
+      r.name,
+      r.checkpoints.map(cp => ({ name: cp.name, position: cp.distanceFromStart }))
+    ])
+  );
 interface UserData {
   name: string;
   totalKm: number;
   completedKm: number;
   currentRoute: string;
 }
-
-const ROUTES: Record<string, number> = {
-  Chandpur: 105,
-  "Cox's Bazar": 414,
-  Sylhet: 244,
-  Rajshahi: 253,
-  Khulna: 332,
-  Chittagong: 264,
-  Barisal: 270,
-};
-
-const ROUTE_CHECKPOINTS: Record<string, { name: string; position: number }[]> = {
-  "Chandpur": [
-    { name: "Dhaka", position: 0 },
-    { name: "Narayanganj", position: 20 },
-    { name: "Munshiganj", position: 55 },
-    { name: "Chandpur", position: 105 },
-  ],
-  "Cox's Bazar": [
-    { name: "Dhaka", position: 0 },
-    { name: "Comilla", position: 95 },
-    { name: "Feni", position: 155 },
-    { name: "Chittagong", position: 265 },
-    { name: "Cox's Bazar", position: 399 },
-  ],
-  "Sylhet": [
-    { name: "Dhaka", position: 0 },
-    { name: "Narsingdi", position: 60 },
-    { name: "Brahmanbaria", position: 120 },
-    { name: "Habiganj", position: 210 },
-    { name: "Sylhet", position: 317 },
-  ],
-  "Chittagong": [
-    { name: "Dhaka", position: 0 },
-    { name: "Comilla", position: 116 },
-    { name: "Feni", position: 172 },
-    { name: "Chittagong", position: 264 },
-  ],
-  "Rajshahi": [
-    { name: "Dhaka", position: 0 },
-    { name: "Manikganj", position: 55 },
-    { name: "Sirajganj", position: 140 },
-    { name: "Rajshahi", position: 262 },
-  ],
-  "Rangpur": [
-    { name: "Dhaka", position: 0 },
-    { name: "Tangail", position: 90 },
-    { name: "Bogura", position: 175 },
-    { name: "Rangpur", position: 318 },
-  ],
-  "Khulna": [
-    { name: "Dhaka", position: 0 },
-    { name: "Faridpur", position: 100 },
-    { name: "Jashore", position: 230 },
-    { name: "Khulna", position: 333 },
-  ],
-  "Barisal": [
-    { name: "Dhaka", position: 0 },
-    { name: "Munshiganj", position: 50 },
-    { name: "Madaripur", position: 130 },
-    { name: "Barisal", position: 270 },
-  ],
-};
 
 function ShareModal({ km, time, pace, currentRoute, completedKm, routeTotal, onClose }: {
   km: string;
