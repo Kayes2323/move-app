@@ -146,12 +146,27 @@ export default function Onboarding() {
           {loading ? "Saving..." : isUpdate ? "Save Weight →" : "Let's Start Moving →"}
         </button>
 
-        {/* Skip — only for new users */}
         {!isUpdate && (
-          <button onClick={() => {
-            setWeight("70");
-            handleSubmit();
-          }}
+  <button onClick={async () => {
+    const w = 70;
+    setWeight("70");
+    setLoading(true);
+    try {
+      const { auth, db } = await import("../firebase");
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const user = auth.currentUser;
+      if (user) {
+        await updateDoc(doc(db, "users", user.uid), {
+          weight: w,
+          onboarded: true,
+        });
+      }
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  }}
             style={{ width: "100%", padding: "14px", borderRadius: "16px", border: "1px solid #E5E7EB", background: "transparent", color: "#9CA3AF", fontSize: "14px", cursor: "pointer" }}>
             Skip for now (use 70 kg default)
           </button>
