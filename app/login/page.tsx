@@ -44,10 +44,11 @@ export default function Login() {
     onboarded: false,
   });
   window.location.href = "/onboarding";
+  return;
 } else {
   window.location.href = "/";
+  return;
 }
-    window.location.href = "/";
   } catch (err) {
     console.error(err);
     setLoading(false);
