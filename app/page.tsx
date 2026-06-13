@@ -13,12 +13,14 @@ interface UserData {
 }
 
 const ROUTES: Record<string, number> = {
-  Chandpur: 105,
+  "Chandpur": 132,
   "Cox's Bazar": 414,
-  Sylhet: 244,
-  Rajshahi: 253,
-  Khulna: 332,
-  Chittagong: 264,
+  "Sylhet": 241,
+  "Rajshahi": 256,
+  "Khulna": 275,
+  "Chittagong": 264,
+  "Rangpur": 320,
+  "Barisal": 154,
 };
 
 const getRank = (km: number) => {
@@ -90,7 +92,7 @@ export default function Home() {
   const todayKm = runs
     .filter(r => new Date(r.date).toDateString() === new Date().toDateString())
     .reduce((sum, r) => sum + r.km, 0);
-  const lastRun = runs[runs.length - 1];
+  const lastRun = runs.filter(r => r.km > 0).slice(-1)[0];
   const initials = (user?.name || "R").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (

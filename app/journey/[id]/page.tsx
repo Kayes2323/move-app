@@ -134,7 +134,7 @@ export default function JourneyDetail() {
             const snap = await getDoc(doc(firebaseModule.db, "users", user.uid));
             if (snap.exists()) {
               const d = snap.data() as UserData;
-              if (d.currentRoute === route.name) {
+              if (d.currentRoute === route.name || d.currentRoute === route.destination) {
                 setCompletedKm(d.completedKm || 0);
                 setStartIdx(d.startCheckpointIndex || 0);
                 setActiveJourney(true);
