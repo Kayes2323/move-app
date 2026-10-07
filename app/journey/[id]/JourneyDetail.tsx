@@ -1,8 +1,10 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ROUTE_MAP, findNearestCheckpoint, type Route, type Checkpoint } from "../../data/routes";
+import { Loading } from "../../components/Loading";
 import { journeyOffsetKm } from "../../lib/activity";
+import { resolveMode, useThemePrefs } from "../../lib/theme";
 
 interface UserData {
   completedKm: number;
@@ -19,7 +21,7 @@ function getCurrentCpIndex(route: Route, completedKm: number, startIdx: number =
   return idx;
 }
 
-function MapComponent({ route, completedKm, startIdx }: { route: Route; completedKm: number; startIdx: number }) {
+function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { route: Route; completedKm: number; startIdx: number; dark: boolean; accent: string; onFail: () => void }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<unknown>(null);
 
@@ -30,75 +32,105 @@ function MapComponent({ route, completedKm, startIdx }: { route: Route; complete
       mapInstance.current = null;
     }
 
+    let cancelled = false;
     const init = async () => {
-      const L = (await import("leaflet")).default;
-      const map = L.map(mapRef.current!, {
-        zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 14,
-      });
-      mapInstance.current = map;
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        subdomains: "abcd", maxZoom: 19,
-      }).addTo(map);
-      map.setView([23.5, 90.3], 7);
-
-      const activeCheckpoints = route.checkpoints.slice(startIdx);
-
-      // Full route dashed
-      L.polyline(activeCheckpoints.map(c => c.coords), {
-        color: "#C7D2FE", weight: 4, dashArray: "8 6",
-      }).addTo(map);
-
-      // Completed route
-      const currentIdx = getCurrentCpIndex(route, completedKm, startIdx);
-      const prog: [number, number][] = [];
-      for (let i = startIdx; i < currentIdx; i++) {
-        prog.push(route.checkpoints[i].coords);
-      }
-      if (prog.length >= 2) {
-        L.polyline(prog, { color: "#4F6EF7", weight: 5, lineCap: "round" }).addTo(map);
-      }
-
-      // Markers
-      activeCheckpoints.forEach((cp, i) => {
-        const globalIdx = i + startIdx;
-        const isCompleted = globalIdx < currentIdx;
-        const isNext = globalIdx === currentIdx + 1;
-        const isLast = globalIdx === route.checkpoints.length - 1;
-        const size = (i === 0 || isLast) ? 32 : 24;
-        const bg = isCompleted ? "#4F6EF7" : isNext ? "#FFFFFF" : "#F1F5F9";
-        const border = isNext || isCompleted ? "#4F6EF7" : "#D1D5DB";
-        const label = isCompleted ? "✓" : i === 0 ? "S" : isLast ? "🎯" : String(i);
-        const color = isCompleted ? "white" : isNext ? "#4F6EF7" : "#9CA3AF";
-
-        const icon = L.divIcon({
-          html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:2px solid ${border};box-shadow:${isNext ? "0 0 0 5px rgba(79,110,247,0.2)" : "0 2px 8px rgba(0,0,0,0.15)"};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${color};font-family:system-ui;">${label}</div>`,
-          className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+      try {
+        const L = (await import("leaflet")).default;
+        if (cancelled || !mapRef.current) return;
+        const map = L.map(mapRef.current, {
+          zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 14,
         });
+        mapInstance.current = map;
+        let tileErrors = 0;
+        const tiles = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`, {
+          subdomains: "abcd", maxZoom: 19,
+        });
+        // A map that never loads used to be an empty box with no explanation.
+        tiles.on("tileerror", () => {
+          tileErrors += 1;
+          if (tileErrors === 4) onFail();
+        });
+        tiles.addTo(map);
+        map.setView([23.5, 90.3], 7);
 
-        L.marker(cp.coords, { icon }).addTo(map).bindPopup(
-          `<div style="font-family:system-ui;min-width:160px"><b style="font-size:14px">${cp.name}</b><br><span style="font-size:11px;color:#64748B">${cp.distanceFromStart} km from Dhaka</span><br><br><p style="font-size:11px;color:#475569;line-height:1.5;margin:0">${cp.fact}</p></div>`,
-          { maxWidth: 220 }
-        );
-      });
+        const activeCheckpoints = route.checkpoints.slice(startIdx);
+        const line = dark ? "#33333D" : "#C7D2FE";
+        const surface = dark ? "#1C1C22" : "#F1F5F9";
+        const ring = dark ? "#33333D" : "#D1D5DB";
+        const muted = dark ? "#9A9AA6" : "#9CA3AF";
+        const onAccent = "#FFFFFF";
+
+        // Full route dashed
+        L.polyline(activeCheckpoints.map(c => c.coords), {
+          color: line, weight: 4, dashArray: "8 6",
+        }).addTo(map);
+
+        // Completed route
+        const currentIdx = getCurrentCpIndex(route, completedKm, startIdx);
+        const prog: [number, number][] = [];
+        for (let i = startIdx; i < currentIdx; i++) {
+          prog.push(route.checkpoints[i].coords);
+        }
+        if (prog.length >= 2) {
+          L.polyline(prog, { color: accent, weight: 5, lineCap: "round" }).addTo(map);
+        }
+
+        // Markers
+        activeCheckpoints.forEach((cp, i) => {
+          const globalIdx = i + startIdx;
+          const isCompleted = globalIdx < currentIdx;
+          const isNext = globalIdx === currentIdx + 1;
+          const isLast = globalIdx === route.checkpoints.length - 1;
+          const size = (i === 0 || isLast) ? 32 : 24;
+          const bg = isCompleted ? accent : isNext ? (dark ? "#0A0A0C" : "#FFFFFF") : surface;
+          const border = isNext || isCompleted ? accent : ring;
+          const label = isCompleted ? "&#10003;" : i === 0 ? "S" : isLast ? "&#9873;" : String(i);
+          const color = isCompleted ? onAccent : isNext ? accent : muted;
+
+          const icon = L.divIcon({
+            html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:2px solid ${border};box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${color};font-family:system-ui;">${label}</div>`,
+            className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+          });
+
+          const pop = document.createElement("div");
+          pop.style.cssText = "font-family:system-ui;min-width:160px";
+          const title = document.createElement("b");
+          title.style.fontSize = "14px";
+          title.textContent = cp.name;
+          const dist = document.createElement("div");
+          dist.style.cssText = "font-size:11px;opacity:.7;margin:2px 0 8px";
+          dist.textContent = `${cp.distanceFromStart} km from Dhaka`;
+          const fact = document.createElement("p");
+          fact.style.cssText = "font-size:12px;line-height:1.5;margin:0";
+          fact.textContent = cp.fact;
+          pop.append(title, dist, fact);
+          L.marker(cp.coords, { icon }).addTo(map).bindPopup(pop, { maxWidth: 220 });
+        });
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) onFail();
+      }
     };
 
-    init();
+    void init();
     return () => {
+      cancelled = true;
       if (mapInstance.current) {
         (mapInstance.current as { remove: () => void }).remove();
         mapInstance.current = null;
       }
     };
-  }, [route.id, startIdx]);
+  }, [route, startIdx, completedKm, dark, accent, onFail]);
 
   return (
     <>
       <style>{`
-        @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(2.2);opacity:0}}
-        .leaflet-popup-content-wrapper{border-radius:14px!important;box-shadow:0 8px 24px rgba(0,0,0,0.12)!important;}
+        .leaflet-container{background:var(--land)!important;font-family:inherit}
+        .leaflet-popup-content-wrapper{border-radius:14px!important;box-shadow:0 8px 24px rgba(0,0,0,0.25)!important;background:var(--surf)!important;color:var(--ink)!important}
         .leaflet-popup-tip{display:none!important;}
+        .leaflet-bar a{background:var(--surf)!important;color:var(--ink)!important;border-color:var(--hair)!important}
       `}</style>
-      <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
+      <div ref={mapRef} role="application" aria-label="Route map" style={{ width: "100%", height: "100%" }} />
     </>
   );
 }
@@ -114,6 +146,11 @@ export default function JourneyDetail() {
   const [loading, setLoading] = useState(true);
   const [activeJourney, setActiveJourney] = useState(false);
   const [selectedCp, setSelectedCp] = useState<number | null>(null);
+  const [mapFailed, setMapFailed] = useState(false);
+  const prefs = useThemePrefs();
+  const dark = resolveMode(prefs.mode) === "dark";
+  const accentHex = { blue: "#4F6EF7", purple: "#7C3AED", green: "#22C55E", orange: "#F59E0B" }[prefs.accent];
+  const onMapFail = useCallback(() => setMapFailed(true), []);
 
   // Nearest checkpoint popup
   const [showPopup, setShowPopup] = useState(false);
@@ -216,20 +253,13 @@ export default function JourneyDetail() {
   };
 
   if (!route) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#6B7280", fontFamily: "system-ui" }}>Route not found</p>
-    </div>
+    <main className="app nonav stack" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}>
+      <p className="h2">Route not found</p>
+      <button className="btn btn-solid" style={{ width: "auto" }} onClick={() => router.push("/journey")}>All journeys</button>
+    </main>
   );
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F8FAFF" }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid #4F6EF7", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        <p style={{ color: "#94A3B8", fontFamily: "system-ui", fontSize: 13 }}>Detecting your location...</p>
-      </div>
-    </div>
-  );
+  if (loading) return <Loading label="Detecting your location..." />;
 
   const activeCheckpoints = route.checkpoints.slice(startIdx);
   const startOffset = journeyOffsetKm(route, startIdx);
@@ -239,121 +269,107 @@ export default function JourneyDetail() {
   const currentIdx = getCurrentCpIndex(route, completedKm, startIdx);
   const currentCity = route.checkpoints[currentIdx].name;
   const nextCp = route.checkpoints[currentIdx + 1];
+  const pin = <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></>;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#F8FAFF", fontFamily: "'Archivo Black', sans-serif", paddingBottom: 100 }}>
+    <main className="app flush nonav" style={{ paddingTop: 0 }}>
 
       {/* NEAREST CHECKPOINT POPUP */}
       {showPopup && nearestCp && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "flex-end" }}>
-          <div style={{ background: "white", borderRadius: "24px 24px 0 0", padding: "28px 20px 40px", width: "100%" }}>
-
-            {/* Handle */}
-            <div style={{ width: 40, height: 4, borderRadius: 2, background: "#E5E7EB", margin: "0 auto 24px" }} />
-
-            {/* Location icon */}
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-
-            <p style={{ color: "#9CA3AF", fontSize: 11, letterSpacing: 2, textAlign: "center", margin: "0 0 8px", fontFamily: "system-ui" }}>WE FOUND YOU NEAR</p>
-            <h2 style={{ color: "#0F0F0F", fontSize: 24, fontWeight: 900, textAlign: "center", margin: "0 0 6px" }}>{nearestCp.name}</h2>
-            <p style={{ color: "#6B7280", fontSize: 13, textAlign: "center", fontFamily: "system-ui", margin: "0 0 24px" }}>
-              Nearest checkpoint on this route
-            </p>
-
-            {/* Route visualization */}
-            <div style={{ background: "#F8F9FA", borderRadius: 16, padding: "14px 16px", marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E" }} />
-                <span style={{ fontSize: 13, fontFamily: "system-ui", color: "#0F0F0F", fontWeight: 600 }}>Dhaka</span>
-                <div style={{ flex: 1, height: 1, background: "#E5E7EB", marginLeft: 4 }} />
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 4 }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#4F6EF7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 900, color: "#4F6EF7" }}>{nearestCp.name}</span>
-                <span style={{ fontSize: 11, color: "#9CA3AF", fontFamily: "system-ui" }}>{nearestCp.distanceFromStart} km</span>
-              </div>
-            </div>
-
-            <p style={{ color: "#6B7280", fontSize: 12, textAlign: "center", fontFamily: "system-ui", margin: "0 0 20px", lineHeight: 1.5 }}>
-              How would you like to start?
-            </p>
-
-            {/* Buttons */}
-            <button onClick={handleStartFromNearest} style={{ width: "100%", padding: 16, borderRadius: 16, background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", border: "none", cursor: "pointer", marginBottom: 10 }}>
-              <span style={{ color: "white", fontSize: 15, fontWeight: 900 }}>
-                Start from {nearestCp.name} 📍
-              </span>
-            </button>
-
-            <button onClick={handleStartFromDhaka} style={{ width: "100%", padding: 14, borderRadius: 16, background: "#F8F9FA", border: "1px solid #E5E7EB", cursor: "pointer" }}>
-              <span style={{ color: "#6B7280", fontSize: 14, fontWeight: 700, fontFamily: "system-ui" }}>
-                Start Full Journey from Dhaka
-              </span>
-            </button>
+        <div role="dialog" aria-label="Where do you want to start?" style={{ position: "fixed", inset: 0, background: "var(--scrim)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div style={{ background: "var(--bg)", borderRadius: "24px 24px 0 0", padding: "24px 20px calc(env(safe-area-inset-bottom, 0px) + 28px)", width: "100%", maxWidth: 480 }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--surf2)", margin: "0 auto 20px" }} />
+            <p className="lab" style={{ textAlign: "center" }}>We found you near</p>
+            <h2 className="title-blk" style={{ textAlign: "center", margin: "8px 0 4px" }}>{nearestCp.name}</h2>
+            <p className="body mute" style={{ textAlign: "center" }}>Nearest checkpoint on this route · {nearestCp.distanceFromStart} km from Dhaka</p>
+            <p className="body mute" style={{ textAlign: "center", margin: "20px 0 14px" }}>How would you like to start?</p>
+            <button className="btn btn-go" onClick={handleStartFromNearest}>Start from {nearestCp.name}</button>
+            <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={handleStartFromDhaka}>Start full journey from Dhaka</button>
           </div>
         </div>
       )}
 
       {/* HERO */}
-      <div style={{ position: "relative", height: 210, overflow: "hidden" }}>
-        <img src={route.image} alt={route.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 100%)" }} />
-
-        <button onClick={() => router.push("/journey")} style={{ position: "absolute", top: 52, left: 16, width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      <div style={{ position: "relative", height: 230, overflow: "hidden", background: "var(--surf2)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={route.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.78) 100%)" }} />
+        <button aria-label="Back to journeys" onClick={() => router.push("/journey")} className="icon-btn" style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 16px)", left: 16, background: "rgba(0,0,0,0.4)", color: "#fff" }}>
+          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-
-        <div style={{ position: "absolute", bottom: 18, left: 20, right: 20 }}>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontFamily: "system-ui", margin: "0 0 4px", letterSpacing: 1 }}>{route.highway} · {route.tagline}</p>
-          <h1 style={{ color: "white", fontSize: 24, fontWeight: 900, margin: "0 0 4px" }}>
+        <div style={{ position: "absolute", bottom: 18, left: 20, right: 20, color: "#fff" }}>
+          <p style={{ fontSize: 12, opacity: 0.75, letterSpacing: 1 }}>{route.highway} · {route.tagline}</p>
+          <h1 className="title-blk" style={{ marginTop: 4, textTransform: "none", fontSize: 26 }}>
             {startIdx > 0 ? route.checkpoints[startIdx].name : "Dhaka"} → {route.name}
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "system-ui", margin: 0 }}>
-            {adjustedTotal} km · {percent.toFixed(1)}% conquered
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 20px calc(env(safe-area-inset-bottom, 0px) + 40px)" }}>
+        {/* PROGRESS */}
+        <section aria-label="Progress">
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <p className="blk" style={{ fontSize: 34 }}>{percent.toFixed(percent >= 10 ? 0 : 1)}<span className="unit">% done</span></p>
+            <p className="mute" style={{ fontSize: 13 }}>{toGo.toFixed(1)} km to go</p>
+          </div>
+          <div className="bar-track" style={{ height: 8, marginTop: 10 }}>
+            <div className="bar-fill" style={{ width: `${Math.max(percent, completedKm > 0 ? 1.5 : 0)}%`, background: "var(--grad)", transition: "width 0.6s ease" }} />
+          </div>
+          <p className="mute" style={{ fontSize: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}>
+            <span>Now in {currentCity} · {completedKm.toFixed(2)} of {adjustedTotal} km</span>
+            <span>{route.checkpoints.length} checkpoints</span>
           </p>
-        </div>
-      </div>
+        </section>
 
-      {/* PROGRESS */}
-      <div style={{ background: "white", padding: "14px 20px", borderBottom: "1px solid #EFF6FF" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#4F6EF7", fontFamily: "system-ui" }}>📍 Now in {currentCity}</span>
-          <span style={{ fontSize: 12, color: "#94A3B8", fontFamily: "system-ui" }}>{toGo.toFixed(1)} km to go</span>
+        {/* CTA */}
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          {activeJourney ? (
+            <button className="btn btn-go" onClick={() => router.push("/run")}>
+              <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
+              Continue moving
+            </button>
+          ) : (
+            <button className="btn btn-go" onClick={() => { if (userCoords !== null && !activeJourney) setShowPopup(true); else saveRoute(0); }}>
+              Start journey
+            </button>
+          )}
+          <button className="icon-btn" aria-label="Share" style={{ width: 56, height: 56, flexShrink: 0 }} onClick={() => router.push("/share")}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6" /></svg>
+          </button>
         </div>
-        <div style={{ height: 8, borderRadius: 8, background: "#EFF6FF" }}>
-          <div style={{ height: "100%", borderRadius: 8, background: "linear-gradient(90deg, #4F6EF7, #7C3AED)", width: `${Math.max(percent, completedKm > 0 ? 1.5 : 0)}%`, transition: "width 0.6s ease" }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
-          <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>{completedKm.toFixed(2)} km done</span>
-          <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>{route.checkpoints.length} checkpoints</span>
-        </div>
-      </div>
 
-      <div style={{ padding: "16px 16px 0" }}>
+        {/* MAP */}
+        <section aria-label="Route map" style={{ marginTop: 24 }}>
+          <p className="lab">Route map</p>
+          <div style={{ marginTop: 10, height: 380, borderRadius: 20, overflow: "hidden", background: "var(--land)", position: "relative" }}>
+            {mapFailed ? (
+              <div className="stack" style={{ height: "100%", alignItems: "center", justifyContent: "center", gap: 10, textAlign: "center", padding: 24 }}>
+                <svg className="ic mute" viewBox="0 0 24 24" style={{ width: 32, height: 32 }} aria-hidden="true">{pin}</svg>
+                <p className="body mute">The map couldn&apos;t load. Check your connection; the checkpoints below still work.</p>
+                <button className="btn btn-soft" style={{ width: "auto" }} onClick={() => setMapFailed(false)}>Retry map</button>
+              </div>
+            ) : (
+              <MapComponent route={route} completedKm={completedKm} startIdx={startIdx} dark={dark} accent={accentHex} onFail={onMapFail} />
+            )}
+          </div>
+        </section>
 
         {/* MOTIVATION */}
         {nextCp && (
-          <div style={{ background: "#EEF2FF", borderRadius: 16, padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#4F6EF7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎯</div>
+          <div className="card" style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 14 }}>
+            <span className="av" style={{ width: 44, height: 44 }}>
+              <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">{pin}</svg>
+            </span>
             <div>
-              <p style={{ color: "#4F6EF7", fontSize: 13, fontWeight: 900, margin: "0 0 2px" }}>{nextCp.name} is calling you!</p>
-              <p style={{ color: "#6B7280", fontSize: 12, fontFamily: "system-ui", margin: 0 }}>
-                {(nextCp.distanceFromStart - startOffset - completedKm).toFixed(1)} km left
-              </p>
+              <p style={{ fontSize: 15, fontWeight: 800 }}>{nextCp.name} is next</p>
+              <p className="mute" style={{ fontSize: 13, marginTop: 2 }}>{(nextCp.distanceFromStart - startOffset - completedKm).toFixed(1)} km left</p>
             </div>
           </div>
         )}
 
         {/* CHECKPOINTS */}
-        <p style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1.5px", color: "#0F172A", margin: "0 0 12px" }}>CHECKPOINTS</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        <p className="lab" style={{ marginTop: 28 }}>Checkpoints</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
           {activeCheckpoints.map((cp, i) => {
             const globalIdx = i + startIdx;
             const adjustedKm = cp.distanceFromStart - startOffset;
@@ -362,75 +378,29 @@ export default function JourneyDetail() {
             const sel = selectedCp === globalIdx;
 
             return (
-              <button key={globalIdx} onClick={() => setSelectedCp(sel ? null : globalIdx)}
-                style={{ display: "flex", alignItems: "center", gap: 12, background: "white", border: sel ? "2px solid #4F6EF7" : "1.5px solid #EFF6FF", borderRadius: 16, padding: "13px 16px", cursor: "pointer", textAlign: "left", boxShadow: sel ? "0 4px 16px rgba(79,110,247,0.15)" : "0 2px 8px rgba(0,0,0,0.04)", transition: "all 0.2s", width: "100%" }}>
-
-                <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: isCompleted ? "#4F6EF7" : isNext ? "#EEF2FF" : "#F8F9FA", border: isNext ? "2px solid #4F6EF7" : "none", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: isNext ? "0 0 0 4px rgba(79,110,247,0.12)" : "none" }}>
+              <button key={globalIdx} onClick={() => setSelectedCp(sel ? null : globalIdx)} aria-expanded={sel}
+                className="card" style={{ display: "flex", alignItems: "center", gap: 12, border: sel || isNext ? "1.5px solid var(--accent)" : "1.5px solid transparent", textAlign: "left", cursor: "pointer", width: "100%", padding: "13px 16px" }}>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: isCompleted ? "var(--accent)" : "var(--surf2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {isCompleted
-                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    : <div style={{ width: 8, height: 8, borderRadius: "50%", background: isNext ? "#4F6EF7" : "#D1D5DB" }} />
-                  }
+                    ? <svg className="ic" viewBox="0 0 24 24" style={{ width: 16, height: 16, strokeWidth: 3, color: "var(--on-acc)" }} aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>
+                    : <div style={{ width: 8, height: 8, borderRadius: "50%", background: isNext ? "var(--accent)" : "var(--trk)" }} />}
                 </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: isCompleted ? "#0F172A" : isNext ? "#4F6EF7" : "#CBD5E1" }}>
-                      {cp.name} {isNext ? "🎯" : ""}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>{adjustedKm} km</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                    <p style={{ fontSize: 15, fontWeight: 800, color: isCompleted ? "var(--ink)" : isNext ? "var(--acc-text)" : "var(--mute)" }}>{cp.name}</p>
+                    <p className="mute" style={{ fontSize: 12 }}>{adjustedKm} km</p>
                   </div>
-                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#94A3B8", fontFamily: "system-ui" }}>
-                    {cp.type} · {isNext ? `${(adjustedKm - completedKm).toFixed(1)} km away` : cp.fact.slice(0, 45) + "..."}
+                  <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>
+                    {isNext ? `${(adjustedKm - completedKm).toFixed(1)} km away` : sel ? "" : cp.type}
                   </p>
-                  {sel && (
-                    <p style={{ margin: "8px 0 0", fontSize: 12, color: "#475569", fontFamily: "system-ui", lineHeight: 1.5 }}>{cp.fact}</p>
-                  )}
+                  {sel && <p style={{ margin: "6px 0 0", fontSize: 13, lineHeight: 1.5 }}>{cp.fact}</p>}
                   {sel && isCompleted && adjustedKm > 0 && (
-                    <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4, background: "#DCFCE7", borderRadius: 10, padding: "3px 10px" }}>
-                      <span style={{ fontSize: 11 }}>🏅</span>
-                      <span style={{ color: "#16A34A", fontSize: 11, fontWeight: 700 }}>{cp.name} Conqueror</span>
-                    </div>
+                    <p className="lab" style={{ marginTop: 8, color: "var(--ok)" }}>{cp.name} conqueror</p>
                   )}
                 </div>
               </button>
             );
           })}
-        </div>
-
-        {/* CTA */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-          {activeJourney ? (
-            <button onClick={() => router.push("/run")} style={{ flex: 1, padding: "15px", background: "#0F0F0F", color: "white", border: "none", borderRadius: 16, fontSize: 14, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <div style={{ width: 0, height: 0, borderTop: "6px solid transparent", borderBottom: "6px solid transparent", borderLeft: "10px solid #22C55E" }} />
-              <span style={{ color: "#22C55E" }}>CONTINUE RUNNING</span>
-            </button>
-          ) : (
-            <button onClick={() => {
-  if (userCoords !== null && !activeJourney) {
-    setShowPopup(true);
-  } else {
-    saveRoute(0);
-  }
-  }}
-  style={{ flex: 1, padding: "15px", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", color: "white", border: "none", borderRadius: 16, fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 24px rgba(79,110,247,0.35)" }}>
-  Start Journey → {route.name}
-</button>
-          )}
-          <button onClick={() => router.push("/share")} style={{ padding: "15px 16px", background: "#EEF2FF", border: "none", borderRadius: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" strokeWidth="2.5" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            <span style={{ color: "#4F6EF7", fontSize: 12, fontWeight: 700 }}>Share</span>
-          </button>
-        </div>
-
-        {/* MAP */}
-        <div style={{ background: "white", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 20px rgba(79,110,247,0.10)", border: "1px solid #EFF6FF", marginBottom: 16 }}>
-          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #F8FAFF" }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4F6EF7", boxShadow: "0 0 6px rgba(79,110,247,0.6)" }} />
-            <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1.5px", color: "#0F172A" }}>LIVE ROUTE MAP</span>
-          </div>
-          <div style={{ height: 420 }}>
-            <MapComponent route={route} completedKm={completedKm} startIdx={startIdx} />
-          </div>
         </div>
       </div>
     </main>

@@ -1,8 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BottomNav } from "../components/BottomNav";
+import { Loading } from "../components/Loading";
 import { LoadError } from "../components/LoadError";
-import { activityDays, effectiveStreak, findRoute, formatPace, nowMs, weightedPace, type RunEntry } from "../lib/activity";
+import { activityDays, effectiveStreak, findRoute, formatKm, formatPace, nowMs, toKind, type RunEntry } from "../lib/activity";
 
 interface UserData {
   name: string;
@@ -27,18 +29,19 @@ const getRank = (km: number) => {
 
 const routeKm = (name: string) => findRoute(name)?.totalKm ?? Infinity;
 
-const achievements = [
-  { name: "First Mile", icon: "👟", condition: (km: number) => km >= 1 },
-  { name: "10km Club", icon: "🏃", condition: (km: number) => km >= 10 },
-  { name: "50km Hero", icon: "⚡", condition: (km: number) => km >= 50 },
-  { name: "Streak x3", icon: "🔥", condition: (_: number, streak: number) => streak >= 3 },
-  { name: "Streak x7", icon: "🔥", condition: (_: number, streak: number) => streak >= 7 },
-  { name: "Chandpur\nConqueror", icon: "🏆", condition: (km: number) => km >= routeKm("Chandpur") },
-  { name: "Cox's Bazar", icon: "🏖️", condition: (km: number) => km >= routeKm("Cox's Bazar") },
-  { name: "Sylhet Run", icon: "🍃", condition: (km: number) => km >= routeKm("Sylhet") },
-  { name: "100km Club", icon: "💪", condition: (km: number) => km >= 100 },
-];
+const RANKS: [string, number][] = [["Starter", 10], ["Mover", 50], ["Pacer", 100], ["Elite", 200], ["Legend", 500]];
 
+const achievements = [
+  { name: "First mile", condition: (km: number) => km >= 1 },
+  { name: "10 km club", condition: (km: number) => km >= 10 },
+  { name: "50 km hero", condition: (km: number) => km >= 50 },
+  { name: "100 km club", condition: (km: number) => km >= 100 },
+  { name: "3 day streak", condition: (_: number, streak: number) => streak >= 3 },
+  { name: "7 day streak", condition: (_: number, streak: number) => streak >= 7 },
+  { name: "Chandpur", condition: (km: number) => km >= routeKm("Chandpur") },
+  { name: "Cox's Bazar", condition: (km: number) => km >= routeKm("Cox's Bazar") },
+  { name: "Sylhet", condition: (km: number) => km >= routeKm("Sylhet") },
+];
 export default function Profile() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,165 +92,118 @@ export default function Profile() {
     window.location.href = "/login";
   };
 
-  if (loading) {
-    return (
-      <main style={{ minHeight: "100vh", background: "#F8F9FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "3px solid #F3F4F6", borderTop: "3px solid #4F6EF7", margin: "0 auto 16px", animation: "spin 1s linear infinite" }} />
-          <p style={{ color: "#9CA3AF", fontSize: "13px", fontFamily: "system-ui" }}>Loading profile...</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </main>
-    );
-  }
+  if (loading) return <Loading label="Loading profile..." />;
 
   const totalKm = user?.totalKm || 0;
   const streak = effectiveStreak(user?.streak, user?.lastRun, nowMs());
   const runs = user?.runs || [];
   const rank = getRank(totalKm);
   const initials = (user?.name || "R").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-  const avgPace = formatPace(weightedPace(runs));
-  const journeys = new Set([user?.currentRoute, ...runs.map((r) => r.routeName)].filter(Boolean)).size;
   // Last 35 days, by real activity date (it used to light up cells by run count instead).
   const grid = activityDays(runs, 35, nowMs());
+  const real = runs.filter((r) => r.km > 0);
+  const activeDays = new Set(real.map((r) => new Date(r.date).toDateString())).size;
+  const longest = real.reduce((m, r) => Math.max(m, r.km), 0);
+  const paced = real.filter((r) => toKind(r.activity) !== "cycling" && r.km >= 1 && r.pace && r.pace > 0);
+  const bestPace = paced.length ? Math.min(...paced.map((r) => r.pace as number)) : 0;
+  const nextRank = RANKS.find(([, min]) => totalKm < min);
+  const prevMin = [...RANKS].reverse().find(([, min]) => totalKm >= min)?.[1] ?? 0;
+  const rankPct = nextRank ? Math.min(((totalKm - prevMin) / (nextRank[1] - prevMin)) * 100, 100) : 100;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
-
-      {/* HEADER */}
-      <div style={{ background: "#FFFFFF", padding: "56px 20px 24px", borderBottom: "1px solid #F3F4F6" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ color: "#9CA3AF", fontSize: "10px", letterSpacing: "3px", marginBottom: "6px" }}>ATHLETE PROFILE</p>
-            <h1 style={{ color: "#0F0F0F", fontSize: "24px", fontWeight: 900, marginBottom: "2px" }}>{user?.name || "Runner"}</h1>
-            <p style={{ color: "#9CA3AF", fontSize: "12px", fontFamily: "system-ui" }}>{user?.email || ""}</p>
-            <div style={{ marginTop: "10px", display: "inline-flex", alignItems: "center", gap: "6px", background: "#EEF2FF", borderRadius: "10px", padding: "4px 10px" }}>
-              <span style={{ fontSize: "12px" }}>🇧🇩</span>
-              <span style={{ color: "#4F6EF7", fontSize: "10px", fontWeight: 700, letterSpacing: "1px" }}>Run The BD · {rank}</span>
-            </div>
-          </div>
+    <main className="app">
+      <header className="bar" style={{ alignItems: "flex-start" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
           {user?.photo ? (
-            <img src={user.photo} alt="avatar" style={{ width: "64px", height: "64px", borderRadius: "50%", objectFit: "cover", border: "3px solid #22C55E", boxShadow: "0 0 0 2px rgba(34,197,94,0.2)" }} />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="av" src={user.photo} alt="" width={72} height={72} style={{ width: 72, height: 72, border: "2px solid var(--accent)", padding: 2 }} />
           ) : (
-            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "22px", fontWeight: 900, border: "3px solid #22C55E" }}>
-              {initials}
-            </div>
+            <div className="av" style={{ width: 72, height: 72, fontSize: 24 }}>{initials}</div>
           )}
+          <div style={{ minWidth: 0 }}>
+            <h1 className="h1" style={{ fontSize: 24, overflow: "hidden", textOverflow: "ellipsis" }}>{user?.name || "Runner"}</h1>
+            <p className="mute" style={{ fontSize: 13, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>{user?.email || ""}</p>
+            <span className="lab" style={{ display: "inline-block", marginTop: 8, padding: "4px 10px", borderRadius: 10, background: "var(--surf)", color: "var(--acc-text)" }}>{rank}</span>
+          </div>
         </div>
+        <Link href="/profile/appearance" className="icon-btn" aria-label="Appearance">
+          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4" /></svg>
+        </Link>
+      </header>
 
-        {/* Two main stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "20px" }}>
-          {[
-            { label: "TOTAL DISTANCE", value: totalKm.toFixed(2), unit: "km", color: "#4F6EF7" },
-            { label: "STREAK", value: String(streak), unit: "days", color: "#22C55E" },
-          ].map((s) => (
-            <div key={s.label} style={{ background: "#F8F9FA", borderRadius: "14px", padding: "14px" }}>
-              <p style={{ color: "#9CA3AF", fontSize: "9px", letterSpacing: "2px", marginBottom: "6px", fontFamily: "system-ui" }}>{s.label}</p>
-              <p style={{ color: s.color, fontSize: "26px", fontWeight: 900, lineHeight: 1 }}>
-                {s.value}<span style={{ fontSize: "13px", color: "#9CA3AF", marginLeft: "3px", fontWeight: 400 }}>{s.unit}</span>
-              </p>
-            </div>
-          ))}
+      <div style={{ marginTop: 22 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }} className="mute">
+          <span>{nextRank ? `${(nextRank[1] - totalKm).toFixed(1)} km to ${nextRank[0]}` : "Top rank reached"}</span>
+          <span>{formatKm(totalKm)}{nextRank ? ` / ${nextRank[1]}` : ""} km</span>
         </div>
-
-        {/* Three pill stats */}
-        <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-          {[
-            { label: "RUNS", value: String(runs.length) },
-            { label: "JOURNEYS", value: String(Math.max(journeys, 1)) },
-            { label: "AVG PACE", value: avgPace === "—" ? "—" : `${avgPace}/km` },
-          ].map((s) => (
-            <div key={s.label} style={{ flex: 1, background: "#F8F9FA", borderRadius: "12px", padding: "10px 8px", textAlign: "center" }}>
-              <p style={{ color: "#0F0F0F", fontSize: "16px", fontWeight: 900 }}>{s.value}</p>
-              <p style={{ color: "#9CA3AF", fontSize: "8px", letterSpacing: "1px", fontFamily: "system-ui", marginTop: "2px" }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
+        <div className="bar-track" style={{ marginTop: 8 }}><div className="bar-fill" style={{ width: `${rankPct}%`, background: "var(--grad)" }} /></div>
       </div>
 
-      <div style={{ padding: "20px 16px 0" }}>
-
-        {/* ACTIVITY GRID */}
-        <div style={{ background: "#FFFFFF", borderRadius: "16px", padding: "16px", marginBottom: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-          <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, marginBottom: "14px" }}>ACTIVITY</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px" }}>
-            {grid.map((active, i) => (
-              <div key={i} style={{ aspectRatio: "1", borderRadius: "4px", background: active ? "#4F6EF7" : "#F3F4F6" }} />
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: "12px", marginTop: "10px", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <div style={{ width: "10px", height: "10px", borderRadius: "2px", background: "#F3F4F6" }} />
-              <span style={{ color: "#9CA3AF", fontSize: "9px", fontFamily: "system-ui" }}>Rest</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <div style={{ width: "10px", height: "10px", borderRadius: "2px", background: "#4F6EF7" }} />
-              <span style={{ color: "#9CA3AF", fontSize: "9px", fontFamily: "system-ui" }}>Active</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ACHIEVEMENTS */}
-        <div style={{ background: "#FFFFFF", borderRadius: "16px", padding: "16px", marginBottom: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-          <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, marginBottom: "14px" }}>ACHIEVEMENTS</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
-            {achievements.map((a, i) => {
-              const unlocked = a.condition(totalKm, user?.streak || 0);
-              return (
-                <div key={i} style={{ background: unlocked ? "#EEF2FF" : "#F9FAFB", borderRadius: "14px", padding: "14px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", border: unlocked ? "1px solid #C7D2FE" : "1px solid #F3F4F6", opacity: unlocked ? 1 : 0.5 }}>
-                  <span style={{ fontSize: "22px", filter: unlocked ? "none" : "grayscale(100%)" }}>
-                    {unlocked ? a.icon : "🔒"}
-                  </span>
-                  <p style={{ color: unlocked ? "#4F6EF7" : "#9CA3AF", fontSize: "9px", fontWeight: 700, textAlign: "center", lineHeight: 1.3 }}>
-                    {a.name}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-       {/* SETTINGS */}
-<div style={{ background: "#FFFFFF", borderRadius: "16px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-  <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, padding: "16px 16px 12px" }}>SETTINGS</p>
-  <div onClick={() => window.location.href = "/onboarding"} style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
-    <span style={{ color: "#0F0F0F", fontSize: "14px", fontWeight: 700 }}>Update Weight</span>
-    <span style={{ color: "#9CA3AF", fontSize: "16px" }}>⚖️</span>
-  </div>
-  <div style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
-    <span style={{ color: "#6B7280", fontSize: "14px", fontWeight: 700 }}>Reset Progress</span>
-    <span style={{ color: "#9CA3AF", fontSize: "16px" }}>↺</span>
-  </div>
-  <div onClick={() => window.location.href = "/share"} style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: "4px", borderTop: "1px solid #F3F4F6", cursor: "pointer", transition: "background 0.2s ease" }} onMouseEnter={(e) => e.currentTarget.style.background = "#F8F9FA"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-    <span style={{ color: "#4F6EF7", fontSize: "14px", fontWeight: 700 }}>Share Your Journey</span>
-    <span style={{ color: "#9CA3AF", fontSize: "11px", fontFamily: "system-ui" }}>Create your MOVE share card</span>
-  </div>
-  <div onClick={handleSignOut} style={{ padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #F3F4F6", cursor: "pointer" }}>
-    <span style={{ color: "#EF4444", fontSize: "14px", fontWeight: 700 }}>Sign Out</span>
-    <span style={{ color: "#9CA3AF", fontSize: "16px" }}>→</span>
-  </div>
-</div>
-      </div>
-
-      {/* BOTTOM NAV */}
-      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #F3F4F6", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", zIndex: 50 }}>
+      <section aria-label="Totals" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", marginTop: 22, borderTop: "1px solid var(--hair)", borderBottom: "1px solid var(--hair)" }}>
         {[
-          { href: "/", icon: "home", label: "Home", active: false },
-          { href: "/journey", icon: "map", label: "Routes", active: false },
-          { href: "/leaderboard", icon: "trophy", label: "Ranks", active: false },
-          { href: "/profile", icon: "user", label: "Profile", active: true },
-        ].map((item) => (
-          <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0 8px" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={item.active ? "#4F6EF7" : "none"} stroke={item.active ? "#4F6EF7" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {item.icon === "home" && <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
-              {item.icon === "map" && <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>}
-              {item.icon === "trophy" && <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="18" width="12" height="4"/></>}
-              {item.icon === "user" && <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>}
-            </svg>
-            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>{item.label}</span>
-          </Link>
+          { label: "Km total", value: formatKm(totalKm) },
+          { label: "Active days", value: String(activeDays) },
+          { label: "Day streak", value: String(streak) },
+        ].map((st, i) => (
+          <div key={st.label} style={{ padding: "16px 0 14px", paddingLeft: i ? 16 : 0, borderLeft: i ? "1px solid var(--hair)" : 0 }}>
+            <p className="blk" style={{ fontSize: 26, color: st.label === "Day streak" && streak > 0 ? "var(--amber)" : undefined }}>{st.value}</p>
+            <p className="lab" style={{ marginTop: 4 }}>{st.label}</p>
+          </div>
         ))}
-      </nav>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <p className="lab">Personal records</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+          <div className="card">
+            <p className="blk" style={{ fontSize: 24 }}>{longest > 0 ? formatKm(longest) : "—"}<span className="unit">km</span></p>
+            <p className="lab" style={{ marginTop: 4 }}>Longest</p>
+          </div>
+          <div className="card">
+            <p className="blk" style={{ fontSize: 24 }}>{bestPace > 0 ? formatPace(bestPace) : "—"}<span className="unit">/km</span></p>
+            <p className="lab" style={{ marginTop: 4 }}>Best pace</p>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <div className="bar"><p className="lab">Last 5 weeks</p><p className="mute" style={{ fontSize: 12 }}>{real.length} {real.length === 1 ? "activity" : "activities"}</p></div>
+        <div role="img" aria-label={`Active on ${grid.reduce((a, b) => a + b, 0)} of the last 35 days`} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5, marginTop: 10 }}>
+          {grid.map((active, i) => (
+            <div key={i} style={{ aspectRatio: "1", borderRadius: 5, background: active ? "var(--accent)" : "var(--surf2)" }} />
+          ))}
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <p className="lab">Achievements</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginTop: 10 }}>
+          {achievements.map((a) => {
+            const unlocked = a.condition(totalKm, user?.streak || 0);
+            return (
+              <div key={a.name} className="card" style={{ padding: "14px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, opacity: unlocked ? 1 : 0.5 }}>
+                <svg className="ic" viewBox="0 0 24 24" aria-hidden="true" style={{ color: unlocked ? "var(--amber)" : "var(--mute)", fill: unlocked ? "var(--amber)" : "none" }}>
+                  {unlocked ? <path d="M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7z" /> : <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></>}
+                </svg>
+                <p style={{ fontSize: 12, fontWeight: 700, textAlign: "center", lineHeight: 1.25 }}>{a.name}</p>
+                <span className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{unlocked ? "Unlocked" : "Locked"}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <p className="lab">Settings</p>
+        <div style={{ marginTop: 4 }}>
+          <Link href="/profile/appearance" className="row"><span>Appearance</span><span className="mute" style={{ fontSize: 14 }}>Theme and accent</span></Link>
+          <Link href="/onboarding" className="row"><span>Update weight</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
+          <Link href="/share" className="row"><span>Share your journey</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
+          <button onClick={handleSignOut} className="row" style={{ color: "var(--danger)" }}><span>Sign out</span></button>
+        </div>
+      </section>
+
+      <BottomNav active="profile" />
     </main>
   );
-}
+}

@@ -36,7 +36,8 @@ test("formatting", () => {
 test("journeys resolve to the right route, never a silent default", () => {
   assert.equal(findRoute("Chandpur")?.id, "chandpur");
   assert.equal(findRoute("cox's bazar")?.id, "coxsbazar");
-  assert.equal(findRoute("Chittagong"), undefined); // legacy name with no route data
+  assert.equal(findRoute("Chittagong")?.id, "chittagong");
+  assert.equal(findRoute("Chattogram")?.id, "chittagong");
   assert.equal(findRoute(undefined), undefined);
 });
 

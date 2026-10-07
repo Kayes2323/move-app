@@ -68,98 +68,65 @@ export default function Onboarding() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#FFFFFF", fontFamily: "'Archivo Black', sans-serif", display: "flex", flexDirection: "column", padding: "0 24px" }}>
-
-      {/* TOP */}
-      <div style={{ paddingTop: "56px", marginBottom: "32px" }}>
-
-        {/* Back button — only for update */}
+    <main className="app nonav stack">
+      <div>
         {isUpdate && (
-          <button onClick={() => router.push("/profile")}
-            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: "#6B7280", fontSize: "14px", marginBottom: "24px", padding: 0 }}>
-            ← Back
+          <button className="icon-btn" aria-label="Back" onClick={() => router.push("/profile")} style={{ marginBottom: 20 }}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
           </button>
         )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/move-mark.png" alt="Move" width={48} height={33} style={{ width: 48, height: "auto", filter: "var(--mark-filter, none)" }} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
-          <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 12px #22C55E" }} />
-          <span style={{ color: "#0F0F0F", fontSize: "22px", fontWeight: 900, letterSpacing: "6px" }}>MOVE</span>
-        </div>
-
-        <p style={{ color: "#9CA3AF", fontSize: "11px", letterSpacing: "3px", marginBottom: "12px" }}>
-          {isUpdate ? "UPDATE WEIGHT" : "STEP 1 OF 1"}
-        </p>
-        <h1 style={{ color: "#0F0F0F", fontSize: "32px", fontWeight: 900, lineHeight: 1.15, marginBottom: "12px" }}>
+        <p className="lab" style={{ marginTop: 28 }}>{isUpdate ? "Update weight" : "Step 1 of 1"}</p>
+        <h1 className="title-blk" style={{ marginTop: 10, fontSize: 34, textTransform: "none", whiteSpace: "pre-line" }}>
           {isUpdate ? "Update your\nweight." : "One quick\nthing."}
         </h1>
-        <p style={{ color: "#6B7280", fontSize: "14px", lineHeight: 1.6, fontFamily: "system-ui" }}>
-          Your weight helps us calculate accurate calories burned during your runs.
+        <p className="body mute" style={{ marginTop: 12, lineHeight: "22px" }}>
+          Your weight helps us calculate accurate calories burned during your activities.
         </p>
       </div>
 
-      {/* WEIGHT INPUT */}
-      <div style={{ flex: 1 }}>
-        <p style={{ color: "#9CA3AF", fontSize: "10px", letterSpacing: "3px", marginBottom: "12px" }}>YOUR WEIGHT</p>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+      <div style={{ flex: 1, marginTop: 32 }}>
+        <label htmlFor="weight" className="lab">Your weight</label>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 8 }}>
           <input
+            id="weight"
             type="number"
+            inputMode="decimal"
             value={weight}
             onChange={e => { setWeight(e.target.value); setError(""); }}
             placeholder="65"
-            style={{
-              flex: 1, fontSize: "52px", fontWeight: 900, color: "#0F0F0F",
-              border: "none", borderBottom: `3px solid ${error ? "#EF4444" : weight ? "#4F6EF7" : "#E5E7EB"}`,
-              outline: "none", padding: "8px 0", background: "transparent",
-              fontFamily: "'Archivo Black', sans-serif",
-            }}
+            aria-invalid={Boolean(error)}
+            className="blk"
+            style={{ flex: 1, minWidth: 0, fontSize: 56, color: "var(--ink)", border: 0, borderBottom: `3px solid ${error ? "var(--danger)" : weight ? "var(--accent)" : "var(--hair)"}`, outline: "none", padding: "8px 0", background: "transparent" }}
           />
-          <span style={{ color: "#9CA3AF", fontSize: "24px", fontWeight: 900 }}>kg</span>
+          <span className="mute" style={{ fontSize: 22, fontWeight: 700 }}>kg</span>
         </div>
+        {error && <p role="alert" style={{ color: "var(--danger)", fontSize: 13, marginTop: 8 }}>{error}</p>}
 
-        {error && <p style={{ color: "#EF4444", fontSize: "12px", fontFamily: "system-ui", marginBottom: "8px" }}>{error}</p>}
-
-        {/* Quick select */}
-        <p style={{ color: "#9CA3AF", fontSize: "10px", letterSpacing: "2px", marginBottom: "10px", marginTop: "24px" }}>QUICK SELECT</p>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "32px" }}>
+        <p className="lab" style={{ marginTop: 28 }}>Quick select</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
           {[50, 55, 60, 65, 70, 75, 80, 85, 90].map(w => (
-            <button key={w} onClick={() => { setWeight(String(w)); setError(""); }}
-              style={{
-                padding: "10px 18px", borderRadius: "12px",
-                border: weight === String(w) ? "2px solid #4F6EF7" : "1px solid #E5E7EB",
-                background: weight === String(w) ? "#EEF2FF" : "#F8F9FA",
-                color: weight === String(w) ? "#4F6EF7" : "#6B7280",
-                fontSize: "15px", fontWeight: 700, cursor: "pointer",
-              }}>
+            <button key={w} onClick={() => { setWeight(String(w)); setError(""); }} aria-pressed={weight === String(w)}
+              style={{ minWidth: 56, minHeight: 44, padding: "0 16px", borderRadius: 14, border: weight === String(w) ? "2px solid var(--accent)" : "2px solid transparent", background: "var(--surf)", color: weight === String(w) ? "var(--acc-text)" : "var(--ink)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
               {w}
             </button>
           ))}
         </div>
 
-        {/* Privacy note */}
-        <div style={{ background: "#F8F9FA", borderRadius: "14px", padding: "14px 16px", marginBottom: "24px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
-          <span style={{ fontSize: "16px" }}>🔒</span>
-          <p style={{ color: "#6B7280", fontSize: "12px", fontFamily: "system-ui", lineHeight: 1.5 }}>
-            Your weight is only used for calorie calculation and is never shared with anyone.
-          </p>
+        <div className="card" style={{ marginTop: 24, display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></svg>
+          <p className="body mute" style={{ fontSize: 13, lineHeight: "19px" }}>Your weight is only used for calorie calculation and is never shared with anyone.</p>
         </div>
 
-        {/* Submit button */}
-        <button onClick={handleSubmit} disabled={loading || !weight}
-          style={{
-            width: "100%", padding: "17px", borderRadius: "16px", border: "none",
-            cursor: loading || !weight ? "not-allowed" : "pointer",
-            background: !weight ? "#F3F4F6" : "linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 100%)",
-            color: !weight ? "#9CA3AF" : "white",
-            fontSize: "15px", fontWeight: 700, letterSpacing: "0.5px",
-            boxShadow: !weight ? "none" : "0 8px 32px rgba(15,15,15,0.25)",
-            transition: "all 0.2s ease", marginBottom: "12px"
-          }}>
-          {loading ? "Saving..." : isUpdate ? "Save Weight →" : "Let's Start Moving →"}
+        <button className="btn btn-go" onClick={handleSubmit} disabled={loading || !weight} style={{ marginTop: 24 }}>
+          {loading ? "Saving..." : isUpdate ? "Save weight" : "Let's Start Moving"}
         </button>
 
         {!isUpdate && (
-  <button onClick={async () => {
+          <button className="btn btn-ghost" style={{ marginTop: 8 }} disabled={loading}
+            onClick={async () => {
     const w = 70;
     setWeight("70");
     setLoading(true);
@@ -178,12 +145,11 @@ export default function Onboarding() {
       console.error(err);
       setLoading(false);
     }
-  }}
-            style={{ width: "100%", padding: "14px", borderRadius: "16px", border: "1px solid #E5E7EB", background: "transparent", color: "#9CA3AF", fontSize: "14px", cursor: "pointer" }}>
+  }}>
             Skip for now (use 70 kg default)
           </button>
         )}
       </div>
     </main>
   );
-}
+}

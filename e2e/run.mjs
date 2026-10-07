@@ -61,7 +61,7 @@ const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline
 
 const text = (pg) => pg.locator("body").innerText();
 const bigKm = (t) => parseFloat((t.match(/(\d+\.\d+)km/) || [])[1]);
-const secondsOf = (t) => { const m = t.match(/(\d+):(\d{2})·/); return m ? Number(m[1]) * 60 + Number(m[2]) : NaN; };
+const secondsOf = (t) => { const m = t.match(/time\s+(\d+):(\d{2})/i); return m ? Number(m[1]) * 60 + Number(m[2]) : NaN; };
 const dbOf = (pg) => pg.evaluate(() => JSON.parse(localStorage.getItem("__mock_db") || "{}"));
 const idb = (pg) =>
   pg.evaluate(
@@ -131,7 +131,7 @@ async function scenarioNavigation() {
   const d0 = bigKm(before);
   check("1. GPS watcher is running during the activity", (await watchers(pg)) === 1);
   await nav(pg, "/"); // leave the Move screen
-  await pg.waitForSelector("text=Welcome back", { timeout: 10000 });
+  await pg.waitForSelector("text=Start moving", { timeout: 10000 });
   await shift(pg, 30000);
   await walk(pg, 15); // the user keeps walking while another screen is showing
   check("1. tracking continues while another screen is open", (await watchers(pg)) === 1);
@@ -329,7 +329,7 @@ async function scenarioCrashRecovery() {
   await second.pg.waitForSelector("text=unfinished");
   await second.pg.getByRole("button", { name: "Discard" }).click();
   await second.pg.waitForTimeout(500);
-  check("9E. discarding removes the activity from the phone", (await idb(second.pg)).activities.length === 0 && /Start Moving/.test(await text(second.pg)));
+  check("9E. discarding removes the activity from the phone", (await idb(second.pg)).activities.length === 0 && /start moving/i.test(await text(second.pg)));
   await second.ctx.close();
 }
 
@@ -411,15 +411,15 @@ async function scenarioRegression() {
   const { pg } = s;
   await pg.goto(`${BASE}/`);
   await pg.waitForSelector("text=Dhaka → Chandpur");
-  check("17. home shows the journey", /132 km total/.test(await text(pg)));
+  check("17. home shows the journey", /of 132 km/.test(await text(pg)));
   await start(pg);
   await walk(pg, 40);
   await pg.getByRole("button", { name: "Finish activity" }).click();
   await pg.waitForSelector("text=Story 9:16");
   await until(async () => ((await dbOf(pg))["users/u1"].runs || []).length === 1, 8000);
   await pg.goto(`${BASE}/profile`);
-  await pg.waitForSelector("text=ATHLETE PROFILE");
-  check("17. profile reflects the synced activity", /1\s+RUNS|RUNS\s+1/i.test((await text(pg)).replace(/\n+/g, " ")));
+  await pg.waitForSelector("text=Personal records");
+  check("17. profile reflects the synced activity", /1\s+activity/i.test((await text(pg)).replace(/\n+/g, " ")));
   await pg.goto(`${BASE}/leaderboard`);
   await pg.waitForSelector("text=Tania");
   const lb = await text(pg);
@@ -433,7 +433,7 @@ async function scenarioRegression() {
   // a journey with no route data never shows somebody else's route
   {
     const db = baseDb();
-    db["users/u1"].currentRoute = "Chittagong";
+    db["users/u1"].currentRoute = "Atlantis";
     db["users/u1"].completedKm = 12;
     db["users/u1"].runs = [{ id: "old", km: 2, duration: "15:00", pace: 7.5, activity: "running", date: new Date().toISOString(), calories: 100, steps: 2000 }];
     const u = await fresh({ db });

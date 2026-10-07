@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BottomNav } from "./components/BottomNav";
+import { Loading } from "./components/Loading";
 import { LoadError } from "./components/LoadError";
 import { PendingSyncBanner } from "./components/PendingSyncBanner";
-import { effectiveStreak, findRoute, journeyOffsetKm, nowMs } from "./lib/activity";
+import { effectiveStreak, findRoute, formatDuration, formatKm, formatPerformance, journeyOffsetKm, nowMs, toKind, type RunEntry } from "./lib/activity";
 import { syncPublicProfile } from "./lib/publicProfile";
 
 interface UserData {
@@ -15,7 +17,7 @@ interface UserData {
   currentRoute: string;
   startCheckpointIndex?: number;
   lastRun?: string;
-  runs: { km: number; duration: string; pace: number; date: string }[];
+  runs: RunEntry[];
 }
 
 const getRank = (km: number) => {
@@ -27,10 +29,14 @@ const getRank = (km: number) => {
   return "Rookie";
 };
 
+const greeting = (hour: number) => (hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening");
+
+const RING = 106;
+const CIRC = 2 * Math.PI * RING;
+
 export default function Home() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
 
@@ -81,177 +87,110 @@ export default function Home() {
   }, [attempt]);
 
   if (failed) return <LoadError onRetry={() => { setFailed(false); setLoading(true); setAttempt((n) => n + 1); }} />;
+  if (loading) return <Loading label="Loading your journey..." />;
 
-  if (loading) {
-    return (
-      <main style={{ minHeight: "100vh", background: "#F8F9FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "3px solid #F3F4F6", borderTop: "3px solid #4F6EF7", margin: "0 auto 16px", animation: "spin 1s linear infinite" }} />
-          <p style={{ color: "#9CA3AF", fontSize: "13px", fontFamily: "system-ui" }}>Loading your journey...</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </main>
-    );
-  }
-
+  const now = nowMs();
   const name = user?.name?.split(" ")[0] || "Runner";
   const totalKm = user?.totalKm || 0;
   const completedKm = user?.completedKm || 0;
-  const streak = effectiveStreak(user?.streak, user?.lastRun, nowMs());
+  const streak = effectiveStreak(user?.streak, user?.lastRun, now);
   const currentRoute = user?.currentRoute || "Chandpur";
   // A journey that began at a later checkpoint is shorter than the full route.
   const route = findRoute(currentRoute);
-  const routeTotal = route ? Math.max(route.totalKm - journeyOffsetKm(route, user?.startCheckpointIndex), 1) : Math.max(completedKm, 1);
-  const toGo = route ? Math.max(routeTotal - completedKm, 0) : 0;
+  const offset = journeyOffsetKm(route, user?.startCheckpointIndex);
+  const routeTotal = route ? Math.max(route.totalKm - offset, 1) : Math.max(completedKm, 1);
   const percent = Math.min((completedKm / routeTotal) * 100, 100);
+  const next = route?.checkpoints.find((c) => c.distanceFromStart - offset > completedKm);
   const rank = getRank(totalKm);
   const runs = user?.runs || [];
-  const todayKm = runs
-    .filter(r => new Date(r.date).toDateString() === new Date().toDateString())
-    .reduce((sum, r) => sum + r.km, 0);
-  const lastRun = runs.filter(r => r.km > 0).slice(-1)[0];
-  const initials = (user?.name || "R").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const today = new Date(now).toDateString();
+  const todayKm = runs.filter((r) => new Date(r.date).toDateString() === today).reduce((sum, r) => sum + r.km, 0);
+  const weekKm = runs.filter((r) => now - Date.parse(r.date) < 7 * 86400000).reduce((sum, r) => sum + r.km, 0);
+  const lastRun = runs.filter((r) => r.km > 0).slice(-1)[0];
+  const initials = (user?.name || "R").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
-
-      {/* TOP BAR */}
-      <div style={{ background: "#FFFFFF", padding: "16px 20px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+    <main className="app">
+      <header className="bar">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           {user?.photo ? (
-            <img src={user.photo} alt="avatar" style={{ width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover" }} />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="av" src={user.photo} alt="" width={44} height={44} style={{ width: 44, height: 44 }} />
           ) : (
-            <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "linear-gradient(135deg, #4F6EF7, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "16px", fontWeight: 900 }}>
-              {initials}
-            </div>
+            <div className="av" style={{ width: 44, height: 44 }}>{initials}</div>
           )}
-          <div>
-            <p style={{ color: "#6B7280", fontSize: "12px", fontWeight: 400, fontFamily: "system-ui" }}>Welcome back,</p>
-            <p style={{ color: "#0F0F0F", fontSize: "16px", fontWeight: 900, lineHeight: 1.2 }}>{name}</p>
+          <div style={{ minWidth: 0 }}>
+            <p className="mute" style={{ fontSize: 13 }}>{greeting(new Date(now).getHours())} · {rank}</p>
+            <p className="h2" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
           </div>
         </div>
-        <div style={{ background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: "20px", padding: "6px 14px", display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "16px" }}>🔥</span>
-          <span style={{ color: "#EA580C", fontSize: "13px", fontWeight: 700 }}>{streak} day{streak !== 1 ? "s" : ""}</span>
+        <div className="chip" aria-label={`${streak} day streak`}>
+          <svg className="ic" viewBox="0 0 24 24" style={{ width: 18, height: 18, fill: "var(--amber)", stroke: "var(--amber)" }} aria-hidden="true">
+            <path d="M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-9z" />
+          </svg>
+          {streak}
         </div>
-      </div>
+      </header>
 
-      <div style={{ padding: "16px 16px 0" }}>
+      <PendingSyncBanner />
 
-        <PendingSyncBanner />
-
-        {/* JOURNEY CARD */}
-        <div style={{ background: "linear-gradient(135deg, #4F6EF7 0%, #6D28D9 60%, #7C3AED 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "180px", height: "180px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: "20px", padding: "5px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 6px #22C55E" }} />
-              <span style={{ color: "white", fontSize: "10px", letterSpacing: "2px", fontWeight: 700 }}>CURRENT JOURNEY</span>
-            </div>
-            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600 }}>{rank}</span>
-          </div>
-          <h2 style={{ color: "white", fontSize: "26px", fontWeight: 900, lineHeight: 1.1, marginBottom: "4px" }}>
-            Dhaka → {currentRoute}
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", fontStyle: "italic", marginBottom: "20px", fontFamily: "system-ui" }}>
-            {routeTotal} km total route
-          </p>
-          <div style={{ display: "flex", gap: "0", marginBottom: "16px" }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "9px", letterSpacing: "2px", marginBottom: "4px", fontFamily: "system-ui" }}>COMPLETED</p>
-              <p style={{ color: "white", fontSize: "30px", fontWeight: 900, lineHeight: 1 }}>
-                {completedKm.toFixed(2)} <span style={{ fontSize: "15px", fontWeight: 400 }}>km</span>
-              </p>
-            </div>
-            <div style={{ width: "1px", background: "rgba(255,255,255,0.2)", margin: "0 20px" }} />
-            <div style={{ flex: 1 }}>
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "9px", letterSpacing: "2px", marginBottom: "4px", fontFamily: "system-ui" }}>TO GO</p>
-              <p style={{ color: "white", fontSize: "30px", fontWeight: 900, lineHeight: 1 }}>
-                {toGo.toFixed(1)} <span style={{ fontSize: "15px", fontWeight: 400 }}>km</span>
-              </p>
-            </div>
-          </div>
-          <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: "4px", height: "6px", marginBottom: "8px" }}>
-            <div style={{ width: `${percent}%`, height: "100%", background: "white", borderRadius: "4px", minWidth: percent > 0 ? "8px" : "0" }} />
-          </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px", fontFamily: "system-ui" }}>{percent.toFixed(1)}% conquered</p>
+      <section aria-label="Journey progress" style={{ position: "relative", width: 236, height: 236, margin: "28px auto 0" }}>
+        <svg viewBox="0 0 236 236" width="236" height="236" style={{ display: "block" }} aria-hidden="true">
+          <circle cx="118" cy="118" r={RING} fill="none" stroke="var(--surf2)" strokeWidth="14" />
+          <circle cx="118" cy="118" r={RING} fill="none" stroke="var(--accent)" strokeWidth="14" strokeLinecap="round" strokeDasharray={`${(CIRC * percent) / 100} ${CIRC}`} transform="rotate(-90 118 118)" style={{ transition: "stroke-dasharray 0.6s ease" }} />
+        </svg>
+        <div className="stack" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+          <span className="blk" style={{ fontSize: 56, lineHeight: "56px" }}>{formatKm(completedKm)}</span>
+          <span className="mute" style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>of {routeTotal} km</span>
+          <span style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--acc-text)" }}>Dhaka → {currentRoute}</span>
         </div>
+      </section>
 
-        {/* STATS GRID */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-          {[
-            { label: "TODAY", value: todayKm.toFixed(2), unit: "km", color: "#0F0F0F" },
-            { label: "LIFETIME", value: totalKm.toFixed(2), unit: "km", color: "#4F6EF7" },
-            { label: "RANK", value: rank, unit: "", color: "#7C3AED" },
-            { label: "STREAK", value: String(streak), unit: "d", color: "#22C55E" },
-          ].map((stat) => (
-            <div key={stat.label} style={{ background: "#FFFFFF", borderRadius: "16px", padding: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <p style={{ color: "#9CA3AF", fontSize: "10px", letterSpacing: "2px", marginBottom: "8px", fontFamily: "system-ui" }}>{stat.label}</p>
-              <p style={{ color: stat.color, fontSize: stat.label === "RANK" ? "20px" : "26px", fontWeight: 900, lineHeight: 1 }}>
-                {stat.value}
-                {stat.unit && <span style={{ fontSize: "13px", fontWeight: 400, color: "#9CA3AF", marginLeft: "2px" }}>{stat.unit}</span>}
-              </p>
-            </div>
-          ))}
-        </div>
+      <Link href="/run" className="btn btn-go" style={{ marginTop: 28 }}>
+        <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
+        Start moving
+      </Link>
 
-        {/* RECENT ACTIVITY */}
-        <div style={{ marginBottom: "16px" }}>
-          <p style={{ color: "#0F0F0F", fontSize: "13px", letterSpacing: "2px", fontWeight: 900, marginBottom: "12px" }}>RECENT ACTIVITY</p>
-          {lastRun ? (
-            <div style={{ background: "#FFFFFF", borderRadius: "16px", padding: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-                </svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ color: "#0F0F0F", fontSize: "15px", fontWeight: 900 }}>{lastRun.km.toFixed(2)} km</p>
-                <p style={{ color: "#9CA3AF", fontSize: "12px", fontFamily: "system-ui", marginTop: "2px" }}>
-                  {new Date(lastRun.date).toLocaleDateString()} · {lastRun.duration}
-                </p>
-              </div>
-              <p style={{ color: "#6B7280", fontSize: "13px", fontWeight: 700 }}>
-                {lastRun.pace}<span style={{ fontSize: "10px", color: "#9CA3AF" }}>/km</span>
-              </p>
-            </div>
-          ) : (
-            <div style={{ background: "#FFFFFF", borderRadius: "16px", padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
-              <p style={{ color: "#9CA3AF", fontSize: "13px", fontFamily: "system-ui" }}>No runs yet. Start moving! 🏃</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <p className="mute" style={{ fontSize: 13, textAlign: "center", marginTop: 14 }}>
+        {next ? <>Next: <b style={{ color: "var(--ink)" }}>{next.name}</b> in {(next.distanceFromStart - offset - completedKm).toFixed(1)} km</> : percent >= 100 ? "Journey complete. Pick a new route." : `${percent.toFixed(0)}% of the way there`}
+      </p>
 
-      {/* START MOVING BUTTON */}
-      <div style={{ position: "fixed", bottom: "80px", left: "16px", right: "16px", zIndex: 40 }}>
-        <Link href="/run" style={{ textDecoration: "none" }}>
-          <button style={{ width: "100%", background: "#0F0F0F", borderRadius: "30px", padding: "18px", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", boxShadow: "0 8px 32px rgba(0,0,0,0.25)" }}>
-            <div style={{ width: "0", height: "0", borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "14px solid #22C55E" }} />
-            <span style={{ color: "#22C55E", fontSize: "16px", fontWeight: 900, letterSpacing: "3px" }}>START MOVING</span>
-          </button>
-        </Link>
-      </div>
-
-      {/* BOTTOM NAV */}
-      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #F3F4F6", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", zIndex: 50 }}>
+      <section aria-label="Totals" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", marginTop: 28, borderTop: "1px solid var(--hair)", borderBottom: "1px solid var(--hair)" }}>
         {[
-          { href: "/", icon: "home", label: "Home", active: true },
-          { href: "/journey", icon: "map", label: "Routes", active: false },
-          { href: "/leaderboard", icon: "trophy", label: "Ranks", active: false },
-          { href: "/profile", icon: "user", label: "Profile", active: false },
-        ].map((item) => (
-          <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0 8px" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={item.active ? "#4F6EF7" : "none"} stroke={item.active ? "#4F6EF7" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {item.icon === "home" && <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
-              {item.icon === "map" && <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>}
-              {item.icon === "trophy" && <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="18" width="12" height="4"/></>}
-              {item.icon === "user" && <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>}
-            </svg>
-            <span style={{ fontSize: "10px", fontWeight: item.active ? 700 : 400, color: item.active ? "#4F6EF7" : "#9CA3AF", fontFamily: "system-ui" }}>{item.label}</span>
-          </Link>
+          { label: "Today", value: formatKm(todayKm) },
+          { label: "7 days", value: formatKm(weekKm) },
+          { label: "Lifetime", value: formatKm(totalKm) },
+        ].map((s, i) => (
+          <div key={s.label} style={{ padding: "16px 0 14px", paddingLeft: i ? 16 : 0, borderLeft: i ? "1px solid var(--hair)" : 0 }}>
+            <p className="blk" style={{ fontSize: 24 }}>{s.value}<span className="unit">km</span></p>
+            <p className="lab" style={{ marginTop: 4 }}>{s.label}</p>
+          </div>
         ))}
-      </nav>
+      </section>
+
+      <section aria-label="Recent activity" style={{ marginTop: 24 }}>
+        <p className="lab">Recent activity</p>
+        {lastRun ? (
+          <Link href={lastRun.id ? `/result?a=${encodeURIComponent(lastRun.id)}` : "/result"} className="card" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ width: 8, height: 40, borderRadius: 4, background: toKind(lastRun.activity) === "walking" ? "var(--walk)" : toKind(lastRun.activity) === "cycling" ? "var(--ride)" : "var(--run)" }} />
+            <div style={{ flex: 1 }}>
+              <p className="blk" style={{ fontSize: 20 }}>{formatKm(lastRun.km)}<span className="unit">km</span></p>
+              <p className="mute" style={{ fontSize: 13, marginTop: 2 }}>
+                {new Date(lastRun.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {formatDuration(lastRun.duration)}
+              </p>
+            </div>
+            <p style={{ fontSize: 14, fontWeight: 700 }}>{formatPerformance(toKind(lastRun.activity), lastRun.pace)}</p>
+            <svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </Link>
+        ) : (
+          <div className="card" style={{ marginTop: 10, textAlign: "center", padding: 24 }}>
+            <p className="h2">Your first move starts here</p>
+            <p className="body mute" style={{ marginTop: 6 }}>Tap Start moving. Every kilometre takes you further along {currentRoute}.</p>
+          </div>
+        )}
+      </section>
+
+      <BottomNav active="home" />
     </main>
   );
 }

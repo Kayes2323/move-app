@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CARD_HEIGHT, CARD_WIDTH, ShareCard, type CardRatio } from "./ShareCard";
+import { CARD_HEIGHT, CARD_WIDTH, ShareCard, type CardRatio, type CardTone } from "./ShareCard";
 import {
   ACTIVITY_META,
   detectAchievement,
@@ -41,6 +41,7 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
   const [selected, setSelected] = useState<number | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [ratio, setRatio] = useState<CardRatio>("story");
+  const [tone, setTone] = useState<CardTone>("dark");
   const [photo, setPhoto] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -137,8 +138,9 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
       achievement: detectAchievement(runs, selected),
       photo,
       ratio,
+      tone,
     };
-  }, [run, selected, runs, user, photo, ratio]);
+  }, [run, selected, runs, user, photo, ratio, tone]);
 
   const step = (dir: -1 | 1) => {
     if (selected === null) return;
@@ -167,12 +169,12 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
       if (document.fonts?.ready) await document.fonts.ready;
       if (!exportRef.current) return null;
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(exportRef.current, { scale: 3, useCORS: true, backgroundColor: "#0A0A0C", logging: false });
+      const canvas = await html2canvas(exportRef.current, { scale: 3, useCORS: true, backgroundColor: tone === "light" && !photo ? "#F4F5F9" : "#0A0A0C", logging: false });
       return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     } finally {
       setExporting(false);
     }
-  }, []);
+  }, [tone, photo]);
 
   const save = async () => {
     if (!cardProps) return;
@@ -207,12 +209,10 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
 
   /* ---------- states ---------- */
 
-  const shell: React.CSSProperties = { minHeight: "100vh", background: "#0A0A0A", display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "'Space Grotesk', system-ui, sans-serif", color: "#FFFFFF" };
-
   if (status === "loading") {
     return (
-      <main style={{ ...shell, justifyContent: "center" }} aria-busy="true">
-        <div style={{ width: CARD_WIDTH * scale, height: CARD_HEIGHT.story * scale, borderRadius: 24, background: "linear-gradient(110deg,#141418 30%,#1E1E24 50%,#141418 70%)", backgroundSize: "200% 100%", animation: "mv-shimmer 1.4s linear infinite" }} />
+      <main className="app nonav stack" style={{ alignItems: "center", justifyContent: "center" }} aria-busy="true">
+        <div className="skel" style={{ width: CARD_WIDTH * scale, height: CARD_HEIGHT.story * scale, borderRadius: 24 }} />
       </main>
     );
   }
@@ -220,15 +220,15 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
   if (status === "empty" || status === "error") {
     const empty = status === "empty";
     return (
-      <main style={{ ...shell, justifyContent: "center", padding: 32, textAlign: "center", gap: 14 }}>
+      <main className="app nonav stack" style={{ alignItems: "center", justifyContent: "center", gap: 14, textAlign: "center" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/move-mark.png" alt="Move" width={56} height={38} style={{ width: 56, height: "auto", opacity: 0.9 }} />
-        <h1 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 22 }}>{empty ? "No activity to share yet" : "Couldn't load your activity"}</h1>
-        <p style={{ color: "#8A8A94", fontSize: 14, maxWidth: 280 }}>{empty ? "Finish a run, walk or ride and your card will be ready here." : "Check your connection and try again."}</p>
-        <button onClick={() => (empty ? router.push("/run") : (setStatus("loading"), setAttempt((n) => n + 1)))} style={{ minHeight: 48, padding: "0 28px", borderRadius: 24, border: 0, background: "#FFFFFF", color: "#09090B", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+        <img src="/move-mark.png" alt="Move" width={56} height={38} style={{ width: 56, height: "auto" }} />
+        <h1 className="h2">{empty ? "No activity to share yet" : "Couldn't load your activity"}</h1>
+        <p className="body mute" style={{ maxWidth: 280 }}>{empty ? "Finish a run, walk or ride and your card will be ready here." : "Check your connection and try again."}</p>
+        <button className="btn btn-solid" style={{ width: "auto" }} onClick={() => (empty ? router.push("/run") : (setStatus("loading"), setAttempt((n) => n + 1)))}>
           {empty ? "Start moving" : "Try again"}
         </button>
-        <button onClick={() => router.push("/")} style={{ minHeight: 44, border: 0, background: "none", color: "#8A8A94", fontSize: 13, cursor: "pointer" }}>Back home</button>
+        <button className="btn btn-ghost" style={{ width: "auto" }} onClick={() => router.push("/")}>Back home</button>
       </main>
     );
   }
@@ -239,15 +239,19 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
   const H = CARD_HEIGHT[ratio];
 
   return (
-    <main style={{ ...shell, padding: "0 16px 40px" }}>
-      <div style={{ width: "100%", maxWidth: 440, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "40px 0 16px" }}>
-        <button aria-label="Back" onClick={() => router.back()} style={{ width: 44, height: 44, borderRadius: "50%", border: 0, background: "rgba(255,255,255,0.08)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+    <main className="app nonav stack" style={{ alignItems: "center", paddingLeft: 16, paddingRight: 16 }}>
+      <div style={{ width: "100%", maxWidth: 440, display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 16 }}>
+        <button className="icon-btn" aria-label="Back" onClick={() => router.back()}>
+          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <button aria-label="Newer activity" disabled={pos >= activityIndexes.length - 1} onClick={() => step(1)} style={navBtn(pos >= activityIndexes.length - 1)}>‹</button>
-          <span style={{ fontSize: 12, letterSpacing: 1.5, color: "#B4B4BE", minWidth: 118, textAlign: "center" }}>{meta.label} · {formatKm(cardProps.km)} km</span>
-          <button aria-label="Older activity" disabled={pos <= 0} onClick={() => step(-1)} style={navBtn(pos <= 0)}>›</button>
+          <button aria-label="Newer activity" disabled={pos >= activityIndexes.length - 1} onClick={() => step(1)} className="icon-btn" style={{ background: "none", opacity: pos >= activityIndexes.length - 1 ? 0.3 : 1 }}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, color: "var(--mute)", minWidth: 118, textAlign: "center" }}>{meta.label} · {formatKm(cardProps.km)} km</span>
+          <button aria-label="Older activity" disabled={pos <= 0} onClick={() => step(-1)} className="icon-btn" style={{ background: "none", opacity: pos <= 0 ? 0.3 : 1 }}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
         </div>
         <div style={{ width: 44 }} />
       </div>
@@ -261,30 +265,41 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
       <div style={{ width: "100%", maxWidth: 440, marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
         <div role="group" aria-label="Card format" style={{ display: "flex", gap: 8 }}>
           {(["story", "post"] as const).map((r) => (
-            <button key={r} onClick={() => setRatio(r)} aria-pressed={ratio === r} style={{ flex: 1, minHeight: 44, borderRadius: 22, border: `1px solid ${ratio === r ? "#FFFFFF" : "#2C2C34"}`, background: ratio === r ? "#FFFFFF" : "transparent", color: ratio === r ? "#09090B" : "#B4B4BE", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+            <button key={r} onClick={() => setRatio(r)} aria-pressed={ratio === r} className={ratio === r ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 44, borderRadius: 22, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
               {r === "story" ? "Story 9:16" : "Post 4:5"}
             </button>
           ))}
         </div>
 
+        {!photo && (
+          <div role="group" aria-label="Card style" style={{ display: "flex", gap: 8 }}>
+            {(["dark", "light"] as const).map((t) => (
+              <button key={t} onClick={() => setTone(t)} aria-pressed={tone === t} className={tone === t ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 44, borderRadius: 22, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
+                {t === "dark" ? "Dark card" : "Light card"}
+              </button>
+            ))}
+          </div>
+        )}
+
         <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: "none" }} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => fileRef.current?.click()} style={{ flex: 1, minHeight: 48, borderRadius: 24, border: "1px solid #2C2C34", background: "transparent", color: "#FFFFFF", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+          <button className="btn btn-line" style={{ flex: 1 }} onClick={() => fileRef.current?.click()}>
             {photo ? "Change photo" : "Add photo"}
           </button>
           {photo && (
-            <button onClick={() => setPhoto(null)} style={{ minHeight: 48, padding: "0 20px", borderRadius: 24, border: "1px solid #2C2C34", background: "transparent", color: "#B4B4BE", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Remove</button>
+            <button className="btn btn-line" style={{ width: "auto", color: "var(--mute)" }} onClick={() => setPhoto(null)}>Remove</button>
           )}
         </div>
 
-        <button onClick={share} disabled={exporting} style={{ minHeight: 56, borderRadius: 28, border: 0, background: meta.accent, color: "#09090B", fontWeight: 700, fontSize: 15, letterSpacing: 1, cursor: exporting ? "wait" : "pointer", opacity: exporting ? 0.6 : 1 }}>
-          {exporting ? "Preparing…" : "SHARE"}
+        <button className="btn btn-go" onClick={share} disabled={exporting} style={{ cursor: exporting ? "wait" : "pointer" }}>
+          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6" /></svg>
+          {exporting ? "Preparing…" : "Share"}
         </button>
-        <button onClick={save} disabled={exporting} style={{ minHeight: 48, borderRadius: 24, border: 0, background: "#17171D", color: "#FFFFFF", fontWeight: 600, fontSize: 14, cursor: exporting ? "wait" : "pointer" }}>Save image</button>
-        <p role="status" style={{ minHeight: 18, textAlign: "center", fontSize: 12, color: "#8A8A94" }}>
+        <button className="btn btn-soft" onClick={save} disabled={exporting}>Save image</button>
+        <p role="status" className="mute" style={{ minHeight: 18, textAlign: "center", fontSize: 12 }}>
           {notice ?? (run?.id && pendingIds.has(run.id) ? "Saved on this phone. It will sync when you're online." : "")}
         </p>
-        <button onClick={() => router.push("/")} style={{ minHeight: 44, border: 0, background: "none", color: "#8A8A94", fontSize: 13, cursor: "pointer" }}>Done</button>
+        <button className="btn btn-ghost" onClick={() => router.push("/")}>Done</button>
       </div>
 
       {/* Full-size copy rendered only while exporting, so the preview can scale freely. */}
@@ -297,8 +312,4 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
       )}
     </main>
   );
-}
-
-function navBtn(disabled: boolean): React.CSSProperties {
-  return { width: 44, height: 44, border: 0, background: "none", color: disabled ? "#3A3A44" : "#FFFFFF", fontSize: 24, cursor: disabled ? "default" : "pointer" };
 }

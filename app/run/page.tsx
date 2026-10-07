@@ -16,9 +16,18 @@ interface Journey {
 const EXPLAINED_KEY = "move.locationExplained";
 
 const ACTIVITIES = [
-  { type: "running" as ActivityKind, label: "Running", emoji: "🏃", desc: "GPS + Steps + Calories", color: "#4F6EF7" },
-  { type: "walking" as ActivityKind, label: "Walking", emoji: "🚶", desc: "GPS + Steps + Calories", color: "#22C55E" },
-  { type: "cycling" as ActivityKind, label: "Cycling", emoji: "🚴", desc: "GPS + Speed + Calories", color: "#F59E0B" },
+  {
+    type: "running" as ActivityKind, label: "Running", desc: "GPS, pace and calories", color: "var(--run)",
+    icon: <><circle cx="14" cy="4.5" r="2" /><path d="M8 21l3-6 3 2 1.5 4M11 15l-1-5 4-2 2 3 3 1M6 12l2-3 3-1" /></>,
+  },
+  {
+    type: "walking" as ActivityKind, label: "Walking", desc: "GPS, steps and calories", color: "var(--walk)",
+    icon: <><circle cx="13" cy="4.5" r="2" /><path d="M9 21l2-7-2-3 3-3 3 2 3 1M11 14l-3-1-2 3M13 14l2 3 1 4" /></>,
+  },
+  {
+    type: "cycling" as ActivityKind, label: "Cycling", desc: "GPS, speed and calories", color: "var(--ride)",
+    icon: <><circle cx="5.5" cy="17" r="3.5" /><circle cx="18.5" cy="17" r="3.5" /><path d="M5.5 17L9 9h6l3.5 8M9 9l3 8M15 9l-1-3h-2" /></>,
+  },
 ];
 
 const noun = (k: ActivityKind) => (k === "cycling" ? "ride" : k === "walking" ? "walk" : "run");
@@ -212,92 +221,81 @@ export default function RunPage() {
   }
 
   /* ---------- choose an activity ---------- */
-  const card = { margin: "20px 20px 0", padding: "16px", borderRadius: "16px", fontFamily: "system-ui" } as const;
   return (
-    <main style={{ minHeight: "100vh", background: "#FFFFFF", fontFamily: "'Archivo Black', sans-serif", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "56px 20px 24px", borderBottom: "1px solid #F3F4F6" }}>
-        <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer", marginBottom: "20px", display: "flex", alignItems: "center", gap: "6px", padding: 0 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
-          </svg>
-          <span style={{ color: "#6B7280", fontSize: "13px", fontFamily: "system-ui" }}>Back</span>
+    <main className="app nonav">
+      <header>
+        <button className="icon-btn" aria-label="Back" onClick={() => router.push("/")}>
+          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h1 style={{ color: "#0F0F0F", fontSize: "28px", fontWeight: 900, margin: "0 0 6px" }}>Start Moving</h1>
-        <p style={{ color: "#6B7280", fontSize: "13px", fontFamily: "system-ui", margin: 0 }}>Choose your activity to begin tracking</p>
+        <h1 className="title-blk" style={{ marginTop: 20 }}>Start moving</h1>
+        <p className="body mute" style={{ marginTop: 6 }}>Choose your activity to begin tracking</p>
+      </header>
+
+      <div className="stack" style={{ gap: 12, marginTop: 20 }}>
+        {needsDecision && activity && live && (
+          <div role="alert" className="notice warn">
+            <p style={{ fontWeight: 800 }}>You have an unfinished {noun(activity.kind)}</p>
+            <p style={{ marginTop: 4, fontSize: 13 }}>
+              {live.distanceKm.toFixed(2)} km · {formatClock(live.durationSec)}. Time while Move wasn&apos;t running isn&apos;t counted.
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button className="btn btn-solid" style={{ minHeight: 44, fontSize: 14, textTransform: "none", letterSpacing: 0 }} onClick={() => void runtime.continueRecovered()}>Continue Activity</button>
+              <button className="btn btn-line" style={{ width: "auto", minHeight: 44, borderColor: "var(--amberbd)", color: "var(--amber)" }} onClick={() => confirm("Discard this activity? It can't be recovered.") && void runtime.discard()}>Discard</button>
+            </div>
+          </div>
+        )}
+
+        {access === "denied" && (
+          <div role="alert" className="notice bad">
+            <p style={{ fontWeight: 800 }}>Location is turned off for Move</p>
+            <p style={{ marginTop: 4, fontSize: 13 }}>
+              {native
+                ? "Open Settings → Permissions → Location and allow it. Also allow notifications, so Android can show that Move is tracking."
+                : "Tap the lock icon in the address bar → Site settings → Location → Allow. Then come back here."}
+            </p>
+            <button className="btn btn-line" style={{ width: "auto", minHeight: 44, marginTop: 12, borderColor: "var(--danger)", color: "var(--danger)" }} onClick={() => void checkLocationAccess().then(setAccess)}>Check again</button>
+          </div>
+        )}
+
+        {explainKind && (
+          <div role="dialog" aria-label="Why Move needs your location" className="notice" style={{ border: "1px solid var(--accent)" }}>
+            <p style={{ fontWeight: 800 }}>Move needs your location</p>
+            <p className="mute" style={{ marginTop: 4, fontSize: 13 }}>
+              {native
+                ? "To measure distance and draw your route, Move uses your location during an activity, even with the screen off. Allow location when asked. Android shows a notification while Move is tracking."
+                : "To measure distance and draw your route, Move uses your location during an activity. Allow it when your browser asks. Browsers pause GPS when the screen locks, so keep Move open while you move."}
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button className="btn btn-go" style={{ minHeight: 44, fontSize: 14, textTransform: "none", letterSpacing: 0, boxShadow: "none" }} onClick={() => void confirmExplainer()}>Allow location and start</button>
+              <button className="btn btn-line" style={{ width: "auto", minHeight: 44 }} onClick={() => setExplainKind(null)}>Not now</button>
+            </div>
+          </div>
+        )}
+
+        {error && <p role="alert" style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
       </div>
 
-      {needsDecision && activity && live && (
-        <div role="alert" style={{ ...card, background: "#FEF3C7", border: "1px solid #FCD34D" }}>
-          <p style={{ color: "#92400E", fontSize: "14px", fontWeight: 700, margin: "0 0 4px" }}>You have an unfinished {noun(activity.kind)}</p>
-          <p style={{ color: "#92400E", fontSize: "13px", margin: "0 0 12px" }}>
-            {live.distanceKm.toFixed(2)} km · {formatClock(live.durationSec)}. Time while Move wasn&apos;t running isn&apos;t counted.
-          </p>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => void runtime.continueRecovered()} style={{ flex: 1, minHeight: "44px", borderRadius: "12px", border: 0, background: "#0F0F0F", color: "#FFFFFF", fontWeight: 700, cursor: "pointer" }}>Continue Activity</button>
-            <button onClick={() => confirm("Discard this activity? It can't be recovered.") && void runtime.discard()} style={{ minHeight: "44px", padding: "0 18px", borderRadius: "12px", border: "1px solid #FCD34D", background: "transparent", color: "#92400E", fontWeight: 700, cursor: "pointer" }}>Discard</button>
-          </div>
-        </div>
-      )}
-
-      {access === "denied" && (
-        <div role="alert" style={{ ...card, background: "#FEF2F2", border: "1px solid #FCA5A5" }}>
-          <p style={{ color: "#991B1B", fontSize: "14px", fontWeight: 700, margin: "0 0 6px" }}>Location is turned off for Move</p>
-          <p style={{ color: "#991B1B", fontSize: "13px", margin: "0 0 12px", lineHeight: 1.5 }}>
-            {native
-              ? "Open Settings → Permissions → Location and allow it. Also allow notifications, so Android can show that Move is tracking."
-              : "Tap the lock icon in the address bar → Site settings → Location → Allow. Then come back here."}
-          </p>
-          <button onClick={() => void checkLocationAccess().then(setAccess)} style={{ minHeight: "44px", padding: "0 18px", borderRadius: "12px", border: "1px solid #FCA5A5", background: "transparent", color: "#991B1B", fontWeight: 700, cursor: "pointer" }}>Check again</button>
-        </div>
-      )}
-
-      {explainKind && (
-        <div role="dialog" aria-label="Why Move needs your location" style={{ ...card, background: "#EEF2FF", border: "1px solid #C7D2FE" }}>
-          <p style={{ color: "#3730A3", fontSize: "14px", fontWeight: 700, margin: "0 0 6px" }}>Move needs your location</p>
-          <p style={{ color: "#3730A3", fontSize: "13px", margin: "0 0 12px", lineHeight: 1.5 }}>
-            {native
-              ? "To measure distance and draw your route, Move uses your location during an activity, even with the screen off. Allow location when asked. Android shows a notification while Move is tracking."
-              : "To measure distance and draw your route, Move uses your location during an activity. Allow it when your browser asks. Browsers pause GPS when the screen locks, so keep Move open while you move."}
-          </p>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => void confirmExplainer()} style={{ flex: 1, minHeight: "44px", borderRadius: "12px", border: 0, background: "#3730A3", color: "#FFFFFF", fontWeight: 700, cursor: "pointer" }}>Allow location and start</button>
-            <button onClick={() => setExplainKind(null)} style={{ minHeight: "44px", padding: "0 18px", borderRadius: "12px", border: "1px solid #C7D2FE", background: "transparent", color: "#3730A3", fontWeight: 700, cursor: "pointer" }}>Not now</button>
-          </div>
-        </div>
-      )}
-
-      {error && <p role="alert" style={{ margin: "16px 20px 0", color: "#EF4444", fontSize: "13px", fontFamily: "system-ui" }}>{error}</p>}
-
-      <div style={{ padding: "24px 20px", display: "flex", flexDirection: "column", gap: "14px", flex: 1, opacity: needsDecision ? 0.4 : 1, pointerEvents: needsDecision ? "none" : "auto" }}>
+      <div className="stack" style={{ gap: 12, marginTop: 20, opacity: needsDecision ? 0.4 : 1, pointerEvents: needsDecision ? "none" : "auto" }}>
         {ACTIVITIES.map((a) => (
-          <button key={a.type} onClick={() => void pick(a.type)} disabled={busy || !uid}
-            style={{ display: "flex", alignItems: "center", gap: "16px", padding: "20px", borderRadius: "20px", border: `2px solid ${a.color}20`, background: `${a.color}08`, cursor: "pointer", textAlign: "left", transition: "all 0.2s", boxShadow: `0 4px 20px ${a.color}15` }}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "18px", background: `${a.color}15`, border: `2px solid ${a.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", flexShrink: 0 }}>
-              {a.emoji}
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ color: "#0F0F0F", fontSize: "18px", fontWeight: 900, margin: "0 0 4px" }}>{a.label}</p>
-              <p style={{ color: "#9CA3AF", fontSize: "12px", fontFamily: "system-ui", margin: 0 }}>{a.desc}</p>
-            </div>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: a.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </div>
+          <button key={a.type} onClick={() => void pick(a.type)} disabled={busy || !uid} className="card"
+            style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 16px", border: 0, cursor: "pointer", textAlign: "left", width: "100%", color: "var(--ink)" }}>
+            <span style={{ width: 52, height: 52, borderRadius: 16, background: "var(--surf2)", color: a.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg className="ic" viewBox="0 0 24 24" style={{ width: 28, height: 28 }} aria-hidden="true">{a.icon}</svg>
+            </span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: "block", fontSize: 18, fontWeight: 800 }}>{a.label}</span>
+              <span className="mute" style={{ display: "block", fontSize: 13, marginTop: 2 }}>{a.desc}</span>
+            </span>
+            <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
           </button>
         ))}
       </div>
 
-      <div style={{ padding: "0 20px 40px" }}>
-        <div style={{ background: "#F8F9FA", borderRadius: "16px", padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-          <span style={{ fontSize: "16px" }}>📍</span>
-          <p style={{ color: "#6B7280", fontSize: "12px", fontFamily: "system-ui", margin: 0, lineHeight: 1.5 }}>
-            {native
-              ? "Move keeps tracking with the screen off. Your activity is saved on your phone first and syncs when you're online."
-              : "Keep Move open while you move: browsers pause GPS when the screen locks. Your activity is saved on your phone first and syncs when you're online."}
-          </p>
-        </div>
-      </div>
+      <p className="body mute" style={{ marginTop: 24, fontSize: 13, lineHeight: "19px" }}>
+        {native
+          ? "Move keeps tracking with the screen off. Your activity is saved on your phone first and syncs when you're online."
+          : "Keep Move open while you move: browsers pause GPS when the screen locks. Your activity is saved on your phone first and syncs when you're online."}
+      </p>
     </main>
   );
 }

@@ -22,6 +22,12 @@ interface Props {
   fontSize?: number;
   dotted?: boolean;
   pulse?: boolean;
+  /** Colours default to the share card's dark look; the live screen passes theme variables. */
+  ink?: string;
+  trail?: string;
+  halo?: string;
+  /** Fill of the "you are here" dot centre. */
+  here?: string;
 }
 
 interface Placed {
@@ -88,7 +94,7 @@ function placeLabels(points: RoutePoint[], wanted: number[], fontSize: number, w
   return out;
 }
 
-function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL, padR, padY, labels, accent, line = 2.5, fontSize = 11, dotted = true, pulse = false }: Props) {
+function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL, padR, padY, labels, accent, line = 2.5, fontSize = 11, dotted = true, pulse = false, ink = "#FFFFFF", trail, halo = "rgba(0,0,0,0.6)", here = "#FFFFFF" }: Props) {
   const box = useMemo(() => ({ x: padL, y: padY, w: Math.max(width - padL - padR, 1), h: Math.max(height - padY * 2, 1) }), [width, height, padL, padR, padY]);
   const geo = useMemo(() => projectRoute(route, box, progressKm, startKm), [route, box, progressKm, startKm]);
   const placed = useMemo(() => placeLabels(geo.points, chooseLabels(geo.points, labels), fontSize, width), [geo.points, labels, fontSize, width]);
@@ -102,23 +108,23 @@ function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL,
       <polyline
         points={toPoints(geo.points)}
         fill="none"
-        stroke={dotted ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.6)"}
+        style={{ stroke: trail ?? (dotted ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.6)") }}
         strokeWidth={dotted ? line * 1.1 : line}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={dotted ? `1 ${Math.round(7 * s)}` : undefined}
       />
       {geo.progress.length > 1 && (
-        <polyline points={toPoints(geo.progress)} fill="none" stroke={accent} strokeWidth={line * 1.7} strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={toPoints(geo.progress)} fill="none" style={{ stroke: accent }} strokeWidth={line * 1.7} strokeLinecap="round" strokeLinejoin="round" />
       )}
       {geo.points.map((p, i) => {
-        if (i === last) return <circle key={i} cx={p.x} cy={p.y} r={5.5 * s} fill={accent} stroke="#FFFFFF" strokeWidth={2 * s} />;
+        if (i === last) return <circle key={i} cx={p.x} cy={p.y} r={5.5 * s} style={{ fill: accent, stroke: ink }} strokeWidth={2 * s} />;
         const big = i === 0;
         const mid = p.type === "city" || p.type === "bridge" || p.type === "junction";
-        return <circle key={i} cx={p.x} cy={p.y} r={(big ? 4.5 : mid ? 3.6 : 2.6) * s} fill="#FFFFFF" />;
+        return <circle key={i} cx={p.x} cy={p.y} r={(big ? 4.5 : mid ? 3.6 : 2.6) * s} style={{ fill: ink }} />;
       })}
-      {pulse && <circle cx={geo.here.x} cy={geo.here.y} r={13 * s} fill={accent} className="mv-blip" />}
-      <circle cx={geo.here.x} cy={geo.here.y} r={5.5 * s} fill="#FFFFFF" stroke={accent} strokeWidth={3 * s} />
+      {pulse && <circle cx={geo.here.x} cy={geo.here.y} r={13 * s} style={{ fill: accent }} className="mv-blip" />}
+      <circle cx={geo.here.x} cy={geo.here.y} r={5.5 * s} style={{ fill: here, stroke: accent }} strokeWidth={3 * s} />
       {Array.from(placed.entries()).map(([i, l]) => (
         <text
           key={i}
@@ -128,8 +134,7 @@ function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL,
           fontSize={fontSize}
           fontWeight={600}
           fontFamily="'Space Grotesk', system-ui, sans-serif"
-          fill="#FFFFFF"
-          stroke="rgba(0,0,0,0.6)"
+          style={{ fill: ink, stroke: halo }}
           strokeWidth={2.6}
           strokeLinejoin="round"
           paintOrder="stroke"

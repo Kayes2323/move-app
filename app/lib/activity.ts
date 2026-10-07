@@ -21,10 +21,14 @@ export interface Achievement {
   subtitle: string;
 }
 
-export const ACTIVITY_META: Record<ActivityKind, { label: string; noun: string; accent: string }> = {
-  running: { label: "RUN", noun: "run", accent: "#FF5B3A" },
-  walking: { label: "WALK", noun: "walk", accent: "#2DD4BF" },
-  cycling: { label: "RIDE", noun: "ride", accent: "#C6F432" },
+/**
+ * One colour per activity, used everywhere: run blue, walk green, ride amber.
+ * `accent` is the bright variant for dark surfaces (share cards, live map); `cssVar` follows the active theme.
+ */
+export const ACTIVITY_META: Record<ActivityKind, { label: string; noun: string; accent: string; cssVar: string }> = {
+  running: { label: "RUN", noun: "run", accent: "#6F8AFF", cssVar: "var(--run)" },
+  walking: { label: "WALK", noun: "walk", accent: "#4ADE80", cssVar: "var(--walk)" },
+  cycling: { label: "RIDE", noun: "ride", accent: "#FBBF24", cssVar: "var(--ride)" },
 };
 
 export function toKind(activity?: string): ActivityKind {

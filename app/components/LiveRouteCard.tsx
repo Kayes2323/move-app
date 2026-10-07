@@ -39,90 +39,90 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
   const progressKm = Math.round((journeyStartKm + distanceKm) * 100) / 100;
 
   const chip = paused
-    ? { label: "PAUSED", bg: "#3A3A44", fg: "#FFFFFF" }
+    ? { label: "PAUSED", dot: "var(--mute)", color: "var(--ink)", bg: "var(--surf2)" }
     : gps === "error"
-      ? { label: "GPS ERROR", bg: "#EF4444", fg: "#FFFFFF" }
+      ? { label: "GPS ERROR", dot: "var(--danger)", color: "var(--danger)", bg: "var(--dangerbg)" }
       : gps === "waiting"
-        ? { label: "GETTING GPS…", bg: "#F59E0B", fg: "#09090B" }
-        : { label: "LIVE", bg: meta.accent, fg: "#09090B" };
+        ? { label: "GETTING GPS…", dot: "var(--amber)", color: "var(--amber)", bg: "var(--amberbg)" }
+        : { label: "LIVE", dot: meta.cssVar, color: "var(--ink)", bg: "var(--surf)" };
 
   const nextTarget = route ? nextCheckpoint(route, progressKm) : null;
 
   return (
-    <main style={{ minHeight: "100dvh", background: "#0E0E12", color: "#FFFFFF", fontFamily: "'Space Grotesk', system-ui, sans-serif", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ width: "100%", maxWidth: 440, minHeight: "100dvh", display: "flex", flexDirection: "column", padding: "0 20px 24px" }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 0 8px" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/move-mark.png" alt="Move" width={38} height={26} style={{ width: 38, height: "auto" }} />
-          <div role="status" style={{ display: "flex", alignItems: "center", gap: 7, background: chip.bg, color: chip.fg, borderRadius: 20, padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 1.5 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: chip.fg }} />
-            {chip.label}
-            {chip.label === "LIVE" ? ` · ${meta.label}` : ""}
+    <main className="app nonav" style={{ display: "flex", flexDirection: "column", paddingTop: "calc(env(safe-area-inset-top, 0px) + 20px)" }}>
+      <header className="bar">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/move-mark.png" alt="Move" width={38} height={26} style={{ width: 38, height: "auto", filter: "var(--mark-filter, none)" }} />
+        <div role="status" style={{ display: "flex", alignItems: "center", gap: 8, background: chip.bg, color: chip.color, borderRadius: 20, padding: "7px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1.5 }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: chip.dot }} />
+          {chip.label}
+          {chip.label === "LIVE" ? ` · ${meta.label}` : ""}
+        </div>
+        <button aria-label="Stop tracking" className="icon-btn" onClick={onClose}>
+          <svg className="ic" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </header>
+      {note && <p className="mute" style={{ fontSize: 12, textAlign: "center", lineHeight: 1.4, margin: "10px 0 0" }}>{note}</p>}
+
+      <section aria-label="Journey route" style={{ flex: 1, minHeight: 240, margin: "12px 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden" }}>
+        {route ? (
+          <div style={{ width: "100%", maxWidth: MAP_W }}>
+            <JourneyRoute route={route} progressKm={progressKm} startKm={routeStartKm} width={MAP_W} height={MAP_H} padL={92} padR={92} padY={14} labels="auto" accent={meta.cssVar} line={3} fontSize={11} pulse ink="var(--ink)" trail="var(--trk)" halo="var(--land)" here="var(--bg)" />
           </div>
-          <button aria-label="Stop tracking" onClick={onClose} style={{ width: 44, height: 44, borderRadius: "50%", border: 0, background: "rgba(255,255,255,0.08)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        ) : (
+          <p className="body mute" style={{ textAlign: "center", maxWidth: 240 }}>Your journey route isn&apos;t available, but your activity is still being tracked.</p>
+        )}
+        {gps === "error" && (
+          <div role="alert" style={{ position: "absolute", bottom: 12, left: 12, right: 12, textAlign: "center", background: "var(--dangerbg)", borderRadius: 14, padding: "10px 12px" }}>
+            <p style={{ color: "var(--danger)", fontSize: 12 }}>{gpsMessage ?? "Turn on location to track distance."}</p>
+            {onOpenSettings && (
+              <button className="btn btn-line" style={{ width: "auto", marginTop: 8, minHeight: 44, padding: "0 20px" }} onClick={onOpenSettings}>Open settings</button>
+            )}
+          </div>
+        )}
+      </section>
+
+      {gapSeconds ? (
+        <div role="alert" className="notice warn" style={{ marginBottom: 14 }}>
+          <p style={{ fontSize: 13, lineHeight: 1.45 }}>
+            Move couldn&apos;t track for {formatClock(Math.round(gapSeconds))}. Browsers pause GPS while the screen is off. Count that time as active?
+          </p>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button className="btn btn-solid" style={{ minHeight: 44, fontSize: 14, textTransform: "none", letterSpacing: 0 }} onClick={() => onResolveGap?.(true)}>Count it</button>
+            <button className="btn btn-line" style={{ minHeight: 44 }} onClick={() => onResolveGap?.(false)}>Skip it</button>
+          </div>
+        </div>
+      ) : null}
+
+      <section>
+        {nextTarget && (
+          <p className="mute" style={{ fontSize: 13, fontWeight: 600 }}>
+            Next · <span style={{ color: "var(--ink)" }}>{nextTarget.name}</span> · {nextTarget.km.toFixed(1)} km
+          </p>
+        )}
+        <p className="lab" style={{ marginTop: 10 }}>Distance</p>
+        <div className="blk" style={{ fontSize: 88, lineHeight: 0.95, marginTop: 4 }}>
+          {formatKm(distanceKm)}
+          <span style={{ fontFamily: "Archivo, sans-serif", fontWeight: 700, fontSize: 22, color: meta.cssVar, marginLeft: 8, letterSpacing: 0 }}>km</span>
+        </div>
+        <div style={{ display: "flex", gap: 32, marginTop: 14 }}>
+          <div><p className="lab">Time</p><p className="blk" style={{ fontSize: 28, marginTop: 2 }}>{formatClock(seconds)}</p></div>
+          <div><p className="lab">{kind === "cycling" ? "Speed" : "Pace"}</p><p className="blk" style={{ fontSize: 28, marginTop: 2 }}>{formatPerformance(kind, pace)}</p></div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 24 }}>
+          <button aria-label={paused ? "Resume" : "Pause"} className="icon-btn" style={{ width: 58, height: 58, background: "var(--surf2)" }} onClick={onPause}>
+            {paused ? (
+              <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
+            ) : (
+              <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+            )}
           </button>
-        </header>
-        {note && <p style={{ fontSize: 12, color: "#8A8A94", textAlign: "center", lineHeight: 1.4, margin: "0 0 4px" }}>{note}</p>}
-
-        <section aria-label="Journey route" style={{ flex: 1, minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-          {route ? (
-            <div style={{ width: "100%", maxWidth: MAP_W }}>
-              <JourneyRoute route={route} progressKm={progressKm} startKm={routeStartKm} width={MAP_W} height={MAP_H} padL={92} padR={92} padY={14} labels="auto" accent={meta.accent} line={3} fontSize={11} pulse />
-            </div>
-          ) : (
-            <p style={{ color: "#8A8A94", fontSize: 14, textAlign: "center", maxWidth: 240 }}>Your journey route isn&apos;t available, but your activity is still being tracked.</p>
-          )}
-          {gps === "error" && (
-            <div role="alert" style={{ position: "absolute", bottom: 0, left: 0, right: 0, textAlign: "center" }}>
-              <p style={{ color: "#FCA5A5", fontSize: 12, margin: 0 }}>{gpsMessage ?? "Turn on location to track distance."}</p>
-              {onOpenSettings && (
-                <button onClick={onOpenSettings} style={{ marginTop: 8, minHeight: 44, padding: "0 20px", borderRadius: 22, border: "1px solid #3A3A44", background: "none", color: "#FFFFFF", fontWeight: 600, cursor: "pointer" }}>Open settings</button>
-              )}
-            </div>
-          )}
-        </section>
-
-        {gapSeconds ? (
-          <div role="alert" style={{ background: "#1B1B21", borderRadius: 16, padding: "14px 16px", marginBottom: 14 }}>
-            <p style={{ fontSize: 13, margin: "0 0 10px", lineHeight: 1.45 }}>
-              Move couldn&apos;t track for {formatClock(Math.round(gapSeconds))}. Browsers pause GPS while the screen is off. Count that time as active?
-            </p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => onResolveGap?.(true)} style={{ flex: 1, minHeight: 44, borderRadius: 12, border: 0, background: meta.accent, color: "#09090B", fontWeight: 700, cursor: "pointer" }}>Count it</button>
-              <button onClick={() => onResolveGap?.(false)} style={{ flex: 1, minHeight: 44, borderRadius: 12, border: "1px solid #3A3A44", background: "none", color: "#FFFFFF", fontWeight: 700, cursor: "pointer" }}>Skip it</button>
-            </div>
-          </div>
-        ) : null}
-
-        <section>
-          {nextTarget && (
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#B4B4BE" }}>
-              Next · <span style={{ color: "#FFFFFF" }}>{nextTarget.name}</span> · {nextTarget.km.toFixed(1)} km
-            </div>
-          )}
-          <div style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: 88, lineHeight: 0.95, marginTop: 6 }}>
-            {formatKm(distanceKm)}
-            <span style={{ fontSize: 22, color: meta.accent, marginLeft: 8 }}>km</span>
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 600, marginTop: 10 }}>
-            {formatClock(seconds)}
-            <span style={{ opacity: 0.4, margin: "0 10px" }}>·</span>
-            {formatPerformance(kind, pace)}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 22, marginTop: 22 }}>
-            <button aria-label={paused ? "Resume" : "Pause"} onClick={onPause} style={{ width: 56, height: 56, borderRadius: "50%", border: 0, background: "#1B1B21", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {paused ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M7 4l13 8-13 8z" /></svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
-              )}
-            </button>
-            <button aria-label="Finish activity" onClick={onFinish} style={{ width: 84, height: 84, borderRadius: "50%", border: 0, background: meta.accent, color: "#09090B", fontWeight: 700, fontSize: 13, letterSpacing: 1.5, cursor: "pointer" }}>FINISH</button>
-            <span style={{ width: 56, height: 56 }} />
-          </div>
-        </section>
-      </div>
+          <button aria-label="Finish activity" className="btn btn-solid" style={{ flex: 1, width: "auto", minHeight: 58, borderRadius: 29 }} onClick={onFinish}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
+            Finish
+          </button>
+        </div>
+      </section>
     </main>
   );
 }
