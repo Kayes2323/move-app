@@ -1,7 +1,8 @@
 // PROPOSED Firestore rules for Move. They are NOT applied automatically: copy them into
 // Firebase console > Firestore > Rules (or `firebase deploy --only firestore:rules`).
 //
-// - A user's private document (email, weight, every activity) is readable and writable only by that user.
+// - A user's private document (email, weight, totals) and everything beneath it (their activities and GPS
+//   tracks) is readable and writable only by that user.
 // - The leaderboard reads `publicProfiles`, which holds just name, photo and totals.
 //
 // Known limit: totals are written by the client, so a determined user could fake their own leaderboard entry.
@@ -12,6 +13,20 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // users/{uid}/activities/{activityId} and users/{uid}/activities/{activityId}/tracks/{chunk}
+      match /activities/{activityId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        // Created once by the sync transaction; the id in the document must match its path.
+        allow create: if request.auth != null && request.auth.uid == uid && request.resource.data.id == activityId;
+        allow update, delete: if false; // an activity is immutable once synced
+
+        match /tracks/{chunk} {
+          allow read: if request.auth != null && request.auth.uid == uid;
+          allow create, update: if request.auth != null && request.auth.uid == uid; // idempotent retries overwrite the same chunk
+          allow delete: if false;
+        }
+      }
     }
 
     match /publicProfiles/{uid} {

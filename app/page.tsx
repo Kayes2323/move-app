@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LoadError } from "./components/LoadError";
+import { PendingSyncBanner } from "./components/PendingSyncBanner";
 import { effectiveStreak, findRoute, journeyOffsetKm, nowMs } from "./lib/activity";
 import { syncPublicProfile } from "./lib/publicProfile";
 
@@ -136,6 +137,8 @@ export default function Home() {
       </div>
 
       <div style={{ padding: "16px 16px 0" }}>
+
+        <PendingSyncBanner />
 
         {/* JOURNEY CARD */}
         <div style={{ background: "linear-gradient(135deg, #4F6EF7 0%, #6D28D9 60%, #7C3AED 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", position: "relative", overflow: "hidden" }}>

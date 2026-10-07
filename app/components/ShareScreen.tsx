@@ -14,6 +14,8 @@ import {
   toKind,
   type RunEntry,
 } from "../lib/activity";
+import { getRuntime } from "../lib/tracking/runtime";
+import { legacyRun } from "../lib/tracking/sync";
 
 interface UserData {
   name?: string;
@@ -27,7 +29,8 @@ type Status = "loading" | "ready" | "empty" | "error";
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
-export function ShareScreen() {
+/** `activityId` shows that activity directly (used right after finishing, where navigating may be impossible offline). */
+export function ShareScreen({ activityId }: { activityId?: string } = {}) {
   const router = useRouter();
   const exportRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -36,6 +39,7 @@ export function ShareScreen() {
   const [attempt, setAttempt] = useState(0);
   const [user, setUser] = useState<UserData | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [ratio, setRatio] = useState<CardRatio>("story");
   const [photo, setPhoto] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -55,20 +59,37 @@ export function ShareScreen() {
             router.replace("/login");
             return;
           }
+          // The server copy may be unreachable (offline): the phone still has every unsynced activity.
+          let data: UserData = {};
+          let serverOk = true;
           try {
             const snap = await getDoc(doc(db, "users", fu.uid));
+            data = (snap.exists() ? snap.data() : {}) as UserData;
+          } catch (err) {
+            console.warn("Server copy unavailable, showing what is on this phone.", err);
+            serverOk = false;
+          }
+          try {
             if (cancelled) return;
-            const data = (snap.exists() ? snap.data() : {}) as UserData;
-            const runs = (data.runs ?? []).filter((r) => r.km > 0);
-            setUser(data);
-            if (runs.length === 0) {
-              setStatus("empty");
+            const local = await getRuntime().store.listActivities().catch(() => []);
+            const waiting = local.filter((l) => l.userId === fu.uid && l.status === "finished" && l.summary && l.sync === "pending");
+            const serverRuns = data.runs ?? [];
+            const known = new Set(serverRuns.map((r) => r.id).filter(Boolean));
+            const extra = waiting.filter((l) => !known.has(l.id)).map(legacyRun);
+            const all = [...serverRuns, ...extra].sort((x, y) => Date.parse(x.date) - Date.parse(y.date));
+            setPendingIds(new Set(extra.map((r) => r.id as string)));
+            setUser({ ...data, runs: all });
+            if (!all.some((r) => r.km > 0)) {
+              setStatus(serverOk ? "empty" : "error");
               return;
             }
-            const wanted = Number(new URLSearchParams(window.location.search).get("i"));
-            const all = data.runs ?? [];
-            const fallback = all.length - 1 - [...all].reverse().findIndex((r) => r.km > 0);
-            setSelected(Number.isInteger(wanted) && all[wanted]?.km > 0 ? wanted : fallback);
+            const params = new URLSearchParams(window.location.search);
+            const wantedId = activityId ?? params.get("a");
+            const byId = all.findIndex((r) => r.id && r.id === wantedId);
+            const legacy = serverRuns[Number(params.get("i"))];
+            const byIndex = legacy ? all.indexOf(legacy) : -1;
+            const last = all.length - 1 - [...all].reverse().findIndex((r) => r.km > 0);
+            setSelected(byId >= 0 ? byId : byIndex >= 0 ? byIndex : last);
             setStatus("ready");
           } catch (err) {
             console.error(err);
@@ -84,7 +105,7 @@ export function ShareScreen() {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [router, attempt]);
+  }, [router, attempt, activityId]);
 
   /* Fit the preview to narrow phones. */
   useEffect(() => {
@@ -260,7 +281,9 @@ export function ShareScreen() {
           {exporting ? "Preparing…" : "SHARE"}
         </button>
         <button onClick={save} disabled={exporting} style={{ minHeight: 48, borderRadius: 24, border: 0, background: "#17171D", color: "#FFFFFF", fontWeight: 600, fontSize: 14, cursor: exporting ? "wait" : "pointer" }}>Save image</button>
-        <p role="status" style={{ minHeight: 18, textAlign: "center", fontSize: 12, color: "#8A8A94" }}>{notice}</p>
+        <p role="status" style={{ minHeight: 18, textAlign: "center", fontSize: 12, color: "#8A8A94" }}>
+          {notice ?? (run?.id && pendingIds.has(run.id) ? "Saved on this phone. It will sync when you're online." : "")}
+        </p>
         <button onClick={() => router.push("/")} style={{ minHeight: 44, border: 0, background: "none", color: "#8A8A94", fontSize: 13, cursor: "pointer" }}>Done</button>
       </div>
 

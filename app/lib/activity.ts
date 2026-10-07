@@ -12,7 +12,7 @@ export interface RunEntry {
   steps?: number;
   activity?: string;
   /** Journey the activity counted towards, and total journey km after it (set on save). */
-  routeName?: string;
+  routeName?: string | null;
   journeyKm?: number;
 }
 

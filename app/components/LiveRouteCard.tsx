@@ -17,6 +17,14 @@ interface Props {
   pace: number;
   gps: GpsStatus;
   paused: boolean;
+  /** Why GPS has no fix (permission, services off), shown instead of a generic message. */
+  gpsMessage?: string;
+  /** One honest line about how tracking behaves on this platform. */
+  note?: string;
+  /** Time the browser suspended tracking, awaiting the user's decision. */
+  gapSeconds?: number | null;
+  onResolveGap?: (count: boolean) => void;
+  onOpenSettings?: () => void;
   onPause: () => void;
   onFinish: () => void;
   onClose: () => void;
@@ -25,7 +33,7 @@ interface Props {
 const MAP_W = 340;
 const MAP_H = 300;
 
-export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, onPause, onFinish, onClose }: Props) {
+export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose }: Props) {
   const meta = ACTIVITY_META[kind];
   // Quantised so the map only re-renders when the dot would visibly move.
   const progressKm = Math.round((journeyStartKm + distanceKm) * 100) / 100;
@@ -55,6 +63,7 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>
         </header>
+        {note && <p style={{ fontSize: 12, color: "#8A8A94", textAlign: "center", lineHeight: 1.4, margin: "0 0 4px" }}>{note}</p>}
 
         <section aria-label="Journey route" style={{ flex: 1, minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
           {route ? (
@@ -65,9 +74,26 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
             <p style={{ color: "#8A8A94", fontSize: 14, textAlign: "center", maxWidth: 240 }}>Your journey route isn&apos;t available, but your activity is still being tracked.</p>
           )}
           {gps === "error" && (
-            <p style={{ position: "absolute", bottom: 0, left: 0, right: 0, textAlign: "center", color: "#FCA5A5", fontSize: 12 }}>Turn on location to track distance.</p>
+            <div role="alert" style={{ position: "absolute", bottom: 0, left: 0, right: 0, textAlign: "center" }}>
+              <p style={{ color: "#FCA5A5", fontSize: 12, margin: 0 }}>{gpsMessage ?? "Turn on location to track distance."}</p>
+              {onOpenSettings && (
+                <button onClick={onOpenSettings} style={{ marginTop: 8, minHeight: 44, padding: "0 20px", borderRadius: 22, border: "1px solid #3A3A44", background: "none", color: "#FFFFFF", fontWeight: 600, cursor: "pointer" }}>Open settings</button>
+              )}
+            </div>
           )}
         </section>
+
+        {gapSeconds ? (
+          <div role="alert" style={{ background: "#1B1B21", borderRadius: 16, padding: "14px 16px", marginBottom: 14 }}>
+            <p style={{ fontSize: 13, margin: "0 0 10px", lineHeight: 1.45 }}>
+              Move couldn&apos;t track for {formatClock(Math.round(gapSeconds))}. Browsers pause GPS while the screen is off. Count that time as active?
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => onResolveGap?.(true)} style={{ flex: 1, minHeight: 44, borderRadius: 12, border: 0, background: meta.accent, color: "#09090B", fontWeight: 700, cursor: "pointer" }}>Count it</button>
+              <button onClick={() => onResolveGap?.(false)} style={{ flex: 1, minHeight: 44, borderRadius: 12, border: "1px solid #3A3A44", background: "none", color: "#FFFFFF", fontWeight: 700, cursor: "pointer" }}>Skip it</button>
+            </div>
+          </div>
+        ) : null}
 
         <section>
           {nextTarget && (

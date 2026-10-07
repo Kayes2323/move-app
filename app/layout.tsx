@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SyncBootstrap } from "./components/SyncBootstrap";
 
 export const metadata: Metadata = {
   title: "MOVE — Run. Conquer. Repeat.",
@@ -25,7 +26,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@300;400;600&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        <SyncBootstrap />
+        {children}
+      </body>
     </html>
   );
 }
