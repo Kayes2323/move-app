@@ -18,3 +18,18 @@ html, body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #080808; }
 ::-webkit-scrollbar-thumb { background: #C6F135; }
+@keyframes mv-blip {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.mv-blip {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: mv-blip 1.6s ease-out infinite;
+}
+@keyframes mv-shimmer {
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mv-blip { animation: none; opacity: 0.35; }
+}

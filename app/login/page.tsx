@@ -100,7 +100,7 @@ export default function Login() {
 
         {/* Hero text */}
         <div style={{ position: "absolute", bottom: "28%", left: "24px", right: "24px", zIndex: 4 }}>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "10px", letterSpacing: "4px", marginBottom: "8px", fontFamily: "monospace" }}>DHAKA → COX'S BAZAR → THE WORLD</p>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "10px", letterSpacing: "4px", marginBottom: "8px", fontFamily: "monospace" }}>DHAKA → COX&apos;S BAZAR → THE WORLD</p>
           <h2 style={{ color: "white", fontSize: "28px", fontWeight: 900, lineHeight: 1.15, letterSpacing: "-0.5px" }}>
             Every step moves<br />
             <span style={{ color: "#C6F135" }}>your world forward.</span>
@@ -120,7 +120,7 @@ export default function Login() {
 
         <p style={{ color: "#6B7280", fontSize: "14px", lineHeight: 1.65, fontWeight: 400, marginBottom: "24px", fontFamily: "system-ui, sans-serif" }}>
           Turn every real KM into a virtual journey.<br />
-          Run your street. Reach Cox's Bazar. Then — the world.
+          Run your street. Reach Cox&apos;s Bazar. Then — the world.
         </p>
 
         {/* Social proof */}
