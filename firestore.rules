@@ -1,0 +1,25 @@
+// PROPOSED Firestore rules for Move. They are NOT applied automatically: copy them into
+// Firebase console > Firestore > Rules (or `firebase deploy --only firestore:rules`).
+//
+// - A user's private document (email, weight, every activity) is readable and writable only by that user.
+// - The leaderboard reads `publicProfiles`, which holds just name, photo and totals.
+//
+// Known limit: totals are written by the client, so a determined user could fake their own leaderboard entry.
+// Preventing that needs server-side validation (e.g. a Cloud Function that recomputes totals from activities).
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /publicProfiles/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'photo', 'totalKm', 'streak', 'updatedAt']);
+      allow delete: if false;
+    }
+  }
+}

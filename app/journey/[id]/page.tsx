@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ROUTE_MAP, findNearestCheckpoint, type Route, type Checkpoint } from "../../data/routes";
+import { journeyOffsetKm } from "../../lib/activity";
 
 interface UserData {
   completedKm: number;
@@ -12,7 +13,7 @@ interface UserData {
 function getCurrentCpIndex(route: Route, completedKm: number, startIdx: number = 0): number {
   let idx = startIdx;
   for (let i = startIdx; i < route.checkpoints.length; i++) {
-    const adjustedKm = route.checkpoints[i].distanceFromStart - route.checkpoints[startIdx].distanceFromStart;
+    const adjustedKm = route.checkpoints[i].distanceFromStart - journeyOffsetKm(route, startIdx);
     if (completedKm >= adjustedKm) idx = i;
   }
   return idx;
@@ -123,13 +124,16 @@ export default function JourneyDetail() {
   useEffect(() => {
     if (!route) return;
 
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
     const load = async () => {
       try {
         const firebaseModule = await import("../../firebase");
         const { doc, getDoc } = await import("firebase/firestore");
         const { onAuthStateChanged } = await import("firebase/auth");
 
-        onAuthStateChanged(firebaseModule.auth, async (user) => {
+        unsubscribe = onAuthStateChanged(firebaseModule.auth, async (user) => {
+          if (cancelled) return;
           if (user) {
             const snap = await getDoc(doc(firebaseModule.db, "users", user.uid));
             if (snap.exists()) {
@@ -173,6 +177,7 @@ export default function JourneyDetail() {
     };
 
     load();
+    return () => { cancelled = true; unsubscribe?.(); };
   }, [route]);
 
   const handleStartFromNearest = async () => {
@@ -191,6 +196,10 @@ export default function JourneyDetail() {
       const { doc, setDoc } = await import("firebase/firestore");
       const user = firebaseModule.auth.currentUser;
       if (user) {
+        const { getDoc } = await import("firebase/firestore");
+        const current = (await getDoc(doc(firebaseModule.db, "users", user.uid))).data();
+        const switching = current?.currentRoute && current.currentRoute !== route.name && (current.completedKm ?? 0) > 0;
+        if (switching && !confirm(`You're ${Number(current.completedKm).toFixed(1)} km into your ${current.currentRoute} journey. Starting ${route.name} will reset that progress. Continue?`)) return;
         await setDoc(doc(firebaseModule.db, "users", user.uid), {
           currentRoute: route.name,
           completedKm: 0,
@@ -223,7 +232,7 @@ export default function JourneyDetail() {
   );
 
   const activeCheckpoints = route.checkpoints.slice(startIdx);
-  const startOffset = route.checkpoints[startIdx].distanceFromStart;
+  const startOffset = journeyOffsetKm(route, startIdx);
   const adjustedTotal = route.checkpoints[route.checkpoints.length - 1].distanceFromStart - startOffset;
   const percent = Math.min((completedKm / adjustedTotal) * 100, 100);
   const toGo = Math.max(adjustedTotal - completedKm, 0);

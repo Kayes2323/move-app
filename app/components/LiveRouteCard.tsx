@@ -8,8 +8,10 @@ export type GpsStatus = "waiting" | "active" | "error";
 interface Props {
   kind: ActivityKind;
   route?: Route;
-  /** Journey km before this activity started. */
+  /** Absolute route km reached before this activity started. */
   journeyStartKm: number;
+  /** Route km where the user's journey began. */
+  routeStartKm: number;
   distanceKm: number;
   seconds: number;
   pace: number;
@@ -23,7 +25,7 @@ interface Props {
 const MAP_W = 340;
 const MAP_H = 300;
 
-export function LiveRouteCard({ kind, route, journeyStartKm, distanceKm, seconds, pace, gps, paused, onPause, onFinish, onClose }: Props) {
+export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, onPause, onFinish, onClose }: Props) {
   const meta = ACTIVITY_META[kind];
   // Quantised so the map only re-renders when the dot would visibly move.
   const progressKm = Math.round((journeyStartKm + distanceKm) * 100) / 100;
@@ -57,7 +59,7 @@ export function LiveRouteCard({ kind, route, journeyStartKm, distanceKm, seconds
         <section aria-label="Journey route" style={{ flex: 1, minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
           {route ? (
             <div style={{ width: "100%", maxWidth: MAP_W }}>
-              <JourneyRoute route={route} progressKm={progressKm} width={MAP_W} height={MAP_H} padL={92} padR={92} padY={14} labels="auto" accent={meta.accent} line={3} fontSize={11} pulse />
+              <JourneyRoute route={route} progressKm={progressKm} startKm={routeStartKm} width={MAP_W} height={MAP_H} padL={92} padR={92} padY={14} labels="auto" accent={meta.accent} line={3} fontSize={11} pulse />
             </div>
           ) : (
             <p style={{ color: "#8A8A94", fontSize: 14, textAlign: "center", maxWidth: 240 }}>Your journey route isn&apos;t available, but your activity is still being tracked.</p>

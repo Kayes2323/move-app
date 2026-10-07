@@ -25,13 +25,16 @@ interface Props {
   pace?: number;
   dateLabel: string;
   route?: Route;
+  /** Absolute km along the route (from Dhaka) reached after this activity. */
   journeyKm: number;
+  /** Route km where the user's journey began. */
+  routeStartKm?: number;
   achievement?: Achievement | null;
   photo?: string | null;
   ratio: CardRatio;
 }
 
-export function ShareCard({ kind, km, duration, pace, dateLabel, route, journeyKm, achievement, photo, ratio }: Props) {
+export function ShareCard({ kind, km, duration, pace, dateLabel, route, journeyKm, routeStartKm = 0, achievement, photo, ratio }: Props) {
   const meta = ACTIVITY_META[kind];
   const H = CARD_HEIGHT[ratio];
   const { logoTop, bottom } = LAYOUT[ratio];
@@ -61,6 +64,7 @@ export function ShareCard({ kind, km, duration, pace, dateLabel, route, journeyK
           <JourneyRoute
             route={route}
             progressKm={journeyKm}
+            startKm={routeStartKm}
             width={CARD_WIDTH}
             height={routeHeight}
             padL={achievement ? 120 : 104}
@@ -82,7 +86,8 @@ export function ShareCard({ kind, km, duration, pace, dateLabel, route, journeyK
 
       {hasPhoto && route && (
         <div style={{ position: "absolute", right: 8, bottom: bottom, width: 200, height: 176 }}>
-          <JourneyRoute route={route} progressKm={journeyKm} width={200} height={176} padL={66} padR={30} padY={14} labels="mini" accent={meta.accent} line={2.2} fontSize={11} dotted={false} />
+          <JourneyRoute route={route} progressKm={journeyKm}
+            startKm={routeStartKm} width={200} height={176} padL={66} padR={30} padY={14} labels="mini" accent={meta.accent} line={2.2} fontSize={11} dotted={false} />
         </div>
       )}
 

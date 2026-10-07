@@ -1,6 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadError } from "./components/LoadError";
+import { effectiveStreak, findRoute, journeyOffsetKm, nowMs } from "./lib/activity";
+import { syncPublicProfile } from "./lib/publicProfile";
 
 interface UserData {
   name: string;
@@ -9,19 +12,10 @@ interface UserData {
   completedKm: number;
   streak: number;
   currentRoute: string;
+  startCheckpointIndex?: number;
+  lastRun?: string;
   runs: { km: number; duration: string; pace: number; date: string }[];
 }
-
-const ROUTES: Record<string, number> = {
-  "Chandpur": 132,
-  "Cox's Bazar": 414,
-  "Sylhet": 241,
-  "Rajshahi": 256,
-  "Khulna": 275,
-  "Chittagong": 264,
-  "Rangpur": 320,
-  "Barisal": 154,
-};
 
 const getRank = (km: number) => {
   if (km >= 500) return "Legend";
@@ -36,36 +30,56 @@ export default function Home() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [attempt, setAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
+
   useEffect(() => {
-    const loadUser = async () => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
       try {
         const { auth, db } = await import("./firebase");
         const { onAuthStateChanged } = await import("firebase/auth");
         const { doc, getDoc } = await import("firebase/firestore");
 
-        onAuthStateChanged(auth, async (firebaseUser) => {
+        unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (cancelled) return;
           if (!firebaseUser) {
             window.location.href = "/login";
             return;
           }
-          const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (snap.exists()) {
-            const data = snap.data();
-            if (!data.weight || !data.onboarded) {
-              window.location.href = "/onboarding";
-              return;
+          try {
+            const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+            if (cancelled) return;
+            if (snap.exists()) {
+              const data = snap.data();
+              if (!data.weight || !data.onboarded) {
+                window.location.href = "/onboarding";
+                return;
+              }
+              setUser(data as UserData);
+              // Make sure the leaderboard copy exists for people who haven't finished an activity since it was introduced.
+              if (!sessionStorage.getItem("move.publicProfileSynced")) {
+                sessionStorage.setItem("move.publicProfileSynced", "1");
+                void syncPublicProfile(firebaseUser.uid, { name: data.name, photo: data.photo, totalKm: data.totalKm ?? 0, streak: effectiveStreak(data.streak, data.lastRun, nowMs()) });
+              }
             }
-            setUser(data as UserData);
+            setFailed(false);
+          } catch (err) {
+            console.error(err);
+            setFailed(true);
           }
           setLoading(false);
         });
       } catch (err) {
         console.error(err);
-        setLoading(false);
+        if (!cancelled) { setFailed(true); setLoading(false); }
       }
-    };
-    loadUser();
-  }, []);
+    })();
+    return () => { cancelled = true; unsubscribe?.(); };
+  }, [attempt]);
+
+  if (failed) return <LoadError onRetry={() => { setFailed(false); setLoading(true); setAttempt((n) => n + 1); }} />;
 
   if (loading) {
     return (
@@ -82,10 +96,12 @@ export default function Home() {
   const name = user?.name?.split(" ")[0] || "Runner";
   const totalKm = user?.totalKm || 0;
   const completedKm = user?.completedKm || 0;
-  const streak = user?.streak || 0;
+  const streak = effectiveStreak(user?.streak, user?.lastRun, nowMs());
   const currentRoute = user?.currentRoute || "Chandpur";
-  const routeTotal = ROUTES[currentRoute] || 105;
-  const toGo = Math.max(routeTotal - completedKm, 0);
+  // A journey that began at a later checkpoint is shorter than the full route.
+  const route = findRoute(currentRoute);
+  const routeTotal = route ? Math.max(route.totalKm - journeyOffsetKm(route, user?.startCheckpointIndex), 1) : Math.max(completedKm, 1);
+  const toGo = route ? Math.max(routeTotal - completedKm, 0) : 0;
   const percent = Math.min((completedKm / routeTotal) * 100, 100);
   const rank = getRank(totalKm);
   const runs = user?.runs || [];

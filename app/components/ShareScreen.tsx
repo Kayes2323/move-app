@@ -6,6 +6,7 @@ import {
   ACTIVITY_META,
   detectAchievement,
   findRoute,
+  journeyOffsetKm,
   formatCardDate,
   formatKm,
   loadPhoto,
@@ -18,6 +19,7 @@ interface UserData {
   name?: string;
   completedKm?: number;
   currentRoute?: string;
+  startCheckpointIndex?: number;
   runs?: RunEntry[];
 }
 
@@ -99,14 +101,18 @@ export function ShareScreen() {
   const cardProps = useMemo(() => {
     if (!run || selected === null) return null;
     const kind = toKind(run.activity);
+    const route = findRoute(run.routeName ?? user?.currentRoute);
+    const routeStartKm = journeyOffsetKm(route, user?.startCheckpointIndex);
     return {
       kind,
       km: run.km,
       duration: run.duration,
       pace: run.pace,
       dateLabel: formatCardDate(run.date),
-      route: findRoute(run.routeName ?? user?.currentRoute),
-      journeyKm: run.journeyKm ?? user?.completedKm ?? 0,
+      route,
+      routeStartKm,
+      // journeyKm is absolute; older activities fall back to the current progress.
+      journeyKm: run.journeyKm ?? routeStartKm + (user?.completedKm ?? 0),
       achievement: detectAchievement(runs, selected),
       photo,
       ratio,

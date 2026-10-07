@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadError } from "../components/LoadError";
+import { activityDays, effectiveStreak, findRoute, formatPace, nowMs, weightedPace, type RunEntry } from "../lib/activity";
 
 interface UserData {
   name: string;
@@ -10,7 +12,8 @@ interface UserData {
   completedKm: number;
   streak: number;
   currentRoute: string;
-  runs: { km: number; duration: string; pace: number; date: string }[];
+  lastRun?: string;
+  runs: RunEntry[];
 }
 
 const getRank = (km: number) => {
@@ -22,7 +25,7 @@ const getRank = (km: number) => {
   return "Rookie";
 };
 
-const activityGrid = Array(35).fill(0);
+const routeKm = (name: string) => findRoute(name)?.totalKm ?? Infinity;
 
 const achievements = [
   { name: "First Mile", icon: "👟", condition: (km: number) => km >= 1 },
@@ -30,9 +33,9 @@ const achievements = [
   { name: "50km Hero", icon: "⚡", condition: (km: number) => km >= 50 },
   { name: "Streak x3", icon: "🔥", condition: (_: number, streak: number) => streak >= 3 },
   { name: "Streak x7", icon: "🔥", condition: (_: number, streak: number) => streak >= 7 },
-  { name: "Chandpur\nConqueror", icon: "🏆", condition: (km: number) => km >= 105 },
-  { name: "Cox's Bazar", icon: "🏖️", condition: (km: number) => km >= 414 },
-  { name: "Sylhet Run", icon: "🍃", condition: (km: number) => km >= 244 },
+  { name: "Chandpur\nConqueror", icon: "🏆", condition: (km: number) => km >= routeKm("Chandpur") },
+  { name: "Cox's Bazar", icon: "🏖️", condition: (km: number) => km >= routeKm("Cox's Bazar") },
+  { name: "Sylhet Run", icon: "🍃", condition: (km: number) => km >= routeKm("Sylhet") },
   { name: "100km Club", icon: "💪", condition: (km: number) => km >= 100 },
 ];
 
@@ -40,31 +43,44 @@ export default function Profile() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [attempt, setAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
+
   useEffect(() => {
-    const loadUser = async () => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
       try {
         const { auth, db } = await import("../firebase");
         const { onAuthStateChanged } = await import("firebase/auth");
         const { doc, getDoc } = await import("firebase/firestore");
 
-        onAuthStateChanged(auth, async (firebaseUser) => {
+        unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (cancelled) return;
           if (!firebaseUser) {
             window.location.href = "/login";
             return;
           }
-          const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (snap.exists()) {
-            setUser(snap.data() as UserData);
+          try {
+            const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+            if (cancelled) return;
+            if (snap.exists()) setUser(snap.data() as UserData);
+            setFailed(false);
+          } catch (err) {
+            console.error(err);
+            setFailed(true);
           }
           setLoading(false);
         });
       } catch (err) {
         console.error(err);
-        setLoading(false);
+        if (!cancelled) { setFailed(true); setLoading(false); }
       }
-    };
-    loadUser();
-  }, []);
+    })();
+    return () => { cancelled = true; unsubscribe?.(); };
+  }, [attempt]);
+
+  if (failed) return <LoadError message="Couldn't load your profile." onRetry={() => { setFailed(false); setLoading(true); setAttempt((n) => n + 1); }} />;
 
   const handleSignOut = async () => {
     const { auth } = await import("../firebase");
@@ -86,17 +102,14 @@ export default function Profile() {
   }
 
   const totalKm = user?.totalKm || 0;
-  const streak = user?.streak || 0;
+  const streak = effectiveStreak(user?.streak, user?.lastRun, nowMs());
   const runs = user?.runs || [];
   const rank = getRank(totalKm);
   const initials = (user?.name || "R").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-  const avgPace = runs.length > 0 ? (runs.reduce((sum, r) => sum + r.pace, 0) / runs.length).toFixed(2) : "0.00";
-
-  // Build activity grid from runs
-  const grid = [...activityGrid];
-  runs.slice(-35).forEach((r, i) => {
-    if (r.km > 0) grid[i] = 1;
-  });
+  const avgPace = formatPace(weightedPace(runs));
+  const journeys = new Set([user?.currentRoute, ...runs.map((r) => r.routeName)].filter(Boolean)).size;
+  // Last 35 days, by real activity date (it used to light up cells by run count instead).
+  const grid = activityDays(runs, 35, nowMs());
 
   return (
     <main style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Archivo Black', sans-serif", paddingBottom: "80px" }}>
@@ -126,7 +139,7 @@ export default function Profile() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "20px" }}>
           {[
             { label: "TOTAL DISTANCE", value: totalKm.toFixed(2), unit: "km", color: "#4F6EF7" },
-            { label: "BEST STREAK", value: String(streak), unit: "days", color: "#22C55E" },
+            { label: "STREAK", value: String(streak), unit: "days", color: "#22C55E" },
           ].map((s) => (
             <div key={s.label} style={{ background: "#F8F9FA", borderRadius: "14px", padding: "14px" }}>
               <p style={{ color: "#9CA3AF", fontSize: "9px", letterSpacing: "2px", marginBottom: "6px", fontFamily: "system-ui" }}>{s.label}</p>
@@ -141,8 +154,8 @@ export default function Profile() {
         <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
           {[
             { label: "RUNS", value: String(runs.length) },
-            { label: "JOURNEYS", value: "1" },
-            { label: "AVG PACE", value: avgPace },
+            { label: "JOURNEYS", value: String(Math.max(journeys, 1)) },
+            { label: "AVG PACE", value: avgPace === "—" ? "—" : `${avgPace}/km` },
           ].map((s) => (
             <div key={s.label} style={{ flex: 1, background: "#F8F9FA", borderRadius: "12px", padding: "10px 8px", textAlign: "center" }}>
               <p style={{ color: "#0F0F0F", fontSize: "16px", fontWeight: 900 }}>{s.value}</p>
@@ -179,7 +192,7 @@ export default function Profile() {
           <p style={{ color: "#0F0F0F", fontSize: "12px", letterSpacing: "2px", fontWeight: 900, marginBottom: "14px" }}>ACHIEVEMENTS</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
             {achievements.map((a, i) => {
-              const unlocked = a.condition(totalKm, streak);
+              const unlocked = a.condition(totalKm, user?.streak || 0);
               return (
                 <div key={i} style={{ background: unlocked ? "#EEF2FF" : "#F9FAFB", borderRadius: "14px", padding: "14px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", border: unlocked ? "1px solid #C7D2FE" : "1px solid #F3F4F6", opacity: unlocked ? 1 : 0.5 }}>
                   <span style={{ fontSize: "22px", filter: unlocked ? "none" : "grayscale(100%)" }}>
@@ -237,4 +250,4 @@ export default function Profile() {
       </nav>
     </main>
   );
-}
+}

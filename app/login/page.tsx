@@ -1,8 +1,27 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const signingIn = useRef(false);
+
+  // Someone who is already signed in has no reason to see the login screen.
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
+      try {
+        const { auth } = await import("../firebase");
+        const { onAuthStateChanged } = await import("firebase/auth");
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user && !signingIn.current) window.location.replace("/");
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+    return () => unsubscribe?.();
+  }, []);
 
   useEffect(() => {
     document.body.style.background = "#FFFFFF";
@@ -15,6 +34,8 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
   setLoading(true);
+  setError("");
+  signingIn.current = true;
   try {
     const { auth, db } = await import("../firebase");
     const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
@@ -51,6 +72,16 @@ export default function Login() {
 }
   } catch (err) {
     console.error(err);
+    signingIn.current = false;
+    const code = (err as { code?: string }).code;
+    // Closing the popup is a choice, not an error.
+    if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
+      setError(
+        code === "auth/popup-blocked" ? "Your browser blocked the sign-in pop-up. Allow pop-ups for this site and try again."
+        : code === "auth/network-request-failed" ? "No connection. Check your internet and try again."
+        : "Sign-in didn't work. Please try again."
+      );
+    }
     setLoading(false);
   }
 };
@@ -168,6 +199,7 @@ export default function Login() {
             {loading ? "Starting your journey..." : "Start Free with Google"}
           </span>
         </button>
+        {error && <p role="alert" style={{ color: "#EF4444", fontSize: "13px", fontFamily: "system-ui", textAlign: "center", margin: "0 0 12px" }}>{error}</p>}
 
         <p style={{ color: "#D1D5DB", fontSize: "10px", textAlign: "center", lineHeight: 1.6, fontFamily: "system-ui" }}>
           By continuing, you agree to our{" "}

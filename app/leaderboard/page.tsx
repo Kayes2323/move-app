@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { LoadError } from "../components/LoadError";
 
 interface LeaderUser {
   uid: string;
@@ -18,33 +19,47 @@ const avatarColors = [
 const initials = (name: string) => name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
 export default function Leaderboard() {
-  const [tab, setTab] = useState("all");
+  const [attempt, setAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
   const [users, setUsers] = useState<LeaderUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUid, setCurrentUid] = useState("");
 
   useEffect(() => {
-    const loadData = async () => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
       try {
         const { auth, db } = await import("../firebase");
         const { collection, getDocs, orderBy, query, limit } = await import("firebase/firestore");
         const { onAuthStateChanged } = await import("firebase/auth");
 
-        onAuthStateChanged(auth, async (user) => {
-          if (user) setCurrentUid(user.uid);
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (!cancelled && user) setCurrentUid(user.uid);
         });
 
-        const q = query(collection(db, "users"), orderBy("totalKm", "desc"), limit(20));
-        const snap = await getDocs(q);
-        const data = snap.docs.map(d => ({ uid: d.id, ...d.data() })) as LeaderUser[];
-        setUsers(data);
+        // Preferred source: public profiles hold only name, photo and totals. The private `users` collection is a
+        // transitional fallback until every runner has a public profile (and it is why access rules matter).
+        let docs = await getDocs(query(collection(db, "publicProfiles"), orderBy("totalKm", "desc"), limit(20))).then((r) => r.docs).catch(() => []);
+        if (docs.length === 0) {
+          docs = (await getDocs(query(collection(db, "users"), orderBy("totalKm", "desc"), limit(20)))).docs;
+        }
+        if (cancelled) return;
+        setUsers(docs.map((d) => {
+          const v = d.data();
+          return { uid: d.id, name: v.name ?? "Runner", photo: v.photo ?? "", totalKm: v.totalKm ?? 0, streak: v.streak ?? 0 };
+        }));
+        setFailed(false);
       } catch (err) {
         console.error(err);
+        if (!cancelled) setFailed(true);
       }
-      setLoading(false);
-    };
-    loadData();
-  }, []);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; unsubscribe?.(); };
+  }, [attempt]);
+
+  if (failed) return <LoadError message="Couldn't load the leaderboard." onRetry={() => { setFailed(false); setLoading(true); setAttempt((n) => n + 1); }} />;
 
   const top3 = users.slice(0, 3);
   const rest = users.slice(3);
@@ -59,18 +74,6 @@ export default function Leaderboard() {
       </div>
 
       <div style={{ padding: "20px 16px 0" }}>
-
-        {/* TAB */}
-        <div style={{ background: "#F3F4F6", borderRadius: "16px", padding: "4px", display: "flex", gap: "4px", marginBottom: "24px" }}>
-          {[
-            { key: "all", label: "ALL TIME" },
-            { key: "weekly", label: "WEEKLY" },
-          ].map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, padding: "10px 0", borderRadius: "12px", border: "none", cursor: "pointer", background: tab === t.key ? "#FFFFFF" : "transparent", boxShadow: tab === t.key ? "0 2px 8px rgba(0,0,0,0.08)" : "none", color: tab === t.key ? "#0F0F0F" : "#9CA3AF", fontSize: "11px", fontWeight: 900, letterSpacing: "1px", transition: "all 0.2s ease" }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
 
         {loading ? (
           <div style={{ textAlign: "center", padding: "40px" }}>
@@ -189,4 +192,4 @@ export default function Leaderboard() {
       </nav>
     </main>
   );
-}
+}

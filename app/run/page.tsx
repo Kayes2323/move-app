@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LiveRouteCard, type GpsStatus } from "../components/LiveRouteCard";
-import { findRoute, nowMs, toKind, type ActivityKind } from "../lib/activity";
+import { findRoute, journeyOffsetKm, nowMs, toKind, type ActivityKind } from "../lib/activity";
+import { clearSnapshot, readSnapshot, writeSnapshot, type ActiveSnapshot } from "../lib/activeActivity";
+import { syncPublicProfile } from "../lib/publicProfile";
 
 type ActivityType = ActivityKind;
 
@@ -15,6 +17,7 @@ interface Position {
 interface Journey {
   routeName: string;
   completedKm: number;
+  startIdx: number;
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -60,6 +63,9 @@ const MIN_DISTANCE_FILTER: Record<ActivityType, number> = {
   cycling: 0.010,
 };
 
+// GPS fixes less accurate than this are noise (a walker standing still can "move" 100 m between fixes).
+const MAX_ACCURACY_M = 50;
+
 export default function RunPage() {
   const router = useRouter();
 
@@ -72,18 +78,22 @@ export default function RunPage() {
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>("waiting");
   const [userWeight, setUserWeight] = useState(70);
   const [journey, setJourney] = useState<Journey | null>(null);
+  const [resumable, setResumable] = useState<ActiveSnapshot | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const watchId = useRef<number | null>(null);
   const lastPos = useRef<Position | null>(null);
   const totalDistance = useRef(0);
   const secondsRef = useRef(0);
+  const activityRef = useRef<ActivityType | null>(null);
   // Wall-clock based timing, so a locked screen or throttled tab doesn't make the timer drift.
   const startedAtRef = useRef(0);
   const pausedMsRef = useRef(0);
   const pauseStartRef = useRef(0);
   const pausedRef = useRef(false);
   const finishing = useRef(false);
+  const trackingRef = useRef(false);
+  const wakeLock = useRef<WakeLockSentinel | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,30 +104,78 @@ export default function RunPage() {
         const { doc, getDoc } = await import("firebase/firestore");
         const { onAuthStateChanged } = await import("firebase/auth");
         unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (!user || cancelled) return;
+          if (cancelled) return;
+          // An activity needs an account to be saved to; don't let someone run for an hour and lose it.
+          if (!user) {
+            router.replace("/login");
+            return;
+          }
+          setResumable(readSnapshot());
           const snap = await getDoc(doc(db, "users", user.uid));
           if (cancelled || !snap.exists()) return;
           const data = snap.data();
           if (data.weight) setUserWeight(data.weight);
-          if (data.currentRoute) setJourney({ routeName: data.currentRoute, completedKm: data.completedKm ?? 0 });
+          if (data.currentRoute) {
+            setJourney({ routeName: data.currentRoute, completedKm: data.completedKm ?? 0, startIdx: data.startCheckpointIndex ?? 0 });
+          }
         });
       } catch (e) { console.error(e); }
     })();
     return () => { cancelled = true; unsubscribe?.(); };
-  }, []);
+  }, [router]);
+
+  const persist = () => {
+    if (!trackingRef.current || !activityRef.current) return;
+    writeSnapshot({ activity: activityRef.current, seconds: secondsRef.current, distance: totalDistance.current, savedAt: nowMs() });
+  };
+
+  const requestWakeLock = async () => {
+    try {
+      if ("wakeLock" in navigator && !wakeLock.current) {
+        const sentinel = await navigator.wakeLock.request("screen");
+        wakeLock.current = sentinel;
+        sentinel.addEventListener("release", () => { wakeLock.current = null; });
+      }
+    } catch {
+      // Not supported or denied: tracking still works, but the screen may sleep.
+    }
+  };
 
   const stopTracking = () => {
+    trackingRef.current = false;
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     if (watchId.current !== null) { navigator.geolocation.clearWatch(watchId.current); watchId.current = null; }
+    wakeLock.current?.release().catch(() => {});
+    wakeLock.current = null;
   };
 
   // Never leave a GPS watch or timer running after leaving the page.
   useEffect(() => stopTracking, []);
 
-  const startTracking = (selectedActivity: ActivityType) => {
+  // Browsers drop the wake lock when the tab is hidden; take it back, and save progress, on visibility changes.
+  useEffect(() => {
+    if (!started) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") requestWakeLock();
+      else persist();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [started]);
+
+  const startTracking = (selectedActivity: ActivityType, restore?: ActiveSnapshot) => {
     setActivity(selectedActivity);
+    activityRef.current = selectedActivity;
     setStarted(true);
-    startedAtRef.current = nowMs();
+    trackingRef.current = true;
+
+    // Time spent with the app closed is not counted (distance wasn't being tracked either).
+    secondsRef.current = restore?.seconds ?? 0;
+    totalDistance.current = restore?.distance ?? 0;
+    setSeconds(secondsRef.current);
+    setDistance(totalDistance.current);
+    startedAtRef.current = nowMs() - secondsRef.current * 1000;
+    requestWakeLock();
 
     intervalRef.current = setInterval(() => {
       if (pausedRef.current) return;
@@ -125,6 +183,7 @@ export default function RunPage() {
       if (elapsed !== secondsRef.current) {
         secondsRef.current = elapsed;
         setSeconds(elapsed);
+        if (elapsed % 5 === 0) persist();
       }
     }, 500);
 
@@ -135,6 +194,10 @@ export default function RunPage() {
 
     watchId.current = navigator.geolocation.watchPosition(
       (pos) => {
+        if (pos.coords.accuracy > MAX_ACCURACY_M) {
+          setGpsStatus("waiting");
+          return;
+        }
         setGpsStatus("active");
         if (pausedRef.current) { lastPos.current = null; return; }
         const { latitude, longitude } = pos.coords;
@@ -160,7 +223,8 @@ export default function RunPage() {
       },
       (err) => {
         console.error(err);
-        setGpsStatus("error");
+        // Permission denied/revoked is a hard stop; timeouts and brief signal loss recover on their own.
+        setGpsStatus(err.code === err.PERMISSION_DENIED ? "error" : "waiting");
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
@@ -176,18 +240,22 @@ export default function RunPage() {
       pauseStartRef.current = nowMs();
       pausedRef.current = true;
       setPaused(true);
+      persist();
     }
   };
 
   const handleFinish = async () => {
     if (finishing.current || !activity) return;
     finishing.current = true;
+    persist();
     stopTracking();
 
     const km = totalDistance.current;
     const secs = secondsRef.current;
 
     if (km < 0.01) {
+      clearSnapshot();
+      window.alert("No distance was recorded, so this activity wasn't saved.");
       router.push("/");
       return;
     }
@@ -201,45 +269,64 @@ export default function RunPage() {
       const { doc, updateDoc, arrayUnion, increment, getDoc } = await import("firebase/firestore");
       const user = auth.currentUser;
 
-      if (user) {
-        const userRef = doc(db, "users", user.uid);
-        const userData = (await getDoc(userRef)).data();
-
-        const run = {
-          id: `${nowMs()}-${Math.random().toString(36).slice(2, 8)}`,
-          km: rounded,
-          duration: formatTime(secs),
-          pace: parseFloat(paceMin.toFixed(2)),
-          calories: calcCalories(activity, userWeight, secs),
-          steps: calcSteps(km, activity, paceMin),
-          activity,
-          date: new Date().toISOString(),
-          routeName: userData?.currentRoute ?? null,
-          journeyKm: parseFloat(((userData?.completedKm ?? 0) + rounded).toFixed(2)),
-        };
-
-        const today = new Date().toDateString();
-        const lastRunDate = userData?.lastRun ? new Date(userData.lastRun).toDateString() : null;
-        const yesterday = new Date(nowMs() - 86400000).toDateString();
-
-        let newStreak = userData?.streak || 0;
-        if (lastRunDate === today) {
-          // already ran today: streak unchanged
-        } else if (lastRunDate === yesterday) {
-          newStreak = newStreak + 1;
-        } else {
-          newStreak = 1;
-        }
-
-        savedIndex = (userData?.runs ?? []).length;
-        await updateDoc(userRef, {
-          totalKm: increment(rounded),
-          completedKm: increment(rounded),
-          runs: arrayUnion(run),
-          lastRun: run.date,
-          streak: newStreak,
-        });
+      if (!user) {
+        // Session ended mid-activity: keep the snapshot so it can be finished after signing back in.
+        finishing.current = false;
+        window.alert("You've been signed out. Sign in again and your activity will be waiting to save.");
+        router.push("/login");
+        return;
       }
+
+      const userRef = doc(db, "users", user.uid);
+      const userData = (await getDoc(userRef)).data();
+      const route = findRoute(userData?.currentRoute);
+      const offset = journeyOffsetKm(route, userData?.startCheckpointIndex);
+      const reached = offset + (userData?.completedKm ?? 0) + rounded;
+
+      const run = {
+        id: `${nowMs()}-${Math.random().toString(36).slice(2, 8)}`,
+        km: rounded,
+        duration: formatTime(secs),
+        pace: parseFloat(paceMin.toFixed(2)),
+        calories: calcCalories(activity, userWeight, secs),
+        steps: calcSteps(km, activity, paceMin),
+        activity,
+        date: new Date().toISOString(),
+        routeName: userData?.currentRoute ?? null,
+        // Absolute km along the route, so a card can always place the dot correctly.
+        journeyKm: parseFloat((route ? Math.min(reached, route.totalKm) : reached).toFixed(2)),
+      };
+
+      const today = new Date().toDateString();
+      const lastRunDate = userData?.lastRun ? new Date(userData.lastRun).toDateString() : null;
+      const yesterday = new Date(nowMs() - 86400000).toDateString();
+
+      let newStreak = userData?.streak || 0;
+      if (lastRunDate === today) {
+        // already active today: streak unchanged
+      } else if (lastRunDate === yesterday) {
+        newStreak = newStreak + 1;
+      } else {
+        newStreak = 1;
+      }
+
+      savedIndex = (userData?.runs ?? []).length;
+      await updateDoc(userRef, {
+        totalKm: increment(rounded),
+        completedKm: increment(rounded),
+        runs: arrayUnion(run),
+        lastRun: run.date,
+        streak: newStreak,
+      });
+      clearSnapshot();
+
+      // Leaderboard copy, kept separate from the private document. Never blocks the save.
+      void syncPublicProfile(user.uid, {
+        name: userData?.name ?? user.displayName ?? "Runner",
+        photo: userData?.photo ?? user.photoURL ?? "",
+        totalKm: (userData?.totalKm ?? 0) + rounded,
+        streak: newStreak,
+      });
     } catch (err) {
       console.error(err);
       finishing.current = false;
@@ -251,13 +338,21 @@ export default function RunPage() {
   };
 
   const handleClose = () => {
-    if (confirm("Stop tracking?")) {
+    if (confirm("Stop tracking? This activity won't be saved.")) {
       stopTracking();
+      clearSnapshot();
       router.push("/");
     }
   };
 
+  const discardResumable = () => {
+    clearSnapshot();
+    setResumable(null);
+  };
+
   const pace = distance > 0.01 && seconds > 0 ? seconds / 60 / distance : 0;
+  const routeObj = journey ? findRoute(journey.routeName) : undefined;
+  const routeStartKm = journeyOffsetKm(routeObj, journey?.startIdx);
 
   if (!started) {
     const activities = [
@@ -278,6 +373,17 @@ export default function RunPage() {
           <h1 style={{ color: "#0F0F0F", fontSize: "28px", fontWeight: 900, margin: "0 0 6px" }}>Start Moving</h1>
           <p style={{ color: "#6B7280", fontSize: "13px", fontFamily: "system-ui", margin: 0 }}>Choose your activity to begin tracking</p>
         </div>
+
+        {resumable && (
+          <div role="alert" style={{ margin: "20px 20px 0", padding: "16px", borderRadius: "16px", background: "#FEF3C7", border: "1px solid #FCD34D", fontFamily: "system-ui" }}>
+            <p style={{ color: "#92400E", fontSize: "14px", fontWeight: 700, margin: "0 0 4px" }}>You have an unfinished {resumable.activity === "cycling" ? "ride" : resumable.activity === "walking" ? "walk" : "run"}</p>
+            <p style={{ color: "#92400E", fontSize: "13px", margin: "0 0 12px" }}>{resumable.distance.toFixed(2)} km · {formatTime(resumable.seconds)}. Time while the app was closed isn&apos;t counted.</p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={() => { const r = resumable; setResumable(null); startTracking(r.activity, r); }} style={{ flex: 1, minHeight: "44px", borderRadius: "12px", border: 0, background: "#0F0F0F", color: "#FFFFFF", fontWeight: 700, cursor: "pointer" }}>Continue</button>
+              <button onClick={discardResumable} style={{ minHeight: "44px", padding: "0 18px", borderRadius: "12px", border: "1px solid #FCD34D", background: "transparent", color: "#92400E", fontWeight: 700, cursor: "pointer" }}>Discard</button>
+            </div>
+          </div>
+        )}
 
         <div style={{ padding: "24px 20px", display: "flex", flexDirection: "column", gap: "14px", flex: 1 }}>
           {activities.map((a) => (
@@ -314,8 +420,9 @@ export default function RunPage() {
   return (
     <LiveRouteCard
       kind={toKind(activity ?? undefined)}
-      route={journey ? findRoute(journey.routeName) : undefined}
-      journeyStartKm={journey?.completedKm ?? 0}
+      route={routeObj}
+      journeyStartKm={routeStartKm + (journey?.completedKm ?? 0)}
+      routeStartKm={routeStartKm}
       distanceKm={distance}
       seconds={seconds}
       pace={pace}

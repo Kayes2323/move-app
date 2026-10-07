@@ -9,27 +9,40 @@ export default function Onboarding() {
   const [error, setError] = useState("");
   const [isUpdate, setIsUpdate] = useState(false);
 
+  const [uid, setUid] = useState<string | null>(null);
+
+  // auth.currentUser is empty right after a page load; wait for the auth state instead of reading it once.
   useEffect(() => {
-    const checkUser = async () => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
       try {
         const { auth, db } = await import("../firebase");
+        const { onAuthStateChanged } = await import("firebase/auth");
         const { doc, getDoc } = await import("firebase/firestore");
-        const user = auth.currentUser;
-        if (user) {
-          const snap = await getDoc(doc(db, "users", user.uid));
-          if (snap.exists() && snap.data().onboarded) {
-            setIsUpdate(true);
-            if (snap.data().weight) {
-              setWeight(String(snap.data().weight));
-            }
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (cancelled) return;
+          if (!user) {
+            router.replace("/login");
+            return;
           }
-        }
+          setUid(user.uid);
+          try {
+            const snap = await getDoc(doc(db, "users", user.uid));
+            if (!cancelled && snap.exists() && snap.data().onboarded) {
+              setIsUpdate(true);
+              if (snap.data().weight) setWeight(String(snap.data().weight));
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        });
       } catch (err) {
         console.error(err);
       }
-    };
-    checkUser();
-  }, []);
+    })();
+    return () => { cancelled = true; unsubscribe?.(); };
+  }, [router]);
 
   const handleSubmit = async () => {
     const w = parseFloat(weight);
@@ -37,20 +50,19 @@ export default function Onboarding() {
       setError("Please enter a valid weight (30-200 kg)");
       return;
     }
+    if (!uid) {
+      setError("Still signing you in. Please try again in a moment.");
+      return;
+    }
     setLoading(true);
     try {
-      const { auth, db } = await import("../firebase");
+      const { db } = await import("../firebase");
       const { doc, updateDoc } = await import("firebase/firestore");
-      const user = auth.currentUser;
-      if (user) {
-        await updateDoc(doc(db, "users", user.uid), {
-          weight: w,
-          onboarded: true,
-        });
-      }
-      router.push("/");
+      await updateDoc(doc(db, "users", uid), { weight: w, onboarded: true });
+      router.push(isUpdate ? "/profile" : "/");
     } catch (err) {
       console.error(err);
+      setError("Couldn't save your weight. Check your connection and try again.");
       setLoading(false);
     }
   };
@@ -174,4 +186,4 @@ export default function Onboarding() {
       </div>
     </main>
   );
-}
+}

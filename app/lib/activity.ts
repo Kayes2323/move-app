@@ -151,7 +151,7 @@ export interface RouteGeometry {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Projects the journey's real checkpoint coordinates into `box` (aspect preserved, centred). */
-export function projectRoute(route: Route, box: PlotBox, progressKm: number): RouteGeometry {
+export function projectRoute(route: Route, box: PlotBox, progressKm: number, startKm = 0): RouteGeometry {
   const raw = [
     { name: "Dhaka", type: "start" as const, km: 0, lat: DHAKA.lat, lng: DHAKA.lng },
     ...route.checkpoints.map((c) => ({ name: c.name, type: c.type, km: c.distanceFromStart, lat: c.coords[0], lng: c.coords[1] })),
@@ -176,26 +176,84 @@ export function projectRoute(route: Route, box: PlotBox, progressKm: number): Ro
     y: round1(oy + (ys[i] - minY) * scale),
   }));
 
-  const done = Math.max(0, Math.min(progressKm, route.totalKm));
-  const progress = [{ x: points[0].x, y: points[0].y }];
-  let here = progress[0];
-  for (let i = 0; i < points.length - 1; i++) {
-    const a = points[i];
-    const b = points[i + 1];
-    if (done >= b.km) {
-      here = { x: b.x, y: b.y };
-      progress.push(here);
-      continue;
+  /** Position on the route polyline at an absolute route distance. */
+  const pointAt = (km: number): { x: number; y: number } => {
+    const d = Math.max(0, Math.min(km, route.totalKm));
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      if (d <= b.km) {
+        const span = b.km - a.km;
+        const t = span > 0 ? (d - a.km) / span : 0;
+        return { x: round1(a.x + (b.x - a.x) * t), y: round1(a.y + (b.y - a.y) * t) };
+      }
     }
-    const span = b.km - a.km;
-    const t = span > 0 ? (done - a.km) / span : 0;
-    here = { x: round1(a.x + (b.x - a.x) * t), y: round1(a.y + (b.y - a.y) * t) };
-    if (done > a.km) progress.push(here);
-    break;
-  }
+    const last = points[points.length - 1];
+    return { x: last.x, y: last.y };
+  };
+
+  const from = Math.max(0, Math.min(startKm, route.totalKm));
+  const done = Math.max(from, Math.min(progressKm, route.totalKm));
+  const progress = [pointAt(from)];
+  for (const p of points) if (p.km > from && p.km < done) progress.push({ x: p.x, y: p.y });
+  if (done > from) progress.push(pointAt(done));
 
   const nextPoint = points.find((p) => p.km > done);
-  return { points, progress, here, next: nextPoint ? { name: nextPoint.name, km: nextPoint.km - done } : null };
+  return { points, progress, here: pointAt(done), next: nextPoint ? { name: nextPoint.name, km: nextPoint.km - done } : null };
+}
+
+/**
+ * Route km at which the user's journey began. Index 0 means "from Dhaka" (0 km, even though the first listed
+ * checkpoint is Jatrabari at 8 km); any other index starts at that checkpoint.
+ */
+export function journeyOffsetKm(route: Route | undefined, startCheckpointIndex?: number): number {
+  if (!route || !startCheckpointIndex) return 0;
+  return route.checkpoints[startCheckpointIndex]?.distanceFromStart ?? 0;
+}
+
+/* ---------- user stats ---------- */
+
+/** A stored streak is only still alive if the last activity was today or yesterday. */
+export function effectiveStreak(streak: number | undefined, lastRun: string | undefined, now: number): number {
+  if (!streak || !lastRun) return 0;
+  const last = new Date(lastRun);
+  if (Number.isNaN(last.getTime())) return 0;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const lastDay = new Date(last);
+  lastDay.setHours(0, 0, 0, 0);
+  const days = Math.round((today.getTime() - lastDay.getTime()) / 86400000);
+  return days <= 1 ? streak : 0;
+}
+
+/** Overall pace in min/km, weighted by distance (a plain mean of per-run paces over-weights short runs). */
+export function weightedPace(runs: RunEntry[]): number {
+  let km = 0;
+  let seconds = 0;
+  for (const r of runs) {
+    const secs = parseDurationSeconds(r.duration);
+    if (r.km > 0 && secs > 0) {
+      km += r.km;
+      seconds += secs;
+    }
+  }
+  return km > 0 ? seconds / 60 / km : 0;
+}
+
+/** 0/1 flags for the last `days` days (oldest first), based on the real activity dates. */
+export function activityDays(runs: RunEntry[], days: number, now: number): number[] {
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const grid = Array<number>(days).fill(0);
+  for (const r of runs) {
+    if (!(r.km > 0)) continue;
+    const d = new Date(r.date);
+    if (Number.isNaN(d.getTime())) continue;
+    d.setHours(0, 0, 0, 0);
+    const ago = Math.round((startOfToday.getTime() - d.getTime()) / 86400000);
+    if (ago >= 0 && ago < days) grid[days - 1 - ago] = 1;
+  }
+  return grid;
 }
 
 /* ---------- photo ---------- */

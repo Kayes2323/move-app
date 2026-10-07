@@ -8,6 +8,8 @@ export type LabelMode = "all" | "major" | "mini" | "auto";
 interface Props {
   route: Route;
   progressKm: number;
+  /** Route km where the user's journey began (defaults to Dhaka). */
+  startKm?: number;
   width: number;
   height: number;
   padL: number;
@@ -86,9 +88,9 @@ function placeLabels(points: RoutePoint[], wanted: number[], fontSize: number, w
   return out;
 }
 
-function JourneyRouteBase({ route, progressKm, width, height, padL, padR, padY, labels, accent, line = 2.5, fontSize = 11, dotted = true, pulse = false }: Props) {
+function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL, padR, padY, labels, accent, line = 2.5, fontSize = 11, dotted = true, pulse = false }: Props) {
   const box = useMemo(() => ({ x: padL, y: padY, w: Math.max(width - padL - padR, 1), h: Math.max(height - padY * 2, 1) }), [width, height, padL, padR, padY]);
-  const geo = useMemo(() => projectRoute(route, box, progressKm), [route, box, progressKm]);
+  const geo = useMemo(() => projectRoute(route, box, progressKm, startKm), [route, box, progressKm, startKm]);
   const placed = useMemo(() => placeLabels(geo.points, chooseLabels(geo.points, labels), fontSize, width), [geo.points, labels, fontSize, width]);
 
   const toPoints = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
