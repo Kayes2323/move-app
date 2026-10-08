@@ -1,7 +1,4 @@
-/**
- * @deprecated Part of the retired cell-exploration experiment (see ../DEPRECATED.md). Territory progress is distance-based now.
- * Kept, with its tests, only until the removal is approved.
- */
+/** Territory's read-only view of an activity, as the exploration algorithm consumes it. Plain data: Territory never imports the tracking engine. */
 import type { ContributingKind } from "../contribution";
 import type { TerritorySelection } from "../selection";
 

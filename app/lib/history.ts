@@ -1,5 +1,4 @@
 import { parseDurationSeconds, toKind, type RunEntry } from "./activity";
-import type { HistoryRun } from "./territory/conquest/credit";
 import { getRuntime } from "./tracking/runtime";
 import { legacyRun } from "./tracking/sync";
 
@@ -45,6 +44,15 @@ export async function loadHistory(uid: string): Promise<History> {
   const extra = waiting.filter((l) => !known.has(l.id)).map(legacyRun);
   const runs = [...serverRuns, ...extra].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
   return { user: { ...user, runs }, runs, pendingIds: new Set(extra.map((r) => r.id as string)), serverOk };
+}
+
+/** A recorded activity with its active-time window. */
+export interface HistoryRun {
+  id: string;
+  kind: "running" | "walking" | "cycling";
+  km: number;
+  startMs: number;
+  endMs: number;
 }
 
 /** The recorded entry as Territory sees it: real distance and the active-time window ending at the recorded finish. */

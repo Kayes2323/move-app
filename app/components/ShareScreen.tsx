@@ -16,9 +16,7 @@ import {
 import { loadHistory, type UserDoc } from "../lib/history";
 import { loadTrack } from "../lib/trackLoader";
 import type { TrackPoint } from "../lib/tracking/types";
-import { reconcileTerritory } from "../lib/territoryState";
-import { getTerritory } from "../lib/territory/conquest/registry";
-import type { TerritoryProgress } from "../lib/territory/conquest/progress";
+import { loadTerritory, type TerritorySnapshot } from "../lib/territoryState";
 import { availableContexts, decideShareContext, SHARE_CONTEXT_LABEL, territoryFactsAt, type ShareContext } from "../lib/share/context";
 
 type UserData = UserDoc;
@@ -37,7 +35,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
   const [attempt, setAttempt] = useState(0);
   const [user, setUser] = useState<UserData | null>(null);
   const [uid, setUid] = useState<string | null>(null);
-  const [territory, setTerritory] = useState<{ progress: TerritoryProgress; areaId: string } | null>(null);
+  const [territory, setTerritory] = useState<TerritorySnapshot | null>(null);
   const [loadedTrack, setLoadedTrack] = useState<{ id: string; points: TrackPoint[] | null } | null>(null);
   const [chosenCtx, setChosenCtx] = useState<ShareContext | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -67,11 +65,14 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
             if (cancelled) return;
             const all = h.runs;
             const serverRuns = h.user.runs ?? [];
-            const rec = reconcileTerritory(fu.uid, h.user.territory, all);
+            const snap = await loadTerritory(fu.uid, h.user, all).catch((err) => {
+              console.warn("Territory not available", err);
+              return null;
+            });
             setUid(fu.uid);
             setPendingIds(h.pendingIds);
             setUser({ ...h.user, runs: all });
-            setTerritory(rec.stored && rec.progress ? { progress: rec.progress, areaId: rec.stored.areaId } : null);
+            setTerritory(snap);
             if (!all.some((r) => r.km > 0)) {
               setStatus(h.serverOk ? "empty" : "error");
               return;
@@ -130,21 +131,22 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     const kind = toKind(run.activity);
     const route = findRoute(run.routeName ?? user?.currentRoute);
     const routeStartKm = journeyOffsetKm(route, user?.startCheckpointIndex);
-    const def = territory ? getTerritory(territory.areaId) : undefined;
-    const territoryFacts = territory && def && run.id ? territoryFactsAt(territory.progress, run.id) : null;
+    const def = territory?.def;
+    const territoryFacts = territory && run.id ? territoryFactsAt(territory.state, territory.mask, run.id) : null;
+    const territoryKm = territory ? Math.round(runs.filter((r) => r.id && territory.state.applied.some((a) => a.id === r.id && a.added > 0)).reduce((sum, r) => sum + r.km, 0) * 10) / 10 : 0;
     const url = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("ctx");
-    const shareFacts = { runId: run.id, hasJourney: Boolean(route), territory: def ? territory?.progress ?? null : null, hint: hint ?? url };
+    const shareFacts = { runId: run.id, hasJourney: Boolean(route), territory: territory?.state ?? null, hint: hint ?? url };
     const options = availableContexts(shareFacts);
     const auto = decideShareContext(shareFacts);
     const context = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
-    return { run, kind, route, routeStartKm, def, territoryFacts, options, context };
-  }, [run, selected, user, territory, hint, chosenCtx]);
+    return { run, kind, route, routeStartKm, def, territoryFacts, territoryKm, options, context };
+  }, [run, selected, user, territory, hint, chosenCtx, runs]);
 
   const common = { photo, ratio, tone } as const;
   const card = (() => {
     if (!facts) return null;
-    const { run: r, kind, route, routeStartKm, def, territoryFacts, context } = facts;
-    if ((context === "TERRITORY_PROGRESS" || context === "TERRITORY_CONQUERED") && def && territoryFacts) return <TerritoryCard def={def} facts={territoryFacts} {...common} />;
+    const { run: r, kind, route, routeStartKm, def, territoryFacts, territoryKm, context } = facts;
+    if ((context === "TERRITORY_PROGRESS" || context === "TERRITORY_CONQUERED") && def && territoryFacts) return <TerritoryCard def={def} facts={territoryFacts} actualKm={territoryKm} {...common} />;
     if (context === "JOURNEY_PROGRESS" && route) {
       // journeyKm is absolute; older activities fall back to the current progress.
       return <JourneyProgressCard route={route} routeStartKm={routeStartKm} today={{ kind, km: r.km, duration: r.duration, pace: r.pace }} journeyKm={r.journeyKm ?? routeStartKm + (user?.completedKm ?? 0)} {...common} />;

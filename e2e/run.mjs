@@ -457,55 +457,110 @@ async function scenarioTerritory() {
   await f.ctx.close();
 }
 
+/* ---------- Territory fixtures: real Mohammadpur mask, GPS tracks along real eligible streets ---------- */
+import { readFileSync } from "node:fs";
+const MASK = JSON.parse(readFileSync(new URL("../public/geo/bd/masks/bd-upa-dhaka-mohammadpur.json", import.meta.url), "utf8"));
+const ZOOM = MASK.meta.cellZoom;
+const tileToLatLng = (x, y) => { const n = 2 ** ZOOM; return { lat: (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI, lng: (x / n) * 360 - 180 }; };
+const cellCentre = (id) => tileToLatLng(Math.floor(id / 2 ** ZOOM) + 0.5, (id % 2 ** ZOOM) + 0.5);
+const STREETS = [...MASK.runs].filter(([, len]) => len >= 16).sort((a, b) => b[1] - a[1]);
+/** A chunk of GPS fixes walking one real eligible street (consecutive cells, north-south), one fix a second at 1.4 m/s. */
+const streetChunk = (i, t0, { lat = 0, lng = 0 } = {}) => {
+  const [start] = STREETS[i];
+  const a = cellCentre(start), b = cellCentre(start + 15);
+  const metres = Math.hypot((b.lat - a.lat) * 111320, (b.lng - a.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180));
+  const n = Math.floor(metres / 1.4);
+  const flat = [];
+  for (let k = 0; k <= n; k++) { const f = k / n; flat.push(t0 + k * 1000, a.lat + (b.lat - a.lat) * f + lat, a.lng + (b.lng - a.lng) * f + lng, 6, -9999, 0); }
+  return { seq: 0, count: n + 1, flat };
+};
+const ELIGIBLE = (() => { const out = []; for (const [s, l] of MASK.runs) for (let k = 0; k < l; k++) out.push(s + k); return out; })();
+const runsOf = (cells) => { const r = []; for (const c of cells) { const last = r[r.length - 1]; if (last && last[0] + last[1] === c) last[1]++; else r.push([c, 1]); } return r; };
+const stored = (over = {}) => ({ areaId: "bd-upa-dhaka-mohammadpur", selectedAt: Date.now() - 5 * 86400000, maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", coverageVersion: "territory-coverage/1", cellRuns: [], applied: [], ...over });
+const TRACK = (id) => `users/u1/activities/${id}/tracks/0`;
+
 async function scenarioConquest() {
-  // Distance-based Territory hub: choose Mohammadpur, then see credit from past Walks/Runs, wherever they were.
+  // Territory is geographic coverage: only new eligible ground inside Mohammadpur counts, never distance.
   const a = await fresh();
   await a.pg.goto(`${BASE}/territory`);
   await a.pg.waitForSelector("text=Choose Mohammadpur", { timeout: 30000 });
   const t0 = await text(a.pg);
-  check("C1. start screen shows MOHAMMADPUR, the real 19.4 km target and 0%", /Mohammadpur/i.test(t0) && /19\.4/.test(t0) && /0% conquered/.test(t0));
+  check("C1. start screen shows MOHAMMADPUR and 0% conquered, with no distance target", /Mohammadpur/i.test(t0) && /0% conquered/.test(t0) && !/to conquer/.test(t0));
   await a.pg.getByRole("button", { name: "Choose Mohammadpur" }).click();
   await a.pg.waitForSelector("text=Start moving", { timeout: 15000 });
   const saved = (await dbOf(a.pg))["users/u1"].territory;
-  check("C2. choosing stores the area, target 19.4 km and the rule/target versions", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.targetKm === 19.4 && /territory-target/.test(saved.targetVersion) && /territory-conquest/.test(saved.rulesVersion), JSON.stringify(saved));
+  check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cellRuns.length === 0 && saved.applied.length === 0, JSON.stringify(saved).slice(0, 200));
   check("C3. START MOVING opens the Territory run", (await a.pg.getByRole("link", { name: /start moving/i }).getAttribute("href")) === "/run?territory=1");
   check("C4. no uncaught page errors on the hub", a.pg.errors.length === 0, a.pg.errors.join(" | ").slice(0, 200));
   await a.ctx.close();
 
   const now = Date.now();
   const iso = (ms) => new Date(ms).toISOString();
-  const db = baseDb();
-  db["users/u1"].territory = { areaId: "bd-upa-dhaka-mohammadpur", selectedAt: now - 3 * 86400000, targetKm: 19.4, rulesVersion: "territory-conquest/1", targetVersion: "territory-target/1" };
-  db["users/u1"].runs = [{ id: "r1", km: 13, duration: "1:20:00", date: iso(now - 86400000), activity: "walking" }];
-  const b = await fresh({ db });
-  await b.pg.goto(`${BASE}/territory`);
-  await b.pg.waitForSelector("text=Start moving", { timeout: 30000 });
-  const t1 = await text(b.pg);
-  check("C5. a past 13 km walk anywhere counts: 67% conquered, 6.4 km remaining", /67% conquered/i.test(t1) && /6\.4 km remaining/.test(t1), t1.slice(0, 300));
-  await b.ctx.close();
+  const walk = (id, daysAgo, over = {}) => ({ id, km: 13, duration: "05:00", date: iso(now - daysAgo * 86400000), activity: "walking", ...over });
+  const seed = (runs, tracks, territory = stored()) => {
+    const db = baseDb();
+    db["users/u1"].territory = territory;
+    db["users/u1"].runs = runs;
+    for (const [id, chunk] of Object.entries(tracks)) db[TRACK(id)] = chunk;
+    return db;
+  };
+  const percentOf = async (db, wait = "text=Start moving") => {
+    const s = await fresh({ db });
+    await s.pg.goto(`${BASE}/territory`);
+    await s.pg.waitForSelector(wait, { timeout: 30000 });
+    await s.pg.waitForTimeout(600);
+    const t = await text(s.pg);
+    const m = t.match(/([\d.]+)% conquered/i);
+    const out = { percent: m ? Number(m[1]) : NaN, db: await dbOf(s.pg), text: t, errors: s.pg.errors };
+    await s.ctx.close();
+    return out;
+  };
 
-  const db2 = baseDb();
-  db2["users/u1"].territory = { areaId: "bd-upa-dhaka-mohammadpur", selectedAt: now - 3 * 86400000, targetKm: 19.4, rulesVersion: "territory-conquest/1", targetVersion: "territory-target/1" };
-  db2["users/u1"].runs = [
-    { id: "r1", km: 15, duration: "1:30:00", date: iso(now - 2 * 86400000), activity: "walking" },
-    { id: "r2", km: 15, duration: "1:30:00", date: iso(now - 86400000), activity: "walking" },
-  ];
-  const c = await fresh({ db: db2 });
-  await c.pg.goto(`${BASE}/territory`);
-  await c.pg.waitForSelector("text=Share your conquest", { timeout: 30000 });
-  const t2 = await text(c.pg);
-  check("C6. completing shows 100% and never exceeds the target", /Territory conquered/i.test(t2) && /100/.test(t2) && /19\.4 \/ 19\.4/.test(t2), t2.slice(0, 300));
-  const stored = (await dbOf(c.pg))["users/u1"].territory;
-  check("C7. completion is saved once with the finishing activity", stored.completion && stored.completion.runId === "r2", JSON.stringify(stored.completion));
-  await c.ctx.close();
+  const one = await percentOf(seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }));
+  check("C5. a Walk along a real Mohammadpur street explores it: progress goes up", one.percent > 0 && one.percent < 5, one.text.slice(0, 200));
+  const terr = one.db["users/u1"].territory;
+  check("C6. the explored cells and the processed activity are saved once", terr.applied.length === 1 && terr.applied[0][0] === "r1" && terr.applied[0][1] >= 12 && terr.cellRuns.length >= 1, JSON.stringify(terr.applied));
+  check("C7. the activity's own distance is untouched", one.db["users/u1"].runs[0].km === 13);
+
+  const again = await percentOf(seed([walk("r1", 3), walk("r2", 2), walk("r3", 1)], { r1: streetChunk(0, now - 3 * 86400000 - 300000), r2: streetChunk(0, now - 2 * 86400000 - 300000), r3: streetChunk(0, now - 86400000 - 300000) }));
+  check("C8. the same street three times counts once: same progress as walking it once", again.percent === one.percent, `${again.percent} vs ${one.percent}`);
+  check("C9. repeats are recorded as processed with 0 new cells", again.db["users/u1"].territory.applied.map((x) => x[1]).slice(1).every((n) => n === 0), JSON.stringify(again.db["users/u1"].territory.applied));
+
+  const other = await percentOf(seed([walk("r1", 3), walk("r2", 2)], { r1: streetChunk(0, now - 3 * 86400000 - 300000), r2: streetChunk(1, now - 2 * 86400000 - 300000) }));
+  check("C10. a different eligible street adds new ground", other.percent > one.percent, `${other.percent} vs ${one.percent}`);
+
+  const far = await percentOf(seed([walk("h1", 1, { km: 20 })], { h1: streetChunk(0, now - 86400000 - 300000, { lat: -0.5, lng: 0.5 }) }));
+  check("C11. a 20 km Walk far from Mohammadpur (like Hajiganj) adds nothing", far.percent === 0 && far.db["users/u1"].runs[0].km === 20, String(far.percent));
+
+  const before = await percentOf(seed([walk("old", 9)], { old: streetChunk(0, now - 9 * 86400000 - 300000) }, stored({ selectedAt: now - 3 * 86400000 })));
+  check("C12. activity from before the Territory was chosen is never back-filled", before.percent === 0, String(before.percent));
+
+  const cycle = await percentOf(seed([walk("c1", 1, { activity: "cycling" })], { c1: streetChunk(0, now - 86400000 - 300000) }));
+  check("C13. cycling explores nothing yet", cycle.percent === 0);
+
+  const reload = await fresh({ db: seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }) });
+  await reload.pg.goto(`${BASE}/territory`);
+  await reload.pg.waitForSelector("text=Start moving", { timeout: 30000 });
+  await reload.pg.waitForTimeout(500);
+  const first = JSON.stringify((await dbOf(reload.pg))["users/u1"].territory);
+  await reload.pg.reload();
+  await reload.pg.waitForSelector("text=Start moving", { timeout: 30000 });
+  await reload.pg.waitForTimeout(500);
+  check("C14. reloading reprocesses nothing: the saved state is identical", JSON.stringify((await dbOf(reload.pg))["users/u1"].territory) === first);
+  await reload.ctx.close();
+
+  const done = await percentOf(seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }, stored({ cellRuns: runsOf(ELIGIBLE), applied: [["r1", ELIGIBLE.length, now - 86400000]], completion: { activityId: "r1", atMs: now - 86400000 } })), "text=Share your conquest");
+  check("C15. a fully explored Territory shows TERRITORY CONQUERED at 100%", /Territory conquered/i.test(done.text) && /100/.test(done.text) && /Share your conquest/i.test(done.text), done.text.slice(0, 200));
 }
 
 async function scenarioShare() {
   // Share Cards: the card follows what the activity really counted towards, and shows only real data.
   const now = Date.now();
   const iso = (ms) => new Date(ms).toISOString();
-  const TERR = { areaId: "bd-upa-dhaka-mohammadpur", selectedAt: now - 5 * 86400000, targetKm: 19.4, rulesVersion: "territory-conquest/1", targetVersion: "territory-target/1" };
-  const track = { seq: 0, count: 4, flat: [1, 23.7640, 90.3600, 5, -9999, 0, 2, 23.7650, 90.3620, 5, -9999, 0, 3, 23.7665, 90.3625, 5, -9999, 0, 4, 23.7680, 90.3650, 5, -9999, 0] };
+  const half = ELIGIBLE.slice(0, 1940);
+  const HALF = stored({ cellRuns: runsOf(half), applied: [["r1", 1940, now]] });
+  const DONE = stored({ cellRuns: runsOf(ELIGIBLE), applied: [["r0", 3000, now - 86400000], ["r1", 880, now]], completion: { activityId: "r1", atMs: now } });
+  const track = streetChunk(0, now - 3600000);
   const mk = ({ runs, territory, route = "Chandpur", withTrack = true }) => {
     const db = baseDb();
     db["users/u1"].currentRoute = route;
@@ -522,9 +577,8 @@ async function scenarioShare() {
     await s.pg.waitForTimeout(600);
     return s;
   };
-  const run1 = { id: "r1", km: 5.2, duration: "30:00", date: iso(now - 3600000), activity: "running", calories: 412, pace: 5.77, journeyKm: 5.2, routeName: "Chandpur" };
+  const run1 = { id: "r1", km: 5.2, duration: "30:00", date: iso(now), activity: "running", calories: 412, pace: 5.77, journeyKm: 5.2, routeName: "Chandpur" };
 
-  // normal: no Journey, no Territory
   let s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "" }), "/share?a=r1", "text=Save image");
   let t = await card(s.pg);
   check("S1. plain activity card: distance, duration, pace, calories", /5\.2/.test(t) && /30:00/.test(t) && /412 kcal/.test(t), t.slice(0, 200));
@@ -533,31 +587,27 @@ async function scenarioShare() {
   check("S4. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
 
-  // no GPS track recorded: no route is drawn, nothing is made up
   s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "", withTrack: false }), "/share?a=r1", "text=Save image");
   check("S5. no recorded track means no route drawn", (await s.pg.locator("svg[aria-label='Route']").count()) === 0 && /5\.2/.test(await card(s.pg)));
   await s.ctx.close();
 
-  // journey
   s = await open(mk({ runs: [run1] }), "/share?a=r1", "text=Save image");
   t = await card(s.pg);
   check("S6. Journey card: DHAKA → CHANDPUR and km completed, no Territory", /DHAKA → CHANDPUR/.test(t) && /completed/.test(t) && /km today/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 200));
   await s.ctx.close();
 
-  // territory progress, opened from the Territory screen
-  s = await open(mk({ runs: [{ ...run1, km: 13, journeyKm: 13, activity: "walking" }], territory: TERR }), "/share?a=r1&ctx=territory", "text=Save image");
+  s = await open(mk({ runs: [{ ...run1, activity: "walking" }], territory: HALF }), "/share?a=r1&ctx=territory", "text=Save image");
   t = await card(s.pg);
-  check("S7. Territory card: MOHAMMADPUR, 67% CONQUERED, 13.0 / 19.4 KM, 6.4 KM REMAINING", /MOHAMMADPUR/.test(t) && /67%/.test(t) && /CONQUERED/.test(t) && /13\.0 \/ 19\.4/.test(t) && /6\.4 KM REMAINING/.test(t), t.slice(0, 260));
+  check("S7. Territory card: MOHAMMADPUR, 50.0% CONQUERED, +50.0% new ground, 50.0% REMAINING", /MOHAMMADPUR/.test(t) && /50\.0%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /50\.0% REMAINING/.test(t) && !/ KM /.test(t.split("Territory")[0]), t.slice(0, 260));
   check("S8. Territory card has no Journey map and offers Journey and Activity cards", !/DHAKA →/.test(t) && (await s.pg.locator("[aria-label='Card type'] button").count()) === 3);
   await s.pg.locator("[aria-label='Card type'] button", { hasText: "Journey" }).click();
   await s.pg.waitForTimeout(300);
   check("S9. switching to Journey shows the Journey card", /DHAKA → CHANDPUR/.test(await card(s.pg)));
   await s.ctx.close();
 
-  // territory conquered
-  s = await open(mk({ runs: [{ ...run1, id: "r0", km: 15, date: iso(now - 2 * 86400000) }, { ...run1, id: "r1", km: 15 }], territory: TERR }), "/share?a=r1", "text=Save image");
+  s = await open(mk({ runs: [{ ...run1, id: "r0", km: 15, activity: "walking", date: iso(now - 86400000) }, { ...run1, activity: "walking" }], territory: DONE }), "/share?a=r1", "text=Save image");
   t = await card(s.pg);
-  check("S10. conquered card is chosen automatically: TERRITORY CONQUERED, MOHAMMADPUR, 100%, 19.4 km", /TERRITORY CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /100%/.test(t) && /19\.4 km/.test(t) && !/REMAINING/.test(t), t.slice(0, 260));
+  check("S10. conquered card is chosen automatically: TERRITORY CONQUERED, MOHAMMADPUR, 100%", /TERRITORY CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /100%/.test(t) && /2 moves/.test(t) && !/REMAINING/.test(t), t.slice(0, 260));
   const dl = s.pg.waitForEvent("download", { timeout: 20000 });
   await s.pg.getByRole("button", { name: "Save image" }).click();
   const file = await dl.then((d) => d.suggestedFilename()).catch(() => "");
@@ -565,13 +615,65 @@ async function scenarioShare() {
   check("S12. no uncaught page errors on the Territory cards", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
 
-  // small phone
-  const small = await fresh({ db: mk({ runs: [{ ...run1, km: 13, journeyKm: 13 }], territory: TERR }) });
+  const small = await fresh({ db: mk({ runs: [{ ...run1, activity: "walking" }], territory: HALF }) });
   await small.pg.setViewportSize({ width: 320, height: 640 });
   await small.pg.goto(`${BASE}/share?a=r1&ctx=territory`);
   await small.pg.waitForSelector("text=Save image", { timeout: 20000 });
   check("S13. no sideways scrolling on a 320 px phone", await small.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
   await small.ctx.close();
+}
+
+async function scenarioLiveTerritory() {
+  // The live Territory view: percentage moves only on new ground inside Mohammadpur, and the finished move settles the same way.
+  const emitAt = async (pg, lat, lng) => { await shift(pg, 2000); await pg.evaluate(([la, ln]) => window.__gps.emit({ lat: la, lng: ln }), [lat, lng]); await pg.waitForTimeout(25); };
+  const route = (lat0, lng0, lat1, lng1, step = 2.8) => {
+    const m = Math.hypot((lat1 - lat0) * 111320, (lng1 - lng0) * 111320 * Math.cos((lat0 * Math.PI) / 180));
+    const n = Math.max(2, Math.floor(m / step));
+    return Array.from({ length: n + 1 }, (_, k) => [lat0 + ((lat1 - lat0) * k) / n, lng0 + ((lng1 - lng0) * k) / n]);
+  };
+  const db = () => { const d = baseDb(); d["users/u1"].territory = stored({ selectedAt: Date.now() - 3600000 }); return d; };
+  const [start0] = STREETS[0];
+  const a = cellCentre(start0), b = cellCentre(start0 + 15);
+
+  const s = await fresh({ db: db() });
+  await s.pg.goto(`${BASE}/run?territory=1`);
+  await s.pg.getByText("Walking").click();
+  await tracking(s.pg);
+  await emitAt(s.pg, a.lat, a.lng);
+  await s.pg.waitForSelector("text=CONQUERED", { timeout: 20000 });
+  check("L1. live view starts at 0.0% CONQUERED", /0\.0% CONQUERED/.test(await text(s.pg)));
+  for (const [la, ln] of route(a.lat, a.lng, b.lat, b.lng)) await emitAt(s.pg, la, ln);
+  await s.pg.waitForTimeout(800);
+  const t = await text(s.pg);
+  const live = Number((t.match(/([\d.]+)% CONQUERED/) || [])[1]);
+  check("L2. walking a real Mohammadpur street raises the live percentage", live > 0, t.slice(0, 200));
+  check("L3. the live screen still shows the real activity distance separately", /\d\.\d{2}\s*km/i.test(t.replace(/\n/g, " ")) || /km/i.test(t));
+  const before = live;
+  for (const [la, ln] of route(b.lat, b.lng, a.lat, a.lng)) await emitAt(s.pg, la, ln); // the same street back again
+  await s.pg.waitForTimeout(800);
+  const after = Number(((await text(s.pg)).match(/([\d.]+)% CONQUERED/) || [])[1]);
+  // the cell at the end of the first pass may only qualify once the way back adds evidence to it: at most one cell
+  check("L4. walking the same street back adds (almost) no new ground", after - before <= 0.1 + 1e-9, `${before} -> ${after}`);
+  await s.pg.getByRole("button", { name: "Finish activity" }).click();
+  await s.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  await s.pg.waitForTimeout(800);
+  const done = await text(s.pg);
+  check("L5. the finished move opens the Territory card with the same new-ground figure", /MOHAMMADPUR/.test(done) && /NEW GROUND/.test(done) && new RegExp(`${after.toFixed(1)}%`).test(done), done.slice(0, 240));
+  const saved = (await dbOf(s.pg))["users/u1"].territory;
+  check("L6. the move is saved once on the Territory with its new cells", saved.applied.length === 1 && saved.applied[0][1] > 0, JSON.stringify(saved.applied));
+  check("L7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+  await s.ctx.close();
+
+  const far = await fresh({ db: db() });
+  await far.pg.goto(`${BASE}/run?territory=1`);
+  await far.pg.getByText("Walking").click();
+  await tracking(far.pg);
+  await emitAt(far.pg, 23.2476, 90.8477);
+  await far.pg.waitForSelector("text=CONQUERED", { timeout: 20000 });
+  for (const [la, ln] of route(23.2476, 90.8477, 23.2576, 90.8477)) await emitAt(far.pg, la, ln);
+  const ft = await text(far.pg);
+  check("L8. moving far away leaves 0.0% and says it is outside Mohammadpur", /0\.0% CONQUERED/.test(ft) && /outside Mohammadpur/i.test(ft), ft.slice(0, 240));
+  await far.ctx.close();
 }
 
 async function scenarioRegression() {
@@ -663,7 +765,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

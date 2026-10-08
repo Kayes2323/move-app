@@ -6,7 +6,6 @@ import { CARD_HEIGHT, CARD_WIDTH, type CardRatio, type CardTone } from "./ShareC
 import { JourneyRoute } from "./JourneyRoute";
 import { TerritoryEmblem, type EmblemColors } from "../territory/TerritoryEmblem";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
-import { ceilKm, floorKm } from "../lib/territory/conquest/progress";
 import type { TerritoryCardFacts } from "../lib/share/context";
 import { drawRoute } from "../lib/share/trackPath";
 import type { TrackPoint } from "../lib/tracking/types";
@@ -191,25 +190,24 @@ export function JourneyProgressCard({ route, journeyKm, routeStartKm, today, pho
 export interface TerritoryCardProps {
   def: TerritoryDefinition;
   facts: TerritoryCardFacts;
+  /** Real distance of the moves that explored the Territory, for the conquered card. Distance is a separate metric from coverage. */
+  actualKm?: number;
   photo?: string | null;
   ratio: CardRatio;
   tone?: CardTone;
 }
 
-export function TerritoryCard({ def, facts, photo, ratio, tone = "dark" }: TerritoryCardProps) {
+export function TerritoryCard({ def, facts, actualKm, photo, ratio, tone = "dark" }: TerritoryCardProps) {
   const L = look(tone, photo, "#6F8AFF", "#4F6EF7");
   const colors: EmblemColors = photo
     ? { fill: "rgba(255,255,255,0.1)", base: "rgba(255,255,255,0.5)", progressFrom: "#8EA2FF", progressTo: "#FFFFFF", head: "#FFFFFF" }
     : L.light
       ? { fill: "#E4E7F1", base: "#C5CAD8", progressFrom: "#4F6EF7", progressTo: "#7C8DF9", head: "#0F0F0F" }
       : { fill: "#15151B", base: "#2C2C36", progressFrom: "#6F8AFF", progressTo: "#B6C2FF", head: "#FFFFFF" };
-  const target = facts.targetKm.toFixed(1);
-  const done = facts.conquered ? target : floorKm(facts.progressKm);
   const stats: string[] = [];
   if (facts.conquered) {
     if (facts.moves) stats.push(`${facts.moves} ${facts.moves === 1 ? "move" : "moves"}`);
-    if (facts.actualKm) stats.push(`${facts.actualKm.toFixed(1)} km real`);
-    if (facts.streakDay) stats.push(`Day ${facts.streakDay} streak`);
+    if (actualKm) stats.push(`${actualKm.toFixed(1)} km real`);
   }
   return (
     <Shell
@@ -217,7 +215,7 @@ export function TerritoryCard({ def, facts, photo, ratio, tone = "dark" }: Terri
       photo={photo}
       look={L}
       blockHeight={facts.conquered ? 150 : 150}
-      visual={({ width, height }) => <TerritoryEmblem def={def} fraction={facts.progressKm / facts.targetKm} conquered={facts.conquered} width={width - 40} height={height} pad={14} colors={colors} stroke={4.5} glow={false} label={`${def.name} boundary`} />}
+      visual={({ width, height }) => <TerritoryEmblem def={def} fraction={facts.percent / 100} conquered={facts.conquered} width={width - 40} height={height} pad={14} colors={colors} stroke={4.5} glow={false} label={`${def.name} boundary`} />}
     >
       {facts.conquered ? (
         <>
@@ -225,16 +223,16 @@ export function TerritoryCard({ def, facts, photo, ratio, tone = "dark" }: Terri
           <div style={big(Math.min(46, Math.floor(300 / (def.name.length * 0.82))), L)}>{def.name.toUpperCase()}</div>
           <div style={{ ...line, display: "flex", alignItems: "baseline", gap: 10 }}>
             <span style={{ fontFamily: DISPLAY, fontSize: 26, color: L.photo ? "#FFFFFF" : L.accent }}>100%</span>
-            <span>{target} km</span>
+            <span>explored</span>
           </div>
           {stats.length > 0 && <div style={{ ...line, marginTop: 6, fontSize: 14, color: L.soft }}>{stats.join(" · ")}</div>}
         </>
       ) : (
         <>
           <div style={label(L)}>{def.name.toUpperCase()}</div>
-          <div style={big(58, L)}>{facts.percent}%<span style={{ fontSize: 18, marginLeft: 8, letterSpacing: 2, color: L.soft, fontFamily: TEXT, fontWeight: 700 }}>CONQUERED</span></div>
-          <div style={line}>{done} / {target}<span style={{ fontSize: 14, marginLeft: 5, color: L.soft }}>KM</span></div>
-          <div style={{ ...line, marginTop: 4, fontSize: 15, color: L.soft, letterSpacing: 1 }}>{ceilKm(facts.remainingKm)} KM REMAINING</div>
+          <div style={big(58, L)}>{facts.percent.toFixed(1)}%<span style={{ fontSize: 18, marginLeft: 8, letterSpacing: 2, color: L.soft, fontFamily: TEXT, fontWeight: 700 }}>CONQUERED</span></div>
+          <div style={line}>+{facts.addedPercent.toFixed(1)}%<span style={{ fontSize: 14, marginLeft: 6, color: L.soft }}>NEW GROUND TODAY</span></div>
+          <div style={{ ...line, marginTop: 4, fontSize: 15, color: L.soft, letterSpacing: 1 }}>{facts.remainingPercent.toFixed(1)}% REMAINING</div>
         </>
       )}
     </Shell>

@@ -1,50 +1,62 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LiveRouteCard, type LiveRouteCardProps } from "../components/LiveRouteCard";
-import { nowMs } from "../lib/activity";
-import type { HistoryRun } from "../lib/territory/conquest/credit";
-import { simplifyTrack } from "../lib/territory/conquest/outline";
+import { applyActivity, coverageProgress, withCompletion } from "../lib/territory/coverage/coverage";
+import type { TerritorySnapshot } from "../lib/territory/coverage/snapshot";
+import { contributionPolicy } from "../lib/territory/contribution";
+import { conquestRing, pointInRing, simplifyTrack, toLngLat } from "../lib/territory/conquest/outline";
 import type { LngLat } from "../lib/territory/conquest/geodesy";
-import { ceilKm, floorKm, liveProgress, type TerritoryChoice } from "../lib/territory/conquest/progress";
-import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
-import { getRuntime } from "../lib/tracking/runtime";
-import type { LocalActivity } from "../lib/tracking/types";
 import { resolveMode, useThemePrefs } from "../lib/theme";
 import { TerritoryEmblem } from "./TerritoryEmblem";
 import { TerritoryLiveMap } from "./TerritoryLiveMap";
 
-type Props = LiveRouteCardProps & { def: TerritoryDefinition; choice: TerritoryChoice; history: HistoryRun[]; activity: LocalActivity };
+interface LiveActivity {
+  id: string;
+  kind: "running" | "walking" | "cycling";
+  startedAt: number;
+  userId: string;
+}
+
+type Props = LiveRouteCardProps & {
+  snapshot: TerritorySnapshot;
+  activity: LiveActivity;
+  /** The GPS fixes recorded so far. Tracking is the source of truth; this screen only reads them. */
+  points: { lat: number; lng: number; t: number; acc: number; gap?: boolean }[];
+  here?: LngLat;
+};
 
 /**
- * The live move, told as a conquest. Everything shown about the move itself (distance, time, pace) is the real activity;
- * the Territory numbers are credit earned from it, computed with the same pure functions the rest of the app uses.
+ * The live move, told as exploration. The distance, time and pace are the real activity; the Territory percentage is how much
+ * of the area's eligible ground is explored, counting what this move has found so far. It is computed by the same pure
+ * functions that settle the move afterwards, and it changes only when the move reaches ground not explored before.
  */
-export function TerritoryLiveScreen({ def, choice, history, activity, ...card }: Props) {
+export function TerritoryLiveScreen({ snapshot, activity, points, here, ...card }: Props) {
+  const { def, choice, state, scope, mask } = snapshot;
   const [tab, setTab] = useState<"territory" | "map">("territory");
   const prefs = useThemePrefs();
   const dark = resolveMode(prefs.mode) === "dark";
-  const [track, setTrack] = useState<LngLat[]>([]);
 
-  // The route so far, from the phone's own record, so the map shows exactly what was tracked.
-  useEffect(() => {
-    let cancelled = false;
-    getRuntime()
-      .store.getPoints(activity.id)
-      .then((pts) => {
-        if (!cancelled) setTrack(simplifyTrack(pts.map((p) => ({ lat: p.lat, lng: p.lng })), 2));
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [activity.id, activity.pointCount]);
+  const track = useMemo(() => simplifyTrack(points.map((p) => ({ lat: p.lat, lng: p.lng })), 2), [points]);
+  const ring = useMemo(() => conquestRing(toLngLat(def.boundary.coordinates[0])), [def]);
+  const counts = contributionPolicy(activity.kind).status === "counts";
 
-  const current: HistoryRun = { id: activity.id, kind: activity.kind, km: Math.round(card.distanceKm * 100) / 100, startMs: activity.startedAt, endMs: nowMs() };
-  const progress = useMemo(() => liveProgress(history, current, choice), [history, current.km, choice]); // eslint-disable-line react-hooks/exhaustive-deps
-  const mine = progress.contributions.find((c) => c.runId === activity.id);
-  const cycling = activity.kind === "cycling";
-  const point = activity.lastPoint ? { lat: activity.lastPoint.lat, lng: activity.lastPoint.lng } : undefined;
-  const fraction = progress.progressKm / progress.targetKm;
+  const live = useMemo(() => {
+    const out = applyActivity(state, choice, scope, { id: activity.id, userId: activity.userId, kind: activity.kind, startMs: activity.startedAt, endMs: points.length ? points[points.length - 1].t : activity.startedAt, points });
+    const progress = coverageProgress(out.state, mask, scope);
+    return { added: out.added, state: withCompletion(out.state, progress), progress };
+  }, [state, choice, scope, mask, activity, points]);
+
+  const before = snapshot.progress;
+  const gain = Math.round((live.progress.percent - before.percent) * 10) / 10;
+  const inside = here ? pointInRing(here, ring) : null;
+
+  const note = !counts
+    ? "Cycling doesn't explore Territory yet."
+    : inside === false
+      ? `You're outside ${def.name}. Only moving inside it explores it.`
+      : gain > 0
+        ? `This move: +${gain.toFixed(1)}% new ground`
+        : `Reach ground you haven't explored in ${def.name} to move the percentage.`;
 
   const header = (
     <div style={{ marginTop: 10 }}>
@@ -55,31 +67,29 @@ export function TerritoryLiveScreen({ def, choice, history, activity, ...card }:
           <button aria-pressed={tab === "map"} onClick={() => setTab("map")}>Map</button>
         </span>
       </div>
-      {progress.conquered ? (
+      {live.progress.conquered ? (
         <>
           <p className="blk" style={{ fontSize: 30, lineHeight: 1.1, marginTop: 2 }}>TERRITORY CONQUERED</p>
-          <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>{def.target.targetKm.toFixed(1)} / {def.target.targetKm.toFixed(1)} km · finish your move to claim it</p>
+          <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>100% explored · finish your move to claim it</p>
         </>
       ) : (
         <>
-          <p className="blk" style={{ fontSize: 34, lineHeight: 1.1, marginTop: 2 }}>{floorKm(progress.progressKm)}<span className="unit"> / {def.target.targetKm.toFixed(1)} km</span></p>
+          <p className="blk" style={{ fontSize: 34, lineHeight: 1.1, marginTop: 2 }}>{live.progress.percent.toFixed(1)}<span className="unit">%</span></p>
           <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>
-            <b style={{ color: "var(--acc-text)", letterSpacing: 0.5 }}>{progress.percent}% CONQUERED</b> · {ceilKm(progress.remainingKm)} km remaining
+            <b style={{ color: "var(--acc-text)", letterSpacing: 0.5 }}>{live.progress.percent.toFixed(1)}% CONQUERED</b> · {live.progress.remainingPercent.toFixed(1)}% remaining
           </p>
         </>
       )}
-      <p className="mute" style={{ fontSize: 12, marginTop: 4, minHeight: 16 }}>
-        {cycling ? "Cycling doesn't add Territory credit yet." : mine && mine.appliedKm > 0 ? `This move: +${mine.appliedKm.toFixed(2)} km credit (×${mine.multiplier.toFixed(2).replace(/0$/, "")})` : "Your real distance is below. Credit adds as you move."}
-      </p>
+      <p role="status" className="mute" style={{ fontSize: 12, marginTop: 4, minHeight: 16 }}>{note}</p>
     </div>
   );
 
   const visual =
     tab === "map" ? (
-      <TerritoryLiveMap def={def} fraction={fraction} point={point} track={track} dark={dark} />
+      <TerritoryLiveMap def={def} fraction={live.progress.fraction} point={here} track={track} dark={dark} />
     ) : (
       <div style={{ width: "100%", padding: "8px 14px", display: "flex", justifyContent: "center" }}>
-        <TerritoryEmblem def={def} fraction={fraction} conquered={progress.conquered} width={320} height={250} />
+        <TerritoryEmblem def={def} fraction={live.progress.fraction} conquered={live.progress.conquered} width={320} height={250} />
       </div>
     );
 

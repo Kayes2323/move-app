@@ -33,23 +33,43 @@ const sources = (dir: string): { file: string; text: string }[] =>
     return /\.(ts|tsx)$/.test(e.name) && !e.name.endsWith(".test.ts") ? [{ file: p, text: readFileSync(p, "utf8") }] : [];
   });
 
-test("Territory and tracking stay decoupled", () => {
+test("Territory and tracking stay decoupled: Territory is a read-only consumer", () => {
   const app = join(process.cwd(), "app");
   const imports = (text: string) => [...text.matchAll(/(?:from\s+|import\s*\(\s*)["']([^"']+)["']/g)].map((m) => m[1]);
 
-  // The Territory rules are pure: no tracking, no activity code, no screens.
+  // The Territory domain never imports the tracking engine, its types, activity code, history or track loading.
   for (const { file, text } of sources(join(app, "lib", "territory"))) {
     for (const spec of imports(text)) {
-      assert.ok(!/tracking|\/activity$|\/run\/|history|trackLoader/.test(spec), `${file} must not import tracking or activity code (${spec})`);
+      assert.ok(!/tracking|\/activity$|\/run\/|\/history$|trackLoader|territoryState/.test(spec), `${file} must not import tracking or activity code (${spec})`);
     }
   }
-  // Territory screens may read the live track (runtime + types) but never reach into the engine itself.
+  // Territory screens reach tracking data only through the one read-only adapter (lib/territoryState).
   for (const { file, text } of sources(join(app, "territory"))) {
-    for (const spec of imports(text)) assert.ok(!/lib\/tracking\/(?!runtime$|types$)|\/run\//.test(spec), `${file} must not import the tracking engine (${spec})`);
+    for (const spec of imports(text)) {
+      assert.ok(!/tracking|\/activity$|\/run\/|\/history$|trackLoader/.test(spec), `${file} must not import tracking or activity code (${spec})`);
+    }
   }
   // The tracking engine, and the activity record it writes, know nothing about Territory.
   for (const { file, text } of sources(join(app, "lib", "tracking"))) {
     for (const spec of imports(text)) assert.ok(!/territory/.test(spec), `${file} must not import Territory (${spec})`);
   }
   assert.ok(!/territory/i.test(readFileSync(join(app, "lib", "activity.ts"), "utf8")), "activity.ts must not reference Territory");
+});
+
+test("the superseded distance model is not part of gameplay", () => {
+  const app = join(process.cwd(), "app");
+  const imports = (text: string) => [...text.matchAll(/(?:from\s+|import\s*\(\s*)["']([^"']+)["']/g)].map((m) => m[1]);
+  const distance = /conquest\/(credit|config|progress|store)$/;
+  for (const { file, text } of sources(app)) {
+    if (file.includes(join("lib", "territory", "conquest"))) continue;
+    for (const spec of imports(text)) assert.ok(!distance.test(spec), `${file} must not use the superseded distance model (${spec})`);
+  }
+});
+
+test("Territory progress never reads activity distance or the perimeter", () => {
+  const dir = join(process.cwd(), "app", "lib", "territory");
+  for (const f of ["coverage/coverage.ts", "exploration/explore.ts"]) {
+    const text = readFileSync(join(dir, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    assert.ok(!/perimeter|targetKm|\.km\b/.test(text), `${f} must not use perimeter or distance`);
+  }
 });

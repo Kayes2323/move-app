@@ -1,4 +1,5 @@
-import type { TerritoryProgress } from "../territory/conquest/progress";
+import { progressAfter, type CoverageState } from "../territory/coverage/coverage";
+import type { EligibilityMask } from "../territory/mask/types";
 
 /**
  * What a Share Card is about. Each activity can be shared in more than one way; this decides which one is shown first
@@ -17,8 +18,8 @@ export interface ShareFacts {
   runId?: string;
   /** The activity counted towards a Journey route that still exists. */
   hasJourney: boolean;
-  /** Territory progress now, or null when no Territory is chosen. */
-  territory: TerritoryProgress | null;
+  /** The chosen Territory's explored state, or null when none is chosen. */
+  territory: CoverageState | null;
   /** Where the user came from: "territory" when they moved from the Territory screen. */
   hint?: string | null;
 }
@@ -27,8 +28,9 @@ export interface ShareFacts {
 export function availableContexts(f: ShareFacts): ShareContext[] {
   const out: ShareContext[] = [];
   const t = f.territory;
-  const contributed = Boolean(t && f.runId && t.contributions.some((c) => c.runId === f.runId));
-  const finishedHere = Boolean(t?.conquered && t.completion && f.runId && t.completion.runId === f.runId);
+  const mine = t && f.runId ? t.applied.find((a) => a.id === f.runId) : undefined;
+  const contributed = Boolean(mine && mine.added > 0);
+  const finishedHere = Boolean(t?.completion && f.runId && t.completion.activityId === f.runId);
   if (finishedHere) out.push("TERRITORY_CONQUERED");
   if (contributed && !finishedHere) out.push("TERRITORY_PROGRESS");
   if (f.hasJourney) out.push("JOURNEY_PROGRESS");
@@ -52,25 +54,26 @@ export function decideShareContext(f: ShareFacts): ShareContext {
 }
 
 export interface TerritoryCardFacts {
-  progressKm: number;
-  targetKm: number;
+  /** Explored share of the eligible ground right after this activity: one decimal, rounded down, 100 only when conquered. */
   percent: number;
-  remainingKm: number;
+  remainingPercent: number;
+  /** What this activity added, in percentage points. */
+  addedPercent: number;
   conquered: boolean;
-  /** Real stats of the whole conquest, only when it is complete. */
+  /** Activities that explored something, for the conquered card. */
   moves?: number;
-  actualKm?: number;
-  /** Streak day of the finishing move, only when it is 2 or more (a streak worth showing). */
-  streakDay?: number;
 }
 
-/** Territory progress as it stood right after this activity, so an older activity's card tells its own moment. */
-export function territoryFactsAt(t: TerritoryProgress, runId: string): TerritoryCardFacts | null {
-  const c = t.contributions.find((x) => x.runId === runId);
-  if (!c) return null;
-  if (t.conquered && t.completion?.runId === runId) {
-    return { progressKm: t.targetKm, targetKm: t.targetKm, percent: 100, remainingKm: 0, conquered: true, moves: t.completion.moves, actualKm: t.completion.actualKm, streakDay: c.streakDay >= 2 ? c.streakDay : undefined };
-  }
-  const progressKm = Math.min(c.cumulativeAfterKm, t.targetKm);
-  return { progressKm, targetKm: t.targetKm, percent: Math.min(99, Math.floor((progressKm / t.targetKm) * 100)), remainingKm: Math.max(t.targetKm - progressKm, 0), conquered: false };
+/** Territory progress as it stood right after this activity, so an older activity's card tells its own moment. Null if it explored nothing new. */
+export function territoryFactsAt(state: CoverageState, mask: EligibilityMask, runId: string): TerritoryCardFacts | null {
+  const p = progressAfter(state, runId, mask);
+  if (!p || p.added <= 0) return null;
+  const conquered = p.conquered && state.completion?.activityId === runId;
+  return {
+    percent: conquered ? 100 : Math.min(p.percent, 99.9),
+    remainingPercent: conquered ? 0 : p.remainingPercent,
+    addedPercent: p.addedPercent,
+    conquered,
+    ...(conquered ? { moves: state.applied.filter((a) => a.added > 0).length } : {}),
+  };
 }
