@@ -93,6 +93,12 @@ Every result records `algorithmVersion` and the exact config, so a server can re
 (`config.ts`) are provisional. `distanceKm` is never read. Known limit: slow correlated GPS drift inside the accuracy radius is
 treated as standing still, but a device that wanders further than its reported accuracy can still register short segments.
 
+## Eligible-cell masks (Phase 2b, pilot: Mohammadpur only)
+`app/lib/territory/mask/` (runtime: `parseMask`, `scopeFromMask`, no OSM knowledge) and `tools/territory-mask/` (build tooling, see its README).
+A mask is the set of cells of one area where a road or route exists; it is versioned, hashed and carries its sources and rule.
+Only Mohammadpur has inputs so far, and the real mask is NOT built yet because OpenStreetMap could not be reached from the build
+environment. Ownership against the real boundary is verified (5,783 cells, no leakage into any neighbouring thana).
+
 ## Not in Phase 1
 GPS coverage, explored percentage, ownership, King, conquest, 2x takeover, reclaim, battles, run/walk/cycling rules,
 anti-cheat, scoring, history, higher-level conquest, notifications, celebrations. Selection is not yet synced to Firestore:

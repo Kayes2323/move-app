@@ -44,3 +44,6 @@ next-env.d.ts
 .netlify
 
 .vercel
+
+# territory mask tooling: large downloads
+tools/territory-mask/cache/

@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test app/lib/*.test.ts app/lib/tracking/*.test.ts app/lib/territory/*.test.ts app/lib/territory/exploration/*.test.ts",
+    "test": "node --import tsx --test app/lib/*.test.ts app/lib/tracking/*.test.ts app/lib/territory/*.test.ts app/lib/territory/exploration/*.test.ts tools/territory-mask/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build:static": "CAPACITOR=1 next build",
-    "e2e": "node e2e/run.mjs"
+    "e2e": "node e2e/run.mjs",
+    "territory:mask:fetch": "node --import tsx tools/territory-mask/fetch.ts",
+    "territory:mask:build": "node --import tsx tools/territory-mask/build.ts"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
