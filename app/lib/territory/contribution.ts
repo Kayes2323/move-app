@@ -24,8 +24,10 @@ export interface TerritoryActivityInput {
   kind: ContributingKind;
   /** Activity distance in km, as recorded by tracking. Never used as exploration. */
   distanceKm: number;
-  /** The recorded route, in order. */
-  points: readonly { lat: number; lng: number; t: number }[];
+  /** The recorded route, in order. `t` is epoch milliseconds and `acc` the horizontal accuracy in metres, as tracking stores them. */
+  points: readonly { lat: number; lng: number; t: number; acc?: number; /** tracking's "long silence before this point" flag */ gap?: boolean }[];
+  /** The area that was active when the activity STARTED. Fixed at that moment: changing the active area later never re-targets it. */
+  activeAreaId: string | null;
 }
 
 export type ContributionPolicy =

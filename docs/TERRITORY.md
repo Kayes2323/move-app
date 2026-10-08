@@ -74,6 +74,25 @@ area may take part in later Territory calculations. `activeId` is saved on this 
 Not decided yet, deliberately: how "new ground" is measured (the unit of coverage), the full-resolution boundaries used
 to test containment, how much of an area counts as explored, and anti-cheat.
 
+## Exploration maths (Phase 2a, `app/lib/territory/exploration/`)
+Pure, deterministic library; nothing is stored and no percentage is computed. `explore(input, scope, config)` returns the
+hidden z20 cells (about 35 m, never drawn) an activity genuinely explored for the area that was active when it started.
+1. Policy: Run and Walk count, cycling returns `not-counted`. The scope must be the area active at the activity's start,
+   so changing area later never back-fills.
+2. Validation (`validate.ts`): bad or out-of-order fixes dropped; accuracy over 25 m dropped; one-point spikes (out and back)
+   dropped; short time-window smoothing; movement inside a standing-still radius (max of 5 m and the fixes' accuracy) ignored;
+   segments rejected when over 120 m or 7 m/s; a silence of over 15 s, or tracking's own gap flag, breaks the path and nothing
+   is drawn across it.
+3. Cells (`cells.ts`, `explore.ts`): each trusted segment is split exactly across the cells it passes. A cell qualifies from
+   a single activity with at least 15 m of trusted path in it, two distinct bounding fixes, and 10 m of net displacement.
+   Evidence does not accumulate across activities.
+4. Scope: qualifying cells are kept only if the active area's scope says the cell belongs to it and is eligible (the road-derived
+   mask arrives in Phase 2b; here it is an interface).
+5. `state.ts` fixes the semantics persistence must keep: union only, idempotent per activity id, single area.
+Every result records `algorithmVersion` and the exact config, so a server can recompute the same raw track. All thresholds
+(`config.ts`) are provisional. `distanceKm` is never read. Known limit: slow correlated GPS drift inside the accuracy radius is
+treated as standing still, but a device that wanders further than its reported accuracy can still register short segments.
+
 ## Not in Phase 1
 GPS coverage, explored percentage, ownership, King, conquest, 2x takeover, reclaim, battles, run/walk/cycling rules,
 anti-cheat, scoring, history, higher-level conquest, notifications, celebrations. Selection is not yet synced to Firestore:
