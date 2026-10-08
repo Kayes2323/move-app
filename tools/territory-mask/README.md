@@ -8,10 +8,29 @@ A mask lists the hidden z20 cells of ONE area that may ever count as explored. `
 
 ## Pilot: Mohammadpur (`bd-upa-dhaka-mohammadpur`)
 ```
-node --import tsx tools/territory-mask/fetch.ts boundary bd-upa-dhaka-mohammadpur   # done; inputs are committed
-node --import tsx tools/territory-mask/fetch.ts osm bd-upa-dhaka-mohammadpur        # needs network access to an Overpass server
-node --import tsx tools/territory-mask/build.ts bd-upa-dhaka-mohammadpur            # writes the mask, a build sidecar and the report
+npm run territory:mask:fetch -- boundary bd-upa-dhaka-mohammadpur                    # done; inputs are committed
+npm run territory:mask:fetch -- pbf bd-upa-dhaka-mohammadpur <file-or-url>           # OSM data from a PBF extract (preferred)
+npm run territory:mask:build -- bd-upa-dhaka-mohammadpur                             # writes the mask, a build sidecar and the report
 ```
+`fetch ... osm` (Overpass) still exists for when an Overpass server is usable; it produces the same two input files.
+
+### OSM from a PBF (no Overpass needed)
+The PBF is read by `pbf.ts` (a small dependency-free reader) and cut to the area by `extract.ts`, the same thing
+`osmium extract --strategy=simple -b` does for one box: nodes inside the area's bounding box plus a 0.01 degree margin are kept, a way is kept
+if any of its nodes is, and its geometry is the runs of consecutive known nodes (a way that leaves the margin and returns is cut in two,
+never joined with a straight line). Nothing about which ways are walkable is decided there; that stays in `lib.ts`.
+
+* Geofabrik country extract (about 340 MB, updated daily). Download it yourself, keep it out of Git:
+  `curl -L -o tools/territory-mask/cache/bangladesh-latest.osm.pbf https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf`
+  `npm run territory:mask:fetch -- pbf bd-upa-dhaka-mohammadpur tools/territory-mask/cache/bangladesh-latest.osm.pbf --md5 https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf.md5`
+  (`tools/territory-mask/cache/` is git-ignored.) Takes about a minute.
+* A dated, immutable planet file from the OSM data set on AWS Open Data can be streamed with no download to disk (about 95 GB read, 20 to 40 minutes):
+  `npm run territory:mask:fetch -- pbf bd-upa-dhaka-mohammadpur https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf --size 95121754261`
+  The `.md5` next to the file is fetched and checked automatically; a dropped connection resumes from the last byte.
+
+The manifest records the source URL or file name, size, MD5 (and whether it was verified), SHA-256, the PBF's replication timestamp (the moment
+the data reflects), the writing program, the box and margin, and counts of what was kept or clipped. The extracted `osm-roads.json` and
+`osm-buildings.json` are committed with their hashes, so building the mask never needs the PBF again.
 Outputs: `public/geo/bd/masks/<areaId>.json` (deterministic), `<areaId>.build.json` (wall-clock build time, node version, input hashes; kept
 out of the mask so identical inputs give an identical file) and `tools/territory-mask/reports/<areaId>.md`.
 
