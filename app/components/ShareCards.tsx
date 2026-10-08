@@ -2,8 +2,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Route } from "../data/routes";
 import { ACTIVITY_META, formatDuration, formatKm, formatPerformance, type ActivityKind } from "../lib/activity";
-import { cardLayout, photoFit, type CardLayout, type CardRatio, type CardTone, type Rect, type ShareMode, type VisualSlot } from "../lib/share/cardLayout";
-import { chooseSlot, type Sample } from "../lib/share/placement";
+import { cardLayout, defaultAdjust, photoPlacement, type CardLayout, type CardRatio, type CardTone, type PhotoAdjust, type Rect, type ShareMode } from "../lib/share/cardLayout";
 import type { TerritoryCardFacts } from "../lib/share/context";
 import { drawRoute } from "../lib/share/trackPath";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
@@ -21,8 +20,6 @@ export interface CardPhoto {
   src: string;
   width: number;
   height: number;
-  /** Where the skin is, per card shape, as drawn. Used to keep the route off the face. */
-  samples?: Partial<Record<CardRatio, Sample>>;
 }
 
 export interface ShareCardProps {
@@ -30,8 +27,8 @@ export interface ShareCardProps {
   ratio: CardRatio;
   tone?: CardTone;
   photo?: CardPhoto | null;
-  /** Where the route goes on a photo card. Automatic when omitted: the slot with less of a person in it. */
-  slot?: VisualSlot;
+  /** How the user moved and zoomed the photo. A sensible default for the photo's shape when omitted. */
+  adjust?: PhotoAdjust;
   activity: { kind: ActivityKind; km: number; duration: string; pace?: number; calories?: number; dateLabel: string };
   /** The recorded GPS track, or null when none exists. Never invented. */
   track: readonly TrackPoint[] | null;
@@ -61,8 +58,8 @@ function scrimGradient(layout: CardLayout): string {
   const stops: string[] = [];
   const top = layout.scrims.find((r) => r.y === 0);
   const bottom = layout.scrims.find((r) => r.y > 0);
-  if (top) stops.push("rgba(0,0,0,0.46) 0px", `rgba(0,0,0,0.34) ${Math.round(top.h * 0.6)}px`, `rgba(0,0,0,0) ${top.h}px`);
-  if (bottom) stops.push(`rgba(0,0,0,0) ${bottom.y}px`, `rgba(0,0,0,0.5) ${bottom.y + 40}px`, `rgba(0,0,0,0.82) ${layout.height}px`);
+  if (top) stops.push("rgba(0,0,0,0.3) 0px", `rgba(0,0,0,0.16) ${Math.round(top.h * 0.6)}px`, `rgba(0,0,0,0) ${top.h}px`);
+  if (bottom) stops.push(`rgba(0,0,0,0) ${bottom.y}px`, `rgba(0,0,0,0.42) ${bottom.y + 44}px`, `rgba(0,0,0,0.74) ${layout.height}px`);
   return `linear-gradient(to bottom, ${stops.join(", ")})`;
 }
 
@@ -213,17 +210,15 @@ function TerritoryStats({ props, L }: { props: ShareCardProps; L: Look }) {
  */
 export function ShareCardView(props: ShareCardProps) {
   const { mode, ratio, photo, tone = "dark" } = props;
-  const base = cardLayout(mode, ratio, Boolean(photo));
-  const slot: VisualSlot = props.slot ?? (photo && base.slots ? chooseSlot(photo.samples?.[ratio], base.slots, base.width, base.height) : "bottom");
-  const layout = photo ? cardLayout(mode, ratio, true, slot) : base;
+  const layout = cardLayout(mode, ratio, Boolean(photo));
   const accent = mode === "TERRITORY" ? ["#6F8AFF", "#4F6EF7"] : [ACTIVITY_META[props.activity.kind].accent, LIGHT_ACCENT[props.activity.kind]];
   const L = look(tone, Boolean(photo), accent[0], accent[1]);
-  const fit = photo ? photoFit(photo.width, photo.height) : null;
+  const placed = photo ? photoPlacement(photo.width, photo.height, layout.width, layout.height, props.adjust ?? defaultAdjust(photo.width, photo.height)) : null;
 
   return (
-    <div data-card-mode={mode} data-slot={photo ? slot : undefined} style={{ position: "relative", width: layout.width, height: layout.height, overflow: "hidden", background: L.bg, color: L.ink, fontFamily: TEXT }}>
-      {photo && layout.photo && fit && (
-        <div data-zone="photo" style={{ ...rectStyle(layout.photo), backgroundColor: "#0A0A0C", backgroundImage: `url(${photo.src})`, backgroundRepeat: "no-repeat", backgroundSize: fit.size, backgroundPosition: fit.position }} />
+    <div data-card-mode={mode} style={{ position: "relative", width: layout.width, height: layout.height, overflow: "hidden", background: L.bg, color: L.ink, fontFamily: TEXT }}>
+      {photo && layout.photo && placed && (
+        <div data-zone="photo" style={{ ...rectStyle(layout.photo), backgroundColor: "#0A0A0C", backgroundImage: `url(${photo.src})`, backgroundRepeat: "no-repeat", backgroundSize: `${placed.w}px ${placed.h}px`, backgroundPosition: `${placed.left}px ${placed.top}px` }} />
       )}
       {/* Soft fades for legibility, only where there is something to read; the rest of the photo is untouched.
           One full-size layer: separate gradient elements leave hairline seams in the exported PNG. */}

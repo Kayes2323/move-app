@@ -3,8 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CARD_HEIGHT, CARD_WIDTH, type CardRatio, type CardTone } from "./ShareCard";
 import { ShareCardView, type CardPhoto } from "./ShareCards";
-import { photoFit, type VisualSlot } from "../lib/share/cardLayout";
-import { sampleFromRgba, type Sample } from "../lib/share/placement";
+import { defaultAdjust, dragAdjust, MAX_ZOOM, MIN_ZOOM, type PhotoAdjust } from "../lib/share/cardLayout";
 import {
   ACTIVITY_META,
   findRoute,
@@ -26,38 +25,10 @@ type UserData = UserDoc;
 
 type Status = "loading" | "ready" | "empty" | "error";
 
-/** Where the skin is in the photo as the card will draw it (same crop and position), on a small grid. Lets the route stay off the face. */
-const makeSamples = (img: HTMLImageElement): Partial<Record<CardRatio, Sample>> => {
-  const out: Partial<Record<CardRatio, Sample>> = {};
-  try {
-    const fit = photoFit(img.naturalWidth, img.naturalHeight);
-    for (const ratio of ["story", "post"] as const) {
-      const w = 45;
-      const h = Math.round(CARD_HEIGHT[ratio] / 8);
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const g = c.getContext("2d", { willReadFrequently: true });
-      if (!g) continue;
-      const scale = fit.size === "cover" ? Math.max(w / img.naturalWidth, h / img.naturalHeight) : Math.min(w / img.naturalWidth, h / img.naturalHeight);
-      const [px, py] = fit.position.split(" ").map((v) => parseFloat(v) / 100);
-      const dw = img.naturalWidth * scale;
-      const dh = img.naturalHeight * scale;
-      g.fillStyle = "#0A0A0C";
-      g.fillRect(0, 0, w, h);
-      g.drawImage(img, (w - dw) * px, (h - dh) * py, dw, dh);
-      out[ratio] = sampleFromRgba(g.getImageData(0, 0, w, h).data, w, h);
-    }
-  } catch {
-    // an unreadable photo just means the route goes to its default place
-  }
-  return out;
-};
-
 const imageSize = (src: string) =>
-  new Promise<{ width: number; height: number; samples: Partial<Record<CardRatio, Sample>> }>((resolve, reject) => {
+  new Promise<{ width: number; height: number }>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight, samples: makeSamples(img) });
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
     img.onerror = () => reject(new Error("Photo unreadable"));
     img.src = src;
   });
@@ -82,7 +53,8 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
   const [ratio, setRatio] = useState<CardRatio>("story");
   const [tone, setTone] = useState<CardTone>("dark");
   const [photo, setPhoto] = useState<CardPhoto | null>(null);
-  const [slotPref, setSlotPref] = useState<"auto" | VisualSlot>("auto");
+  const [adjust, setAdjust] = useState<PhotoAdjust | null>(null);
+  const dragFrom = useRef<{ x: number; y: number; adjust: PhotoAdjust } | null>(null);
   const [exporting, setExporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
@@ -170,7 +142,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     if (!run || selected === null) return null;
     const kind = toKind(run.activity);
     // The route this activity was done on, as recorded with it; and where that journey began (only meaningful for the same route).
-    const route = findRoute(run.routeName ?? undefined);
+    const route = findRoute(run.routeName ?? user?.currentRoute);
     const sameJourney = route && findRoute(user?.currentRoute)?.id === route.id;
     const routeStartKm = sameJourney ? journeyOffsetKm(route, user?.startCheckpointIndex) : 0;
     const def = territory?.def;
@@ -191,7 +163,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
       ratio={ratio}
       tone={tone}
       photo={photo}
-      slot={slotPref === "auto" ? undefined : slotPref}
+      adjust={adjust ?? undefined}
       activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, dateLabel: formatCardDate(facts.run.date) }}
       track={track}
       journey={facts.route ? { route: facts.route, startKm: facts.routeStartKm, progressKm: facts.journeyKm } : null}
@@ -217,6 +189,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     try {
       const src = await loadPhoto(file);
       setPhoto({ src, ...(await imageSize(src)) });
+      setAdjust(null);
       setNotice(null);
     } catch (err) {
       console.error(err);
@@ -315,10 +288,26 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
             <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <div style={{ width: 44 }} />
+        <button className="btn btn-ghost" style={{ width: "auto", minHeight: 44, padding: "0 12px", fontSize: 14, textTransform: "none", letterSpacing: 0 }} onClick={() => router.push("/")}>Later</button>
       </div>
 
-      <div style={{ width: CARD_WIDTH * scale, height: H * scale, borderRadius: 24 * scale, overflow: "hidden", flexShrink: 0 }}>
+      <div
+        data-testid="card-preview"
+        style={{ width: CARD_WIDTH * scale, height: H * scale, borderRadius: 24 * scale, overflow: "hidden", flexShrink: 0, touchAction: photo ? "none" : undefined, cursor: photo ? "grab" : undefined }}
+        onPointerDown={(e) => {
+          if (!photo) return;
+          dragFrom.current = { x: e.clientX, y: e.clientY, adjust: adjust ?? defaultAdjust(photo.width, photo.height) };
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const from = dragFrom.current;
+          if (!from || !photo) return;
+          // Card pixels moved: the preview is scaled down on narrow phones.
+          setAdjust(dragAdjust(from.adjust, (e.clientX - from.x) / scale, (e.clientY - from.y) / scale, photo.width, photo.height, CARD_WIDTH, H));
+        }}
+        onPointerUp={() => (dragFrom.current = null)}
+        onPointerCancel={() => (dragFrom.current = null)}
+      >
         <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: CARD_WIDTH, height: H }}>
           {card}
         </div>
@@ -356,22 +345,29 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
         )}
 
         {photo && (
-          <div role="group" aria-label="Route position" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span className="mute" style={{ fontSize: 12, minWidth: 74 }}>Map position</span>
-            {(["auto", "top", "bottom"] as const).map((v) => (
-              <button key={v} onClick={() => setSlotPref(v)} aria-pressed={slotPref === v} className={slotPref === v ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 40, borderRadius: 20, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
-                {v === "auto" ? "Auto" : v === "top" ? "Top" : "Bottom"}
-              </button>
-            ))}
+          <div role="group" aria-label="Photo position" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <label htmlFor="photo-zoom" className="mute" style={{ fontSize: 12, whiteSpace: "nowrap" }}>Zoom</label>
+            <input
+              id="photo-zoom"
+              type="range"
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
+              step={0.05}
+              value={(adjust ?? defaultAdjust(photo.width, photo.height)).zoom}
+              onChange={(e) => setAdjust({ ...(adjust ?? defaultAdjust(photo.width, photo.height)), zoom: Number(e.target.value) })}
+              style={{ flex: 1, accentColor: "var(--accent)" }}
+            />
+            <button className="btn btn-line" style={{ width: "auto", minHeight: 40, padding: "0 14px", fontSize: 13, textTransform: "none", letterSpacing: 0 }} onClick={() => setAdjust(null)}>Reset</button>
           </div>
         )}
+        {photo && <p className="mute" style={{ fontSize: 12, textAlign: "center", marginTop: -2 }}>Drag the photo on the card to move it.</p>}
         <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: "none" }} />
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn btn-line" style={{ flex: 1 }} onClick={() => fileRef.current?.click()}>
             {photo ? "Change photo" : "Add photo"}
           </button>
           {photo && (
-            <button className="btn btn-line" style={{ width: "auto", color: "var(--mute)" }} onClick={() => setPhoto(null)}>Remove</button>
+            <button className="btn btn-line" style={{ width: "auto", color: "var(--mute)" }} onClick={() => { setPhoto(null); setAdjust(null); }}>Remove</button>
           )}
         </div>
 
@@ -381,7 +377,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
         </button>
         <button className="btn btn-soft" onClick={save} disabled={exporting}>Save image</button>
         <p role="status" className="mute" style={{ minHeight: 18, textAlign: "center", fontSize: 12 }}>
-          {notice ?? (run?.id && pendingIds.has(run.id) ? "Saved on this phone. It will sync when you're online." : "")}
+          {notice ?? (run?.id && pendingIds.has(run.id) ? "Saved on this phone. It will sync when you're online." : activityId ? "Saved. The card is ready whenever you want it: share it now, or later from Home." : "")}
         </p>
         <button className="btn btn-ghost" onClick={() => router.push("/")}>Done</button>
       </div>

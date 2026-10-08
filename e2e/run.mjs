@@ -612,6 +612,10 @@ async function scenarioShare() {
     check("S8c. the map shows the whole route including Hajiganj and Chandpur", /Hajiganj/.test(t) && /Chandpur/.test(t));
     await s.ctx.close();
   }
+  // an older activity saved without a route name still gets the Routes card, from the journey the user is on
+  s = await open(mk({ runs: [{ ...run1, routeName: null }], withTrack: false }));
+  check("S8e. an activity saved without a route name still offers Routes (the user's active journey)", !(await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Routes$/ }).isDisabled()) && (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label^='Route from']").count()) === 1);
+  await s.ctx.close();
   // no journey, but a recorded GPS track: Routes draws the real track
   s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "" }));
   check("S8d. an activity with no journey draws its real GPS track on Routes", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label='Route']").count()) === 1);
@@ -653,88 +657,94 @@ async function scenarioShare() {
     await pg.getByRole("button", { name: "Save image" }).click();
     return readFileSync(await (await dl).path()).toString("base64");
   };
-  const { cardLayout, photoFit } = await import("../app/lib/share/cardLayout.ts");
+  const { cardLayout } = await import("../app/lib/share/cardLayout.ts");
 
-  /** Where the face lands in the export (3x), from the same crop the card uses. */
-  const faceBox = (photo, ratio) => {
-    const H = ratio === "story" ? 640 : 450;
-    const fit = photoFit(photo.W, photo.H);
-    const scale = Math.max(360 / photo.W, H / photo.H);
-    const [px, py] = fit.position.split(" ").map((v) => parseFloat(v) / 100);
-    const cx = photo.face.x * scale - (photo.W * scale - 360) * px;
-    const cy = photo.face.y * scale - (photo.H * scale - H) * py;
-    const r = photo.face.r * scale;
+  /** Where the face is in the export (3x), read from how the card actually draws the photo right now. */
+  const faceBox = async (pg, photo) => {
+    const st = await pg.locator("[data-zone='photo']").first().evaluate((el) => ({ size: getComputedStyle(el).backgroundSize, pos: getComputedStyle(el).backgroundPosition }));
+    const [sw] = st.size.split(" ").map(parseFloat);
+    const [left, top] = st.pos.split(" ").map(parseFloat);
+    const k = sw / photo.W;
+    const cx = left + photo.face.x * k, cy = top + photo.face.y * k, r = photo.face.r * k;
     return { box: [(cx - r) * 3, (cy - r) * 3, 2 * r * 3, 2 * r * 3], area: Math.PI * (r * 3) ** 2, cy, r };
   };
-  const slotsPx = (ratio) => { const { slots } = cardLayout("ROUTES", ratio, true); const f = (r) => [r.x * 3, r.y * 3, r.w * 3, r.h * 3]; return { top: f(slots.top), bottom: f(slots.bottom) }; };
+  const zonePx = (ratio) => { const l = cardLayout("ROUTES", ratio, true); const f = (r) => [r.x * 3, r.y * 3, r.w * 3, r.h * 3]; return { top: f({ x: 0, y: 0, w: 360, h: l.visual.y - 40 }), bottom: f(l.visual) }; };
+  const load = async (pg, kind, faceY) => {
+    const photo = await makePhoto(pg, kind, faceY);
+    await pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
+    await pg.waitForSelector("text=Change photo", { timeout: 10000 });
+    await pg.waitForTimeout(300);
+    return photo;
+  };
 
-  const cases = [
-    { name: "portrait, face high", kind: "portrait", faceY: 0.27, expect: "bottom" },
-    { name: "landscape, face a little left of centre", kind: "landscape", faceY: 0.38, expect: "bottom" },
-    { name: "portrait, face low", kind: "portrait", faceY: 0.62, expect: "top" },
-  ];
-  for (const c of cases) {
+  for (const c of [{ name: "portrait, face high", kind: "portrait", faceY: 0.27 }, { name: "landscape, face a little left of centre", kind: "landscape", faceY: 0.38 }]) {
     for (const m of ["Routes", "Territory", "Normal"]) {
       const sp = await open(mk({ runs: [run1], territory: HALF }));
-      const photo = await makePhoto(sp.pg, c.kind, c.faceY);
-      await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
-      await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
+      const photo = await load(sp.pg, c.kind, c.faceY);
       await mode(sp.pg, m);
-      await sp.pg.waitForTimeout(400);
-      const slot = await sp.pg.locator("[data-card-mode]").first().getAttribute("data-slot");
-      const fb = faceBox(photo, "story");
-      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, slotsPx("story"));
+      await sp.pg.waitForTimeout(300);
+      const fb = await faceBox(sp.pg, photo);
+      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("story"));
       check(`P1. ${c.name}, ${m}: the export is 1080 x 1920`, r.width === 1080 && r.height === 1920, `${r.width}x${r.height}`);
-      check(`P2. ${c.name}, ${m}: the route goes to the ${c.expect} (away from the face)`, slot === c.expect, `slot=${slot}`);
+      check(`P2. ${c.name}, ${m}: the real photo fills the card (no panel, no blur)`, (await sp.pg.locator("[data-zone='backdrop']").count()) === 0 && (await sp.pg.locator("[data-zone='photo']").evaluate((el) => el.offsetHeight)) === 640);
       check(`P3. ${c.name}, ${m}: the face is fully visible in the export (${Math.round((100 * r.skin) / fb.area)}% of its area)`, r.skin >= fb.area * 0.92, `${r.skin}/${Math.round(fb.area)}`);
-      check(`P4. ${c.name}, ${m}: no route, map or boundary colour on the face`, r.accentOnFace === 0, String(r.accentOnFace));
-      check(`P5. ${c.name}, ${m}: the route is drawn in its slot`, (c.expect === "top" ? r.accentTop : r.accentBottom) > 200, `top ${r.accentTop} bottom ${r.accentBottom}`);
+      check(`P4. ${c.name}, ${m}: no route, map or boundary on the face`, r.accentOnFace === 0, String(r.accentOnFace));
+      check(`P5. ${c.name}, ${m}: the route is at the bottom, above the numbers`, r.accentBottom > 200 && r.accentTop === 0, `top ${r.accentTop} bottom ${r.accentBottom}`);
       await sp.ctx.close();
     }
   }
 
-  // the user can override the automatic choice
+  // a face low in the picture: the user zooms and drags it up, clear of the route
   {
     const sp = await open(mk({ runs: [run1], territory: HALF }));
-    const photo = await makePhoto(sp.pg, "portrait", 0.27);
-    await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
-    await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
-    await sp.pg.locator("[aria-label='Route position'] button", { hasText: /^Top$/ }).click();
+    const photo = await load(sp.pg, "portrait", 0.66);
+    const before = await faceBox(sp.pg, photo);
+    const l = cardLayout("ROUTES", "story", true);
+    check("P6. a low face starts where the route is", before.cy + before.r > l.visual.y, `${Math.round(before.cy + before.r)} vs ${l.visual.y}`);
+    await sp.pg.locator("#photo-zoom").fill("2.2");
+    await sp.pg.waitForTimeout(200);
+    await sp.pg.evaluate(() => window.scrollTo(0, 0));
+    await sp.pg.waitForTimeout(200);
+    const box = await sp.pg.getByTestId("card-preview").boundingBox();
+    await sp.pg.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await sp.pg.mouse.down();
+    await sp.pg.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 900, { steps: 12 });
+    await sp.pg.mouse.up();
     await sp.pg.waitForTimeout(300);
-    check("P6. the user can move the route to the top", (await sp.pg.locator("[data-card-mode]").first().getAttribute("data-slot")) === "top");
-    await sp.pg.locator("[aria-label='Route position'] button", { hasText: /^Auto$/ }).click();
-    await sp.pg.waitForTimeout(300);
-    check("P7. Auto puts it back where the face is not", (await sp.pg.locator("[data-card-mode]").first().getAttribute("data-slot")) === "bottom");
+    const after = await faceBox(sp.pg, photo);
+    check("P7. zooming and dragging moves the face up, above the route", after.cy + after.r < l.visual.y - 36, `${Math.round(after.cy + after.r)} vs ${l.visual.y - 36}`);
+    const r = await analyse(sp.pg, await exportPng(sp.pg), after.box, zonePx("story"));
+    // pushed right up to the top, the top of the head sits under the light fade behind the logo, which tints it slightly
+    check("P8. the adjusted photo exports with the face visible and nothing on it", r.skin >= after.area * 0.85 && r.accentOnFace === 0, `skin ${r.skin}/${Math.round(after.area)} accent ${r.accentOnFace}`);
+    await sp.pg.getByRole("button", { name: "Reset" }).click();
+    await sp.pg.waitForTimeout(200);
+    const reset = await faceBox(sp.pg, photo);
+    check("P9. Reset puts the photo back", Math.abs(reset.cy - before.cy) < 1);
     await sp.ctx.close();
   }
 
   // post (4:5) and a 320 px phone
   {
     const sp = await open(mk({ runs: [run1], territory: HALF }));
-    const photo = await makePhoto(sp.pg, "portrait", 0.27);
-    await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
-    await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
+    const photo = await load(sp.pg, "portrait", 0.27);
     await sp.pg.getByRole("button", { name: "Post 4:5" }).click();
     for (const m of ["Routes", "Territory", "Normal"]) {
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(300);
-      const fb = faceBox(photo, "post");
-      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, slotsPx("post"));
-      check(`P8. post 4:5, ${m}: 1080 x 1350, face fully visible, no route on it`, r.width === 1080 && r.height === 1350 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)} accent ${r.accentOnFace}`);
+      const fb = await faceBox(sp.pg, photo);
+      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("post"));
+      check(`P10. post 4:5, ${m}: 1080 x 1350, face fully visible, no route on it`, r.width === 1080 && r.height === 1350 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)} accent ${r.accentOnFace}`);
     }
     await sp.ctx.close();
   }
   {
     const sp = await open(mk({ runs: [run1], territory: HALF }), "/share?a=r1&ctx=territory", { width: 320, height: 640 });
-    const photo = await makePhoto(sp.pg, "landscape", 0.38);
-    await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
-    await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
-    await sp.pg.waitForTimeout(400);
-    check("P9. 320 px phone: no sideways scrolling with a photo card", await sp.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-    const fb = faceBox(photo, "story");
-    const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, slotsPx("story"));
-    check("P10. 320 px phone: the export is still 1080 x 1920 with the face visible and clear", r.width === 1080 && r.height === 1920 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)}`);
-    check("P11. no uncaught page errors with photos", sp.pg.errors.length === 0, sp.pg.errors.join(" | ").slice(0, 200));
+    const photo = await load(sp.pg, "landscape", 0.38);
+    check("P11. 320 px phone: no sideways scrolling with a photo card", await sp.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    const fb = await faceBox(sp.pg, photo);
+    const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("story"));
+    check("P12. 320 px phone: the export is still 1080 x 1920 with the face visible and clear", r.width === 1080 && r.height === 1920 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)}`);
+    check("P13. no uncaught page errors with photos", sp.pg.errors.length === 0, sp.pg.errors.join(" | ").slice(0, 200));
     await sp.ctx.close();
   }
 
