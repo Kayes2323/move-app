@@ -96,8 +96,10 @@ treated as standing still, but a device that wanders further than its reported a
 ## Eligible-cell masks (Phase 2b, pilot: Mohammadpur only)
 `app/lib/territory/mask/` (runtime: `parseMask`, `scopeFromMask`, no OSM knowledge) and `tools/territory-mask/` (build tooling, see its README).
 A mask is the set of cells of one area where a road or route exists; it is versioned, hashed and carries its sources and rule.
-Only Mohammadpur has inputs so far, and the real mask is NOT built yet because OpenStreetMap could not be reached from the build
-environment. Ownership against the real boundary is verified (5,783 cells, no leakage into any neighbouring thana).
+Only Mohammadpur is built (`public/geo/bd/masks/bd-upa-dhaka-mohammadpur.json`, version `territory-mask/1:bd-upa-dhaka-mohammadpur:2d8866a921f6`):
+5,783 owned cells, 3,880 eligible. Source: OpenStreetMap (ODbL 1.0, © OpenStreetMap contributors), the dated planet file `planet-260928.osm.pbf`
+(data as of 2026-09-28T00:00:04Z, MD5 verified), read by `tools/territory-mask/pbf.ts`; the build needs no network. See `tools/territory-mask/README.md`
+and the generated report `tools/territory-mask/reports/bd-upa-dhaka-mohammadpur.md`. Findings that bear on fairness are listed there and in the Phase 2b report; none has been compensated for.
 
 ## Not in Phase 1
 GPS coverage, explored percentage, ownership, King, conquest, 2x takeover, reclaim, battles, run/walk/cycling rules,

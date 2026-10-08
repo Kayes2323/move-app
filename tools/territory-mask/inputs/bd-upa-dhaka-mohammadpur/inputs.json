@@ -17,5 +17,83 @@
     "file": "neighbours.geojson",
     "sha256": "308c06ad97a844bc72b738e66e5821bafb0fb3603ee1772ff8deeb81fc43a84c",
     "count": 9
+  },
+  "roads": {
+    "file": "osm-roads.json",
+    "sha256": "be5c327bf6c96d380cf71afbca830e45dfa8919077965a202e3a9a8ab4ab8cef",
+    "source": {
+      "dataset": "OpenStreetMap",
+      "licence": "Open Database Licence (ODbL) 1.0",
+      "attribution": "© OpenStreetMap contributors",
+      "licenceUrl": "https://www.openstreetmap.org/copyright",
+      "snapshotTimestamp": "2026-09-28T00:00:04Z",
+      "extract": {
+        "kind": "pbf",
+        "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+        "bytes": 95121754261,
+        "md5": "3b704522e01272f5a6078ec93b275b64",
+        "md5Verified": true,
+        "sha256": "cdeac9298007385a0fa73ee0673a681633eb410efa313ec1d34380355c19b280",
+        "replicationTimestamp": "2026-09-28T00:00:04Z",
+        "writingProgram": "planet-dump-ng 1.2.4",
+        "method": "tools/territory-mask/extract.ts: nodes inside the box, ways touching it, geometry as runs of known nodes",
+        "box": [
+          90.31973517100003,
+          23.735389591000047,
+          90.39285387100007,
+          23.78493297900003
+        ],
+        "marginDegrees": 0.01,
+        "stats": {
+          "nodesInBox": 327770,
+          "waysSeen": 1220864527,
+          "highwayWaysKept": 4221,
+          "highwayWaysSplit": 3,
+          "highwayWaysClipped": 160,
+          "buildingsKept": 64650,
+          "buildingsSkippedPartial": 496
+        }
+      },
+      "elements": 4224
+    }
+  },
+  "buildings": {
+    "file": "osm-buildings.json",
+    "sha256": "5725fda9795662c9a2bf36777b72d08fb3ac329ab8b51f6f2a8cdc3b42aeee3b",
+    "source": {
+      "dataset": "OpenStreetMap",
+      "licence": "Open Database Licence (ODbL) 1.0",
+      "attribution": "© OpenStreetMap contributors",
+      "licenceUrl": "https://www.openstreetmap.org/copyright",
+      "snapshotTimestamp": "2026-09-28T00:00:04Z",
+      "extract": {
+        "kind": "pbf",
+        "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+        "bytes": 95121754261,
+        "md5": "3b704522e01272f5a6078ec93b275b64",
+        "md5Verified": true,
+        "sha256": "cdeac9298007385a0fa73ee0673a681633eb410efa313ec1d34380355c19b280",
+        "replicationTimestamp": "2026-09-28T00:00:04Z",
+        "writingProgram": "planet-dump-ng 1.2.4",
+        "method": "tools/territory-mask/extract.ts: nodes inside the box, ways touching it, geometry as runs of known nodes",
+        "box": [
+          90.31973517100003,
+          23.735389591000047,
+          90.39285387100007,
+          23.78493297900003
+        ],
+        "marginDegrees": 0.01,
+        "stats": {
+          "nodesInBox": 327770,
+          "waysSeen": 1220864527,
+          "highwayWaysKept": 4221,
+          "highwayWaysSplit": 3,
+          "highwayWaysClipped": 160,
+          "buildingsKept": 64650,
+          "buildingsSkippedPartial": 496
+        }
+      },
+      "elements": 64650
+    }
   }
 }

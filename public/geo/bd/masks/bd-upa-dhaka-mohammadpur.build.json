@@ -1,0 +1,11 @@
+{
+  "maskVersion": "territory-mask/1:bd-upa-dhaka-mohammadpur:2d8866a921f6",
+  "contentHash": "2d8866a921f688dd4729d99344e5f2fe41e5e4a2fd7b413d1f20800863e98569",
+  "builtAt": "2026-10-08T07:11:44.895Z",
+  "node": "v22.22.0",
+  "inputs": {
+    "boundary": "e0d7557b1733bafef04c5b2f61f771e2eaff403d1b1a2df8dd481c1a3c067623",
+    "roads": "be5c327bf6c96d380cf71afbca830e45dfa8919077965a202e3a9a8ab4ab8cef",
+    "buildings": "5725fda9795662c9a2bf36777b72d08fb3ac329ab8b51f6f2a8cdc3b42aeee3b"
+  }
+}
