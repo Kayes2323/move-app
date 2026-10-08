@@ -622,98 +622,119 @@ async function scenarioShare() {
   check("S10. the conquering activity opens the conquest card: TERRITORY CONQUERED, MOHAMMADPUR, 100%, 2 moves", /TERRITORY CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /100%/.test(t) && /2 moves/.test(t) && !/REMAINING/.test(t), t.slice(0, 260));
   await s.ctx.close();
 
-  // --- the photo: the subject is never covered, in the real exported PNG ---
-  const makePhoto = (pg, kind) => pg.evaluate(async (k) => {
+  // --- the photo: the real photo fills the card, the data sits on it, and the route stays off the face (checked in the exported PNG) ---
+  const makePhoto = (pg, kind, faceY) => pg.evaluate(async ([k, fy]) => {
     const portrait = k === "portrait";
     const W = portrait ? 900 : 1600, H = portrait ? 1200 : 1000;
-    const face = portrait ? { x: 450, y: 324, r: 108 } : { x: 720, y: 380, r: 120 };
+    const face = portrait ? { x: 450, y: Math.round(H * fy), r: 108 } : { x: 720, y: Math.round(H * fy), r: 120 };
     const c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d");
-    g.fillStyle = "#7a7f88"; g.fillRect(0, 0, W, H);
-    g.fillStyle = "#555a63"; g.fillRect(0, H * 0.7, W, H * 0.3);
-    g.fillStyle = "#e02020"; g.beginPath(); g.arc(face.x, face.y, face.r, 0, Math.PI * 2); g.fill();
+    const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#9db4cf"); sky.addColorStop(1, "#c9d3dc");
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#c58c63"; g.beginPath(); g.arc(face.x, face.y, face.r, 0, Math.PI * 2); g.fill();
     const blob = await new Promise((r) => c.toBlob(r, "image/png"));
     const buf = new Uint8Array(await blob.arrayBuffer());
     let bin = ""; for (const b of buf) bin += String.fromCharCode(b);
     return { b64: btoa(bin), W, H, face };
-  }, kind);
-  const analyse = (pg, b64, zone, accent, scale) => pg.evaluate(async ([data, z, acc, sc]) => {
+  }, [kind, faceY]);
+  /** Counts, in the exported PNG: skin pixels of the face (visible face) and route-coloured pixels inside the face's box and in each slot. */
+  const analyse = (pg, b64, box, slots) => pg.evaluate(async ([data, bx, sl]) => {
     const bytes = Uint8Array.from(atob(data), (ch) => ch.charCodeAt(0));
     const bmp = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
     const c = document.createElement("canvas"); c.width = bmp.width; c.height = bmp.height;
     const g = c.getContext("2d"); g.drawImage(bmp, 0, 0);
-    const count = (x, y, w, h, test) => { const d = g.getImageData(x, y, w, h).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (test(d[i], d[i + 1], d[i + 2])) n++; return n; };
-    const isRed = (r, gg, b) => r > 170 && gg < 90 && b < 90;
-    const isAccent = (r, gg, b) => Math.abs(r - acc[0]) < 45 && Math.abs(gg - acc[1]) < 45 && Math.abs(b - acc[2]) < 45;
-    const Z = z.map((v) => Math.round(v * sc));
-    return {
-      width: bmp.width, height: bmp.height,
-      redInPhoto: count(Z[0], Z[1], Z[2], Z[3], isRed),
-      accentInPhoto: count(Z[0], Z[1], Z[2], Z[3], isAccent),
-      redBelow: count(0, Z[3], bmp.width, bmp.height - Z[3], isRed),
-      accentBelow: count(0, Z[3], bmp.width, bmp.height - Z[3], isAccent),
-    };
-  }, [b64, zone, accent, scale]);
+    const count = (r, test) => { const x = Math.max(0, Math.round(r[0])), y = Math.max(0, Math.round(r[1])); const w = Math.min(bmp.width - x, Math.round(r[2])), h = Math.min(bmp.height - y, Math.round(r[3])); if (w <= 0 || h <= 0) return 0; const d = g.getImageData(x, y, w, h).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (test(d[i], d[i + 1], d[i + 2])) n++; return n; };
+    const skin = (r, gg, b) => Math.abs(r - 197) < 30 && Math.abs(gg - 140) < 30 && Math.abs(b - 99) < 30;
+    const accent = (r, gg, b) => Math.abs(r - 111) < 40 && Math.abs(gg - 138) < 40 && Math.abs(b - 255) < 40;
+    return { width: bmp.width, height: bmp.height, skin: count(bx, skin), accentOnFace: count(bx, accent), accentTop: count(sl.top, accent), accentBottom: count(sl.bottom, accent) };
+  }, [b64, box, slots]);
   const exportPng = async (pg) => {
     const dl = pg.waitForEvent("download", { timeout: 40000 });
     await pg.getByRole("button", { name: "Save image" }).click();
-    const d = await dl;
-    return readFileSync(await d.path()).toString("base64");
+    return readFileSync(await (await dl).path()).toString("base64");
   };
-  const BLUE = [111, 138, 255];
-  const { cardLayout } = await import("../app/lib/share/cardLayout.ts");
+  const { cardLayout, photoFit } = await import("../app/lib/share/cardLayout.ts");
 
-  for (const photoKind of ["portrait", "landscape"]) {
-    for (const [m, label, layoutMode] of [["Routes", "ROUTES", "ROUTES"], ["Territory", "TERRITORY", "TERRITORY"], ["Normal", "NORMAL", "NORMAL"]]) {
+  /** Where the face lands in the export (3x), from the same crop the card uses. */
+  const faceBox = (photo, ratio) => {
+    const H = ratio === "story" ? 640 : 450;
+    const fit = photoFit(photo.W, photo.H);
+    const scale = Math.max(360 / photo.W, H / photo.H);
+    const [px, py] = fit.position.split(" ").map((v) => parseFloat(v) / 100);
+    const cx = photo.face.x * scale - (photo.W * scale - 360) * px;
+    const cy = photo.face.y * scale - (photo.H * scale - H) * py;
+    const r = photo.face.r * scale;
+    return { box: [(cx - r) * 3, (cy - r) * 3, 2 * r * 3, 2 * r * 3], area: Math.PI * (r * 3) ** 2, cy, r };
+  };
+  const slotsPx = (ratio) => { const { slots } = cardLayout("ROUTES", ratio, true); const f = (r) => [r.x * 3, r.y * 3, r.w * 3, r.h * 3]; return { top: f(slots.top), bottom: f(slots.bottom) }; };
+
+  const cases = [
+    { name: "portrait, face high", kind: "portrait", faceY: 0.27, expect: "bottom" },
+    { name: "landscape, face a little left of centre", kind: "landscape", faceY: 0.38, expect: "bottom" },
+    { name: "portrait, face low", kind: "portrait", faceY: 0.62, expect: "top" },
+  ];
+  for (const c of cases) {
+    for (const m of ["Routes", "Territory", "Normal"]) {
       const sp = await open(mk({ runs: [run1], territory: HALF }));
-      const photo = await makePhoto(sp.pg, photoKind);
+      const photo = await makePhoto(sp.pg, c.kind, c.faceY);
       await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
       await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(400);
-      const L = cardLayout(layoutMode, "story", true, photo.W / photo.H);
-      const scale = Math.max(L.photo.w / photo.W, L.photo.h / photo.H);
-      const expected = Math.PI * (photo.face.r * scale * 3) ** 2;
-      const png = await exportPng(sp.pg);
-      const r = await analyse(sp.pg, png, [L.protect.x, L.protect.y, L.protect.w, L.protect.h], BLUE, 3);
-      check(`P1. ${photoKind} photo, ${label}: exported PNG is 1080 x 1920`, r.width === 1080 && r.height === 1920, `${r.width}x${r.height}`);
-      check(`P2. ${photoKind} photo, ${label}: the face is fully visible in the export (${Math.round((100 * r.redInPhoto) / expected)}% of its area)`, r.redInPhoto >= expected * 0.85 && r.redInPhoto <= expected * 1.15, `${r.redInPhoto} vs ${Math.round(expected)}`);
-      check(`P3. ${photoKind} photo, ${label}: no route, map, text or logo colour inside the protected top`, r.accentInPhoto === 0, String(r.accentInPhoto));
-      check(`P4. ${photoKind} photo, ${label}: the overlay lives below the protected top (${r.accentBelow} px)`, m === "Normal" ? r.accentBelow > 20 : r.accentBelow > 300, String(r.accentBelow));
-      check(`P5. ${photoKind} photo, ${label}: no face colour leaks below the protected top`, r.redBelow === 0, String(r.redBelow));
+      const slot = await sp.pg.locator("[data-card-mode]").first().getAttribute("data-slot");
+      const fb = faceBox(photo, "story");
+      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, slotsPx("story"));
+      check(`P1. ${c.name}, ${m}: the export is 1080 x 1920`, r.width === 1080 && r.height === 1920, `${r.width}x${r.height}`);
+      check(`P2. ${c.name}, ${m}: the route goes to the ${c.expect} (away from the face)`, slot === c.expect, `slot=${slot}`);
+      check(`P3. ${c.name}, ${m}: the face is fully visible in the export (${Math.round((100 * r.skin) / fb.area)}% of its area)`, r.skin >= fb.area * 0.92, `${r.skin}/${Math.round(fb.area)}`);
+      check(`P4. ${c.name}, ${m}: no route, map or boundary colour on the face`, r.accentOnFace === 0, String(r.accentOnFace));
+      check(`P5. ${c.name}, ${m}: the route is drawn in its slot`, (c.expect === "top" ? r.accentTop : r.accentBottom) > 200, `top ${r.accentTop} bottom ${r.accentBottom}`);
       await sp.ctx.close();
     }
+  }
+
+  // the user can override the automatic choice
+  {
+    const sp = await open(mk({ runs: [run1], territory: HALF }));
+    const photo = await makePhoto(sp.pg, "portrait", 0.27);
+    await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
+    await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
+    await sp.pg.locator("[aria-label='Route position'] button", { hasText: /^Top$/ }).click();
+    await sp.pg.waitForTimeout(300);
+    check("P6. the user can move the route to the top", (await sp.pg.locator("[data-card-mode]").first().getAttribute("data-slot")) === "top");
+    await sp.pg.locator("[aria-label='Route position'] button", { hasText: /^Auto$/ }).click();
+    await sp.pg.waitForTimeout(300);
+    check("P7. Auto puts it back where the face is not", (await sp.pg.locator("[data-card-mode]").first().getAttribute("data-slot")) === "bottom");
+    await sp.ctx.close();
   }
 
   // post (4:5) and a 320 px phone
   {
     const sp = await open(mk({ runs: [run1], territory: HALF }));
-    const photo = await makePhoto(sp.pg, "portrait");
+    const photo = await makePhoto(sp.pg, "portrait", 0.27);
     await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
     await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
     await sp.pg.getByRole("button", { name: "Post 4:5" }).click();
-    for (const [m, layoutMode] of [["Routes", "ROUTES"], ["Territory", "TERRITORY"], ["Normal", "NORMAL"]]) {
+    for (const m of ["Routes", "Territory", "Normal"]) {
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(300);
-      const L = cardLayout(layoutMode, "post", true, photo.W / photo.H);
-      const expected = Math.PI * (photo.face.r * Math.max(L.photo.w / photo.W, L.photo.h / photo.H) * 3) ** 2;
-      const r = await analyse(sp.pg, await exportPng(sp.pg), [L.protect.x, L.protect.y, L.protect.w, L.protect.h], BLUE, 3);
-      check(`P6. post 4:5, ${m}: 1080 x 1350, face visible, nothing over the photo`, r.width === 1080 && r.height === 1350 && r.redInPhoto >= expected * 0.85 && r.accentInPhoto === 0 && r.redBelow === 0, `${r.width}x${r.height} red ${r.redInPhoto}/${Math.round(expected)} accent ${r.accentInPhoto}`);
+      const fb = faceBox(photo, "post");
+      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, slotsPx("post"));
+      check(`P8. post 4:5, ${m}: 1080 x 1350, face fully visible, no route on it`, r.width === 1080 && r.height === 1350 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)} accent ${r.accentOnFace}`);
     }
     await sp.ctx.close();
   }
   {
     const sp = await open(mk({ runs: [run1], territory: HALF }), "/share?a=r1&ctx=territory", { width: 320, height: 640 });
-    const photo = await makePhoto(sp.pg, "landscape");
+    const photo = await makePhoto(sp.pg, "landscape", 0.38);
     await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
     await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
     await sp.pg.waitForTimeout(400);
-    check("P7. 320 px phone: no sideways scrolling with a photo card", await sp.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-    const L = cardLayout("TERRITORY", "story", true, photo.W / photo.H);
-    const expected = Math.PI * (photo.face.r * Math.max(L.photo.w / photo.W, L.photo.h / photo.H) * 3) ** 2;
-    const r = await analyse(sp.pg, await exportPng(sp.pg), [L.protect.x, L.protect.y, L.protect.w, L.protect.h], BLUE, 3);
-    check("P8. 320 px phone: the export is still 1080 x 1920 with the face visible and nothing over it", r.width === 1080 && r.height === 1920 && r.redInPhoto >= expected * 0.85 && r.accentInPhoto === 0, `${r.width}x${r.height} red ${r.redInPhoto}/${Math.round(expected)}`);
-    check("P9. no uncaught page errors with photos", sp.pg.errors.length === 0, sp.pg.errors.join(" | ").slice(0, 200));
+    check("P9. 320 px phone: no sideways scrolling with a photo card", await sp.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    const fb = faceBox(photo, "story");
+    const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, slotsPx("story"));
+    check("P10. 320 px phone: the export is still 1080 x 1920 with the face visible and clear", r.width === 1080 && r.height === 1920 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)}`);
+    check("P11. no uncaught page errors with photos", sp.pg.errors.length === 0, sp.pg.errors.join(" | ").slice(0, 200));
     await sp.ctx.close();
   }
 

@@ -2,7 +2,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Route } from "../data/routes";
 import { ACTIVITY_META, formatDuration, formatKm, formatPerformance, type ActivityKind } from "../lib/activity";
-import { cardLayout, photoFit, type CardLayout, type CardRatio, type CardTone, type Rect, type ShareMode } from "../lib/share/cardLayout";
+import { cardLayout, photoFit, type CardLayout, type CardRatio, type CardTone, type Rect, type ShareMode, type VisualSlot } from "../lib/share/cardLayout";
+import { chooseSlot, type Sample } from "../lib/share/placement";
 import type { TerritoryCardFacts } from "../lib/share/context";
 import { drawRoute } from "../lib/share/trackPath";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
@@ -20,8 +21,8 @@ export interface CardPhoto {
   src: string;
   width: number;
   height: number;
-  /** A tiny copy of the photo, stretched to fill the card behind a photo that doesn't fill it. Soft by construction (no CSS filters). */
-  backdrop?: string;
+  /** Where the skin is, per card shape, as drawn. Used to keep the route off the face. */
+  samples?: Partial<Record<CardRatio, Sample>>;
 }
 
 export interface ShareCardProps {
@@ -29,6 +30,8 @@ export interface ShareCardProps {
   ratio: CardRatio;
   tone?: CardTone;
   photo?: CardPhoto | null;
+  /** Where the route goes on a photo card. Automatic when omitted: the slot with less of a person in it. */
+  slot?: VisualSlot;
   activity: { kind: ActivityKind; km: number; duration: string; pace?: number; calories?: number; dateLabel: string };
   /** The recorded GPS track, or null when none exists. Never invented. */
   track: readonly TrackPoint[] | null;
@@ -51,6 +54,16 @@ const rectStyle = (r: Rect): CSSProperties => ({ position: "absolute", left: r.x
 function look(tone: CardTone, hasPhoto: boolean, accentDark: string, accentLight: string): Look {
   const light = tone === "light" && !hasPhoto;
   return { ink: light ? "#0F0F0F" : "#FFFFFF", soft: light ? "#5F6675" : "#8A8A94", bg: light ? "#F4F5F9" : "#0A0A0C", accent: light ? accentLight : accentDark, light };
+}
+
+/** The fades as one gradient: dark behind a visual at the top (if it is there), clear in the middle, dark behind the numbers. */
+function scrimGradient(layout: CardLayout): string {
+  const stops: string[] = [];
+  const top = layout.scrims.find((r) => r.y === 0);
+  const bottom = layout.scrims.find((r) => r.y > 0);
+  if (top) stops.push("rgba(0,0,0,0.46) 0px", `rgba(0,0,0,0.34) ${Math.round(top.h * 0.6)}px`, `rgba(0,0,0,0) ${top.h}px`);
+  if (bottom) stops.push(`rgba(0,0,0,0) ${bottom.y}px`, `rgba(0,0,0,0.5) ${bottom.y + 40}px`, `rgba(0,0,0,0.82) ${layout.height}px`);
+  return `linear-gradient(to bottom, ${stops.join(", ")})`;
 }
 
 const label = (L: Look, size: number): CSSProperties => ({ fontSize: size, fontWeight: 700, letterSpacing: size >= 13 ? 2 : 1.4, color: L.accent, whiteSpace: "nowrap" });
@@ -119,12 +132,12 @@ function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: Card
   const { kind, km, duration, pace, calories, dateLabel } = props.activity;
   const distance = formatKm(km);
   const roomy = layout.stats.h >= 140;
-  const size = layout.compact ? bigSize(distance, 36, 32, 27) : roomy ? bigSize(distance, 92, 78, 64) : bigSize(distance, 46, 40, 34);
+  const size = false ? bigSize(distance, 36, 32, 27) : roomy ? bigSize(distance, 92, 78, 64) : bigSize(distance, 46, 40, 34);
   const kcal = calories && calories > 0 ? Math.round(calories) : null;
-  const sub = layout.compact ? 12 : roomy ? 20 : 15;
+  const sub = false ? 12 : roomy ? 20 : 15;
   return (
     <>
-      <div style={label(L, layout.compact ? 11 : 13)}>{ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
+      <div style={label(L, false ? 11 : 13)}>{ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
       <div style={big(size, 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.24), marginLeft: 6, color: L.soft }}>km</span></div>
       <div style={{ fontSize: sub, fontWeight: 600, marginTop: 8 }}>{formatDuration(duration)}<span style={{ opacity: 0.5, margin: "0 8px" }}>·</span>{formatPerformance(kind, pace)}</div>
       {kcal && <div style={{ fontSize: sub - 2, fontWeight: 600, marginTop: 4, color: L.soft }}>{kcal} kcal</div>}
@@ -132,10 +145,10 @@ function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: Card
   );
 }
 
-function RoutesStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
+function RoutesStats({ props, L }: { props: ShareCardProps; L: Look }) {
   const { kind, km, duration, pace, calories, dateLabel } = props.activity;
   const distance = formatKm(km);
-  const c = layout.compact;
+  const c = false;
   const size = c ? bigSize(distance, 36, 32, 27) : bigSize(distance, 46, 40, 34);
   const j = props.journey;
   const kcal = calories && calories > 0 ? Math.round(calories) : null;
@@ -161,11 +174,11 @@ function RoutesStats({ props, layout, L }: { props: ShareCardProps; layout: Card
   );
 }
 
-function TerritoryStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
+function TerritoryStats({ props, L }: { props: ShareCardProps; L: Look }) {
   const t = props.territory;
   if (!t) return null;
   const { def, facts } = t;
-  const c = layout.compact;
+  const c = false;
   if (facts.conquered) {
     const stats = [facts.moves ? `${facts.moves} ${facts.moves === 1 ? "move" : "moves"}` : "", t.actualKm ? `${t.actualKm.toFixed(1)} km real` : ""].filter(Boolean).join(" · ");
     const nameSize = Math.min(c ? 22 : 34, Math.floor((c ? 146 : 308) / (def.name.length * 0.82)));
@@ -200,23 +213,21 @@ function TerritoryStats({ props, layout, L }: { props: ShareCardProps; layout: C
  */
 export function ShareCardView(props: ShareCardProps) {
   const { mode, ratio, photo, tone = "dark" } = props;
-  const layout = cardLayout(mode, ratio, Boolean(photo), photo ? photo.width / photo.height : undefined);
+  const base = cardLayout(mode, ratio, Boolean(photo));
+  const slot: VisualSlot = props.slot ?? (photo && base.slots ? chooseSlot(photo.samples?.[ratio], base.slots, base.width, base.height) : "bottom");
+  const layout = photo ? cardLayout(mode, ratio, true, slot) : base;
   const accent = mode === "TERRITORY" ? ["#6F8AFF", "#4F6EF7"] : [ACTIVITY_META[props.activity.kind].accent, LIGHT_ACCENT[props.activity.kind]];
   const L = look(tone, Boolean(photo), accent[0], accent[1]);
   const fit = photo ? photoFit(photo.width, photo.height) : null;
 
   return (
-    <div data-card-mode={mode} style={{ position: "relative", width: layout.width, height: layout.height, overflow: "hidden", background: L.bg, color: L.ink, fontFamily: TEXT }}>
-      {photo && layout.backdrop && (
-        <div data-zone="backdrop" style={{ position: "absolute", inset: 0, backgroundColor: "#0A0A0C", backgroundImage: photo.backdrop ? `url(${photo.backdrop})` : undefined, backgroundSize: "100% 100%" }} />
-      )}
+    <div data-card-mode={mode} data-slot={photo ? slot : undefined} style={{ position: "relative", width: layout.width, height: layout.height, overflow: "hidden", background: L.bg, color: L.ink, fontFamily: TEXT }}>
       {photo && layout.photo && fit && (
         <div data-zone="photo" style={{ ...rectStyle(layout.photo), backgroundColor: "#0A0A0C", backgroundImage: `url(${photo.src})`, backgroundRepeat: "no-repeat", backgroundSize: fit.size, backgroundPosition: fit.position }} />
       )}
-      {/* The fade lives entirely in the overlay zone: the protected top of the photo is never darkened. */}
-      {photo && layout.overlay && (
-        <div data-zone="scrim" style={{ ...rectStyle(layout.overlay), background: "linear-gradient(to bottom, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.62) 56px, rgba(0,0,0,0.84) 100%)" }} />
-      )}
+      {/* Soft fades for legibility, only where there is something to read; the rest of the photo is untouched.
+          One full-size layer: separate gradient elements leave hairline seams in the exported PNG. */}
+      {photo && layout.scrims.length > 0 && <div data-zone="scrim" style={{ position: "absolute", inset: 0, background: scrimGradient(layout) }} />}
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img data-zone="logo" src={L.light ? "/move-mark-dark.png" : "/move-mark.png"} alt="Move" width={layout.logo.w} height={layout.logo.h} style={{ position: "absolute", left: layout.logo.x, top: layout.logo.y, width: layout.logo.w, height: "auto" }} />
@@ -225,8 +236,8 @@ export function ShareCardView(props: ShareCardProps) {
 
       <div data-zone="stats" style={rectStyle(layout.stats)}>
         {mode === "NORMAL" && <NormalStats props={props} layout={layout} L={L} />}
-        {mode === "ROUTES" && <RoutesStats props={props} layout={layout} L={L} />}
-        {mode === "TERRITORY" && <TerritoryStats props={props} layout={layout} L={L} />}
+        {mode === "ROUTES" && <RoutesStats props={props} L={L} />}
+        {mode === "TERRITORY" && <TerritoryStats props={props} L={L} />}
       </div>
     </div>
   );
