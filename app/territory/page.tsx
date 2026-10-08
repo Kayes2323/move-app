@@ -1,120 +1,187 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BottomNav } from "../components/BottomNav";
-import { Loading } from "../components/Loading";
 import { LoadError } from "../components/LoadError";
-import { AREA_TYPE_LABEL, AREA_TYPE_LABEL_PLURAL, contextLine, type AreaIndex } from "../lib/territory/hierarchy";
-import { useTerritory } from "../lib/territory/useTerritory";
-import { resolveMode, useThemePrefs } from "../lib/theme";
-import { TerritoryMap } from "./TerritoryMap";
+import { Loading } from "../components/Loading";
+import { loadHistory, toHistoryRuns } from "../lib/history";
+import { nowMs } from "../lib/activity";
+import { CONQUEST_CONFIG } from "../lib/territory/conquest/config";
+import { localDay, qualifyingDays, streakDayNumber, streakMultiplier } from "../lib/territory/conquest/credit";
+import { ceilKm, floorKm, territoryProgress, type TerritoryProgress } from "../lib/territory/conquest/progress";
+import { getTerritory, MOHAMMADPUR_ID } from "../lib/territory/conquest/registry";
+import { reconcileTerritory } from "../lib/territoryState";
+import { newChoice, saveTerritory, type StoredTerritory } from "../lib/territory/conquest/store";
+import { TerritoryEmblem } from "./TerritoryEmblem";
 
-const glass: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--bg) 88%, transparent)",
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
-};
-
-function childSummary(index: AreaIndex, id: string): string {
-  const kids = index.childrenOf(id);
-  if (!kids.length) return "";
-  return index
-    .childTypes(id)
-    .map((t) => `${kids.filter((k) => k.type === t).length} ${AREA_TYPE_LABEL_PLURAL[t]}`)
-    .join(" · ");
+interface Loaded {
+  uid: string;
+  stored: StoredTerritory | null;
+  progress: TerritoryProgress | null;
+  streakDay: number;
+  now: number;
 }
 
-export default function TerritoryPage() {
-  const router = useRouter();
-  const { load, selection, actions, retry } = useTerritory();
-  const prefs = useThemePrefs();
-  const [problem, setProblem] = useState<string | null>(null);
+const def = getTerritory(MOHAMMADPUR_ID)!;
+const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
-  if (load.status === "loading" || (load.status === "ready" && !selection)) return <Loading label="Loading the map..." />;
-  if (load.status === "error") return <LoadError message={load.message} onRetry={retry} />;
-  if (!selection || !actions) return null;
+export default function TerritoryHub() {
+  const [data, setData] = useState<Loaded | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
-  const { index, sources } = load.data;
-  const focus = index.get(selection.focusId) ?? index.root;
-  const path = index.pathTo(focus.id);
-  const active = selection.activeId ? index.get(selection.activeId) : undefined;
-  const isActive = active?.id === focus.id;
-  const atRoot = focus.id === index.root.id;
-  const summary = childSummary(index, focus.id);
-  const dark = resolveMode(prefs.mode) === "dark";
+  const refresh = useCallback(async (uid: string) => {
+    const h = await loadHistory(uid);
+    if (!h.serverOk && !h.runs.length) throw new Error("no data");
+    const runs = toHistoryRuns(h.runs);
+    const { stored, progress } = reconcileTerritory(uid, h.user.territory, h.runs);
+    const now = nowMs();
+    return { uid, stored, progress, streakDay: streakDayNumber(localDay(now), qualifyingDays(runs)), now } satisfies Loaded;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
+      try {
+        const [{ auth }, { onAuthStateChanged }] = await Promise.all([import("../firebase"), import("firebase/auth")]);
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (cancelled) return;
+          if (!user) {
+            window.location.href = "/login";
+            return;
+          }
+          try {
+            const loaded = await refresh(user.uid);
+            if (!cancelled) {
+              setData(loaded);
+              setFailed(false);
+            }
+          } catch (err) {
+            console.error(err);
+            if (!cancelled) setFailed(true);
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [refresh, attempt]);
+
+  const choose = async () => {
+    if (!data || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const stored = newChoice(MOHAMMADPUR_ID, nowMs()) as StoredTerritory;
+      await saveTerritory(data.uid, stored);
+      setData({ ...data, stored, progress: territoryProgress([], stored) });
+    } catch (err) {
+      console.error(err);
+      setError("Couldn't save your choice. Check your connection and try again.");
+    }
+    setBusy(false);
+  };
+
+  if (failed) return <LoadError message="Couldn't load your Territory." onRetry={() => { setFailed(false); setData(null); setAttempt((n) => n + 1); }} />;
+  if (!data) return <Loading label="Loading your Territory..." />;
+
+  const { stored, progress } = data;
+  const target = def.target.targetKm;
+  const chosen = Boolean(stored && progress);
+  const conquered = Boolean(progress?.conquered);
+  const fraction = progress ? progress.progressKm / progress.targetKm : 0;
+  const minuteNow = Math.floor((((data.now + CONQUEST_CONFIG.timezone.offsetMinutes * 60_000) % 86_400_000) + 86_400_000) % 86_400_000 / 60_000);
+  const morningNow = minuteNow >= CONQUEST_CONFIG.morning.startMinute && minuteNow < CONQUEST_CONFIG.morning.endMinute;
+  const hh = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const morningWindow = `${hh(CONQUEST_CONFIG.morning.startMinute)}-${hh(CONQUEST_CONFIG.morning.endMinute)}`;
+  const recent = progress ? [...progress.contributions].reverse().slice(0, 3) : [];
 
   return (
-    <main style={{ position: "fixed", inset: 0, background: "var(--bg)", overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: 0, isolation: "isolate" }}>
-        <TerritoryMap index={index} focusId={focus.id} activeId={selection.activeId} dark={dark} accent={prefs.accent} onFocus={actions.focus} onProblem={setProblem} />
-      </div>
-
-      {/* top: back + where you are */}
-      <header style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 40, padding: "calc(env(safe-area-inset-top, 0px) + 12px) 12px 0", pointerEvents: "none" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, maxWidth: 480, margin: "0 auto" }}>
-          <button
-            className="icon-btn"
-            aria-label={atRoot ? "Back to Home" : `Up to ${index.get(focus.parentId ?? "")?.name ?? "Bangladesh"}`}
-            onClick={() => (atRoot ? router.push("/") : actions.up())}
-            style={{ ...glass, pointerEvents: "auto", boxShadow: "0 2px 12px rgba(0,0,0,0.18)" }}
-          >
-            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
-          </button>
-          <nav aria-label="Where you are" style={{ ...glass, pointerEvents: "auto", flex: 1, minWidth: 0, height: 44, borderRadius: 22, display: "flex", alignItems: "center", overflowX: "auto", padding: "0 6px", boxShadow: "0 2px 12px rgba(0,0,0,0.18)", scrollbarWidth: "none" }}>
-            {path.map((a, i) => (
-              <span key={a.id} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-                {i > 0 && <svg className="ic mute" viewBox="0 0 24 24" style={{ width: 14, height: 14 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>}
-                <button
-                  onClick={() => actions.focus(a.id)}
-                  aria-current={a.id === focus.id ? "location" : undefined}
-                  style={{ background: "none", border: 0, cursor: "pointer", padding: "10px 8px", fontSize: 13, fontWeight: a.id === focus.id ? 800 : 600, color: a.id === focus.id ? "var(--ink)" : "var(--mute)" }}
-                >
-                  {a.name}
-                </button>
-              </span>
-            ))}
-          </nav>
-        </div>
-        {problem && (
-          <p role="status" style={{ ...glass, pointerEvents: "auto", maxWidth: 456, margin: "8px auto 0", padding: "8px 14px", borderRadius: 14, fontSize: 12, color: "var(--amber)", border: "1px solid var(--amberbd)" }}>
-            {problem}
-          </p>
-        )}
+    <main className="app">
+      <header>
+        <p className="lab" style={{ color: "var(--acc-text)" }}>{conquered ? "Territory conquered" : chosen ? "Your Territory" : "Your next Territory"}</p>
+        <h1 className="title-blk" style={{ marginTop: 6, fontSize: 34 }}>{def.name}</h1>
       </header>
 
-      {/* bottom: the focused area and the one action */}
-      <section aria-label="Selected area" style={{ position: "absolute", left: 0, right: 0, zIndex: 40, bottom: "calc(env(safe-area-inset-bottom, 0px) + 74px)", padding: "0 12px 10px" }}>
-        <div style={{ ...glass, maxWidth: 456, margin: "0 auto", borderRadius: 28, padding: "18px 18px 12px", boxShadow: "0 -4px 30px rgba(0,0,0,0.25)" }}>
-          <p className="lab" style={{ color: "var(--acc-text)" }}>{AREA_TYPE_LABEL[focus.type]}{focus.status === "boundary-pending" ? " · boundary pending" : ""}</p>
-          <h1 className="title-blk" style={{ marginTop: 6, fontSize: 26, textTransform: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{focus.name}</h1>
-          <p className="mute" style={{ fontSize: 13, marginTop: 4, minHeight: 18 }}>
-            {[contextLine(index, focus.id), summary].filter(Boolean).join(" · ") || "Tap an area to explore it"}
-          </p>
+      <div style={{ margin: "8px auto 0", maxWidth: 340 }}>
+        <TerritoryEmblem def={def} fraction={fraction} conquered={conquered} width={340} height={300} />
+      </div>
 
-          {isActive ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
-              <div className="btn btn-soft" style={{ flex: 1, cursor: "default", color: "var(--acc-text)" }} role="status">
-                <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>
-                Active area
-              </div>
-              <button className="btn btn-ghost" style={{ width: "auto" }} onClick={actions.clear}>Clear</button>
+      {!chosen ? (
+        <section style={{ textAlign: "center", marginTop: 4 }}>
+          <p className="blk" style={{ fontSize: 44, lineHeight: 1.05 }}>{fmt(target)}<span className="unit">km</span></p>
+          <p className="body mute" style={{ marginTop: 4 }}>to conquer · 0% conquered</p>
+          <p className="body mute" style={{ marginTop: 14, lineHeight: "21px" }}>
+            The line around {def.name} is {fmt(target)} km long. Every Walk and Run you do counts toward it, wherever you are, and the same road counts every time.
+          </p>
+          <button className="btn btn-go" style={{ marginTop: 22 }} onClick={choose} disabled={busy}>{busy ? "Saving…" : `Choose ${def.name}`}</button>
+          {error && <p role="alert" style={{ color: "var(--danger)", fontSize: 13, marginTop: 10 }}>{error}</p>}
+        </section>
+      ) : conquered && progress ? (
+        <section style={{ textAlign: "center", marginTop: 4 }}>
+          <p className="blk" style={{ fontSize: 56, lineHeight: 1 }}>100<span className="unit">%</span></p>
+          <p className="h2" style={{ marginTop: 6 }}>{fmt(target)} / {fmt(target)} km</p>
+          <p className="body mute" style={{ marginTop: 8 }}>{progress.completion?.moves} {progress.completion?.moves === 1 ? "move" : "moves"} · {fmt(progress.completion?.actualKm ?? 0)} km of real distance</p>
+          <Link href={progress.completion ? `/share?a=${encodeURIComponent(progress.completion.runId)}` : "/share"} className="btn btn-go" style={{ marginTop: 22 }}>Share your conquest</Link>
+        </section>
+      ) : progress ? (
+        <section style={{ marginTop: 4 }}>
+          <div style={{ textAlign: "center" }}>
+            <p className="blk" style={{ fontSize: 40, lineHeight: 1.05 }}>{floorKm(progress.progressKm)}<span className="unit"> / {fmt(target)} km</span></p>
+            <p className="lab" style={{ marginTop: 8, color: "var(--acc-text)" }}>{progress.percent}% conquered</p>
+            <p className="body mute" style={{ marginTop: 4 }}>{ceilKm(progress.remainingKm)} km remaining</p>
+          </div>
+          <Link href="/run?territory=1" className="btn btn-go" style={{ marginTop: 20 }}>
+            <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
+            Start moving
+          </Link>
+        </section>
+      ) : null}
+
+      {chosen && !conquered && progress && (
+        <>
+          <section aria-label="Today's bonuses" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 20 }}>
+            <div className="card">
+              <p className="lab">Streak</p>
+              <p className="blk" style={{ fontSize: 22, marginTop: 4 }}>Day {data.streakDay}</p>
+              <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>×{streakMultiplier(data.streakDay).toFixed(1)} credit today</p>
             </div>
-          ) : (
-            <button className="btn btn-go" style={{ marginTop: 14 }} onClick={actions.select}>Select this area</button>
-          )}
+            <div className="card">
+              <p className="lab">Morning runs</p>
+              <p className="blk" style={{ fontSize: 22, marginTop: 4 }}>×{CONQUEST_CONFIG.morning.multiplier.running.toFixed(1)}</p>
+              <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>{morningNow ? "Active now" : morningWindow}</p>
+            </div>
+          </section>
 
-          {active && !isActive && (
-            <button onClick={() => actions.focus(active.id)} style={{ display: "block", margin: "10px auto 0", background: "none", border: 0, cursor: "pointer", fontSize: 12, color: "var(--mute)" }}>
-              Active: <b style={{ color: "var(--ink)" }}>{active.name}</b>
-            </button>
-          )}
-          <p className="mute" style={{ fontSize: 10, textAlign: "center", marginTop: 10, lineHeight: 1.4 }}>
-            Map © OpenStreetMap, © CARTO · Borders: BBS and OCHA ROAP via{" "}
-            <Link href={sources.url} style={{ textDecoration: "underline" }}>geoBoundaries</Link> (CC BY 3.0 IGO)
-          </p>
-        </div>
-      </section>
+          <section style={{ marginTop: 22 }}>
+            <p className="lab">Your moves toward {def.name}</p>
+            {recent.length ? (
+              <ul style={{ listStyle: "none", marginTop: 8 }}>
+                {recent.map((c) => (
+                  <li key={c.runId} className="row" style={{ minHeight: 52, fontSize: 15 }}>
+                    <span>{c.actualKm.toFixed(2)} km real</span>
+                    <span style={{ fontWeight: 800, color: "var(--acc-text)" }}>+{c.appliedKm.toFixed(2)} km <span className="mute" style={{ fontWeight: 600, fontSize: 12 }}>×{c.multiplier.toFixed(2).replace(/0$/, "")}</span></span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="body mute" style={{ marginTop: 8 }}>Nothing yet. Your first Walk or Run starts the count.</p>
+            )}
+            <p className="mute" style={{ fontSize: 12, marginTop: 12, lineHeight: "18px" }}>
+              Your real distance never changes. Territory credit is a separate layer: Walk ×1.0, Run ×1.25, morning Run ×1.5, plus a streak bonus up to ×{Math.max(...CONQUEST_CONFIG.streak.dailyMultipliers).toFixed(1)}, capped at ×{CONQUEST_CONFIG.maxCombinedMultiplier.toFixed(1)}.
+            </p>
+          </section>
+        </>
+      )}
+
       <BottomNav active="territory" />
     </main>
   );

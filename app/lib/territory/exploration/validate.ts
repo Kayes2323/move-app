@@ -1,6 +1,6 @@
 import { haversineM, type LatLng } from "./cells";
 import type { ExplorationConfig } from "./config";
-import type { TerritoryActivityInput } from "../contribution";
+import type { TerritoryActivityInput } from "./input";
 
 export type FixRejection = "invalid" | "out-of-order" | "accuracy" | "spike";
 export type SegmentRejection = "gap" | "too-long" | "too-fast";

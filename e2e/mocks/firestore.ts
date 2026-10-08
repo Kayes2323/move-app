@@ -58,12 +58,13 @@ export const runTransaction = async <T,>(_d: unknown, fn: (tx: any) => Promise<T
   if (flags().includes("lose_ack")) throw Object.assign(new Error("response lost after commit"), { code: "unavailable" }); // committed, but the client never hears
   return result;
 };
-export const getDocs = async (q: { path: string; cs: any[] }) => {
+export const getDocs = async (q: { path: string; cs?: any[] }) => {
   gate("getDocs");
+  const cs = q.cs ?? [];
   let docs = Object.entries(load()).filter(([p]) => p.startsWith(q.path + "/") && !p.slice(q.path.length + 1).includes("/")).map(([p, v]) => ({ id: p.split("/").pop(), data: () => v as Json }));
-  const o = q.cs.find((c) => c.t === "order");
+  const o = cs.find((c) => c.t === "order");
   if (o) docs.sort((a, b) => (o.dir === "desc" ? -1 : 1) * ((a.data()[o.field] || 0) - (b.data()[o.field] || 0)));
-  const l = q.cs.find((c) => c.t === "limit");
+  const l = cs.find((c) => c.t === "limit");
   if (l) docs = docs.slice(0, l.n);
   return { docs };
 };

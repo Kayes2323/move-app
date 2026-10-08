@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test app/lib/*.test.ts app/lib/tracking/*.test.ts app/lib/territory/*.test.ts app/lib/territory/exploration/*.test.ts tools/territory-mask/*.test.ts",
+    "test": "node --import tsx --test app/lib/*.test.ts app/lib/share/*.test.ts app/lib/tracking/*.test.ts app/lib/territory/*.test.ts app/lib/territory/exploration/*.test.ts app/lib/territory/conquest/*.test.ts tools/territory-mask/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build:static": "CAPACITOR=1 next build",
     "e2e": "node e2e/run.mjs",
+    "territory:target": "node --import tsx tools/territory-target/build.ts bd-upa-dhaka-mohammadpur",
     "territory:mask:fetch": "node --import tsx tools/territory-mask/fetch.ts",
     "territory:mask:build": "node --import tsx tools/territory-mask/build.ts"
   },

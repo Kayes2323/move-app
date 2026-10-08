@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { contributionPolicy, contributionTarget } from "./contribution";
+import { contributionPolicy } from "./contribution";
+import { contributionTarget } from "./exploration/input";
 
 test("running and walking share one rule set and count; cycling is deferred, not guessed", () => {
   assert.deepEqual(contributionPolicy("running"), { status: "counts", ruleSet: "run-walk" });
@@ -32,19 +33,23 @@ const sources = (dir: string): { file: string; text: string }[] =>
     return /\.(ts|tsx)$/.test(e.name) && !e.name.endsWith(".test.ts") ? [{ file: p, text: readFileSync(p, "utf8") }] : [];
   });
 
-test("Territory and tracking stay decoupled in both directions", () => {
+test("Territory and tracking stay decoupled", () => {
   const app = join(process.cwd(), "app");
   const imports = (text: string) => [...text.matchAll(/(?:from\s+|import\s*\(\s*)["']([^"']+)["']/g)].map((m) => m[1]);
 
-  for (const { file, text } of [...sources(join(app, "lib", "territory")), ...sources(join(app, "territory"))]) {
+  // The Territory rules are pure: no tracking, no activity code, no screens.
+  for (const { file, text } of sources(join(app, "lib", "territory"))) {
     for (const spec of imports(text)) {
-      assert.ok(!/tracking|\/activity$|\/run\//.test(spec), `${file} must not import tracking or activity code (${spec})`);
+      assert.ok(!/tracking|\/activity$|\/run\/|history|trackLoader/.test(spec), `${file} must not import tracking or activity code (${spec})`);
     }
   }
-  for (const { file, text } of [...sources(join(app, "lib", "tracking")), ...sources(join(app, "run"))]) {
+  // Territory screens may read the live track (runtime + types) but never reach into the engine itself.
+  for (const { file, text } of sources(join(app, "territory"))) {
+    for (const spec of imports(text)) assert.ok(!/lib\/tracking\/(?!runtime$|types$)|\/run\//.test(spec), `${file} must not import the tracking engine (${spec})`);
+  }
+  // The tracking engine, and the activity record it writes, know nothing about Territory.
+  for (const { file, text } of sources(join(app, "lib", "tracking"))) {
     for (const spec of imports(text)) assert.ok(!/territory/.test(spec), `${file} must not import Territory (${spec})`);
   }
-  for (const f of [join(app, "lib", "activity.ts"), join(app, "components", "ShareScreen.tsx")]) {
-    assert.ok(!/territory/.test(readFileSync(f, "utf8")), `${f} must not reference Territory`);
-  }
+  assert.ok(!/territory/i.test(readFileSync(join(app, "lib", "activity.ts"), "utf8")), "activity.ts must not reference Territory");
 });

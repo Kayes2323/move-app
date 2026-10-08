@@ -1,4 +1,4 @@
-import type { TerritoryActivityInput } from "../contribution";
+import type { TerritoryActivityInput } from "./input";
 import { cellCenter, cellId, cellOf, cellXY, type LatLng } from "./cells";
 import type { CellScope } from "./explore";
 

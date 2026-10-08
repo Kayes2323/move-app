@@ -2,10 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as Leaflet from "leaflet";
-import { loadBoundaries } from "../lib/territory/data";
-import type { AreaIndex } from "../lib/territory/hierarchy";
-import { DETAIL_MIN_ZOOM } from "../lib/territory/zoom";
-import type { GeoArea, BoundaryFeature } from "../lib/territory/types";
+import { loadBoundaries } from "../../lib/territory/data";
+import type { AreaIndex } from "../../lib/territory/hierarchy";
+import { DETAIL_MIN_ZOOM } from "../../lib/territory/zoom";
+import type { GeoArea, BoundaryFeature } from "../../lib/territory/types";
 
 interface Props {
   index: AreaIndex;

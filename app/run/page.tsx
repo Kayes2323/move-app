@@ -2,6 +2,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { LiveRouteCard, type GpsStatus } from "../components/LiveRouteCard";
+import { TerritoryLiveScreen } from "../territory/TerritoryLiveScreen";
+import { loadHistory, toHistoryRuns } from "../lib/history";
+import type { HistoryRun } from "../lib/territory/conquest/credit";
+import { getTerritory } from "../lib/territory/conquest/registry";
+import { parseStoredTerritory, type StoredTerritory } from "../lib/territory/conquest/store";
 import { ShareScreen } from "../components/ShareScreen";
 import { findRoute, formatClock, journeyOffsetKm, type ActivityKind } from "../lib/activity";
 import { checkLocationAccess, isNativeApp, type LocationAccess } from "../lib/tracking/location";
@@ -47,6 +52,22 @@ export default function RunPage() {
   const [error, setError] = useState("");
   const [finishedId, setFinishedId] = useState<string | null>(null);
   const finishing = useRef(false);
+  // "Start moving" from the Territory screen asks for the live view of that Territory.
+  const [territoryMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("territory"));
+  const [territoryCtx, setTerritoryCtx] = useState<{ stored: StoredTerritory; history: HistoryRun[] } | null>(null);
+  useEffect(() => {
+    if (!territoryMode || !uid) return;
+    let cancelled = false;
+    loadHistory(uid)
+      .then((h) => {
+        const stored = parseStoredTerritory(h.user.territory);
+        if (!cancelled && stored) setTerritoryCtx({ stored, history: toHistoryRuns(h.runs) });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [territoryMode, uid]);
 
   /* Who is signed in, their journey, and any activity left over from before this screen existed. */
   useEffect(() => {
@@ -185,7 +206,7 @@ export default function RunPage() {
     }
   };
 
-  if (finishedId) return <ShareScreen activityId={finishedId} />;
+  if (finishedId) return <ShareScreen activityId={finishedId} hint={territoryMode ? "territory" : undefined} />;
 
   /* ---------- an activity is running (or was just recovered) ---------- */
   if (activity && live && !needsDecision) {
@@ -193,31 +214,28 @@ export default function RunPage() {
     const routeStartKm = journeyOffsetKm(route, activity.journey?.startIdx);
     const gpsStatus: GpsStatus = gps.status === "active" ? "active" : gps.status === "error" ? "error" : "waiting";
     const gap = activity.pendingGap ? (activity.pendingGap.to - activity.pendingGap.from) / 1000 : null;
-    return (
-      <LiveRouteCard
-        kind={activity.kind}
-        route={route}
-        journeyStartKm={routeStartKm + (activity.journey?.completedKmBefore ?? 0)}
-        routeStartKm={routeStartKm}
-        distanceKm={live.distanceKm}
-        seconds={live.durationSec}
-        pace={live.paceMin}
-        gps={gpsStatus}
-        gpsMessage={gps.error?.message}
-        paused={activity.status === "paused"}
-        note={
-          activity.source === "native"
-            ? "Tracking continues in the background. Android shows a notification while it does."
-            : "Keep Move open: browsers pause GPS when the screen locks or another app is in front."
-        }
-        gapSeconds={gap}
-        onResolveGap={(count) => void runtime.resolveGap(count)}
-        onOpenSettings={native ? () => void import("../lib/tracking/location").then(({ NativeLocationSource }) => new NativeLocationSource().openSettings()) : undefined}
-        onPause={() => void (activity.status === "paused" ? runtime.resume() : runtime.pause())}
-        onFinish={onFinish}
-        onClose={onClose}
-      />
-    );
+    const cardProps = {
+      kind: activity.kind,
+      route,
+      journeyStartKm: routeStartKm + (activity.journey?.completedKmBefore ?? 0),
+      routeStartKm,
+      distanceKm: live.distanceKm,
+      seconds: live.durationSec,
+      pace: live.paceMin,
+      gps: gpsStatus,
+      gpsMessage: gps.error?.message,
+      paused: activity.status === "paused",
+      note: activity.source === "native" ? "Tracking continues in the background. Android shows a notification while it does." : "Keep Move open: browsers pause GPS when the screen locks or another app is in front.",
+      gapSeconds: gap,
+      onResolveGap: (count: boolean) => void runtime.resolveGap(count),
+      onOpenSettings: native ? () => void import("../lib/tracking/location").then(({ NativeLocationSource }) => new NativeLocationSource().openSettings()) : undefined,
+      onPause: () => void (activity.status === "paused" ? runtime.resume() : runtime.pause()),
+      onFinish,
+      onClose,
+    };
+    const def = territoryCtx ? getTerritory(territoryCtx.stored.areaId) : undefined;
+    if (territoryMode && territoryCtx && def) return <TerritoryLiveScreen {...cardProps} def={def} choice={territoryCtx.stored} history={territoryCtx.history} activity={activity} />;
+    return <LiveRouteCard {...cardProps} />;
   }
 
   /* ---------- choose an activity ---------- */

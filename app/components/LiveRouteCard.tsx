@@ -5,7 +5,7 @@ import { JourneyRoute } from "./JourneyRoute";
 
 export type GpsStatus = "waiting" | "active" | "error";
 
-interface Props {
+export interface LiveRouteCardProps {
   kind: ActivityKind;
   route?: Route;
   /** Absolute route km reached before this activity started. */
@@ -28,12 +28,16 @@ interface Props {
   onPause: () => void;
   onFinish: () => void;
   onClose: () => void;
+  /** Replaces the journey route with another view of the move (the Territory screen uses this). */
+  visual?: React.ReactNode;
+  /** Shown between the status bar and the visual. */
+  header?: React.ReactNode;
 }
 
 const MAP_W = 340;
 const MAP_H = 300;
 
-export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose }: Props) {
+export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose, visual, header }: LiveRouteCardProps) {
   const meta = ACTIVITY_META[kind];
   // Quantised so the map only re-renders when the dot would visibly move.
   const progressKm = Math.round((journeyStartKm + distanceKm) * 100) / 100;
@@ -62,10 +66,13 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
           <svg className="ic" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </header>
+      {header}
       {note && <p className="mute" style={{ fontSize: 12, textAlign: "center", lineHeight: 1.4, margin: "10px 0 0" }}>{note}</p>}
 
       <section aria-label="Journey route" style={{ flex: 1, minHeight: 240, margin: "12px 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden" }}>
-        {route ? (
+        {visual ? (
+          visual
+        ) : route ? (
           <div style={{ width: "100%", maxWidth: MAP_W }}>
             <JourneyRoute route={route} progressKm={progressKm} startKm={routeStartKm} width={MAP_W} height={MAP_H} padL={92} padR={92} padY={14} labels="auto" accent={meta.cssVar} line={3} fontSize={11} pulse ink="var(--ink)" trail="var(--trk)" halo="var(--land)" here="var(--bg)" />
           </div>

@@ -389,3 +389,18 @@ a {
 .leaflet-tooltip.terr-tip::before { display: none; }
 .leaflet-container { font-family: "Archivo", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
 .leaflet-interactive:focus { outline: none; }
+
+/* ---------- territory live ---------- */
+.you-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); border: 3px solid #fff;
+  box-shadow: 0 0 0 0 var(--glow), 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: you-pulse 2s ease-out infinite;
+}
+@keyframes you-pulse { 0% { box-shadow: 0 0 0 0 var(--glow), 0 2px 8px rgba(0,0,0,.4); } 70% { box-shadow: 0 0 0 16px rgba(0,0,0,0), 0 2px 8px rgba(0,0,0,.4); } 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0), 0 2px 8px rgba(0,0,0,.4); } }
+@media (prefers-reduced-motion: reduce) { .you-dot { animation: none; } }
+.leaflet-tooltip.here-tip { background: var(--accent); color: var(--on-acc); border: 0; font: 800 11px "Archivo", sans-serif; letter-spacing: .5px; padding: 3px 8px; border-radius: 10px; box-shadow: none; }
+.leaflet-tooltip.here-tip::before { display: none; }
+.seg { display: inline-flex; background: color-mix(in srgb, var(--bg) 85%, transparent); border-radius: 18px; padding: 3px; backdrop-filter: blur(10px); }
+.seg button { border: 0; background: none; color: var(--mute); font: 700 12px "Archivo", sans-serif; padding: 7px 12px; border-radius: 15px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }

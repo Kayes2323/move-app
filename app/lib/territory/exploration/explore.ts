@@ -1,4 +1,5 @@
-import { contributionPolicy, type TerritoryActivityInput } from "../contribution";
+import { contributionPolicy } from "../contribution";
+import type { TerritoryActivityInput } from "./input";
 import { haversineM, traverse, type LatLng } from "./cells";
 import { ALGORITHM_VERSION, DEFAULT_EXPLORATION_CONFIG, RESULT_SCHEMA, type ExplorationConfig } from "./config";
 import { validateTrack, type ValidationReport } from "./validate";

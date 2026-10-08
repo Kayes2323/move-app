@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CARD_HEIGHT, CARD_WIDTH, ShareCard, type CardRatio, type CardTone } from "./ShareCard";
+import { CARD_HEIGHT, CARD_WIDTH, type CardRatio, type CardTone } from "./ShareCard";
+import { JourneyProgressCard, NormalActivityCard, TerritoryCard } from "./ShareCards";
 import {
   ACTIVITY_META,
-  detectAchievement,
   findRoute,
   journeyOffsetKm,
   formatCardDate,
@@ -12,25 +12,23 @@ import {
   loadPhoto,
   makeFileName,
   toKind,
-  type RunEntry,
 } from "../lib/activity";
-import { getRuntime } from "../lib/tracking/runtime";
-import { legacyRun } from "../lib/tracking/sync";
+import { loadHistory, type UserDoc } from "../lib/history";
+import { loadTrack } from "../lib/trackLoader";
+import type { TrackPoint } from "../lib/tracking/types";
+import { reconcileTerritory } from "../lib/territoryState";
+import { getTerritory } from "../lib/territory/conquest/registry";
+import type { TerritoryProgress } from "../lib/territory/conquest/progress";
+import { availableContexts, decideShareContext, SHARE_CONTEXT_LABEL, territoryFactsAt, type ShareContext } from "../lib/share/context";
 
-interface UserData {
-  name?: string;
-  completedKm?: number;
-  currentRoute?: string;
-  startCheckpointIndex?: number;
-  runs?: RunEntry[];
-}
+type UserData = UserDoc;
 
 type Status = "loading" | "ready" | "empty" | "error";
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
 /** `activityId` shows that activity directly (used right after finishing, where navigating may be impossible offline). */
-export function ShareScreen({ activityId }: { activityId?: string } = {}) {
+export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: string } = {}) {
   const router = useRouter();
   const exportRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -38,6 +36,10 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
   const [status, setStatus] = useState<Status>("loading");
   const [attempt, setAttempt] = useState(0);
   const [user, setUser] = useState<UserData | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
+  const [territory, setTerritory] = useState<{ progress: TerritoryProgress; areaId: string } | null>(null);
+  const [loadedTrack, setLoadedTrack] = useState<{ id: string; points: TrackPoint[] | null } | null>(null);
+  const [chosenCtx, setChosenCtx] = useState<ShareContext | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [ratio, setRatio] = useState<CardRatio>("story");
@@ -53,35 +55,25 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
     let unsubscribe: (() => void) | undefined;
     (async () => {
       try {
-        const [{ auth, db }, { onAuthStateChanged }, { doc, getDoc }] = await Promise.all([import("../firebase"), import("firebase/auth"), import("firebase/firestore")]);
+        const [{ auth }, { onAuthStateChanged }] = await Promise.all([import("../firebase"), import("firebase/auth")]);
         unsubscribe = onAuthStateChanged(auth, async (fu) => {
           if (cancelled) return;
           if (!fu) {
             router.replace("/login");
             return;
           }
-          // The server copy may be unreachable (offline): the phone still has every unsynced activity.
-          let data: UserData = {};
-          let serverOk = true;
           try {
-            const snap = await getDoc(doc(db, "users", fu.uid));
-            data = (snap.exists() ? snap.data() : {}) as UserData;
-          } catch (err) {
-            console.warn("Server copy unavailable, showing what is on this phone.", err);
-            serverOk = false;
-          }
-          try {
+            const h = await loadHistory(fu.uid);
             if (cancelled) return;
-            const local = await getRuntime().store.listActivities().catch(() => []);
-            const waiting = local.filter((l) => l.userId === fu.uid && l.status === "finished" && l.summary && l.sync === "pending");
-            const serverRuns = data.runs ?? [];
-            const known = new Set(serverRuns.map((r) => r.id).filter(Boolean));
-            const extra = waiting.filter((l) => !known.has(l.id)).map(legacyRun);
-            const all = [...serverRuns, ...extra].sort((x, y) => Date.parse(x.date) - Date.parse(y.date));
-            setPendingIds(new Set(extra.map((r) => r.id as string)));
-            setUser({ ...data, runs: all });
+            const all = h.runs;
+            const serverRuns = h.user.runs ?? [];
+            const rec = reconcileTerritory(fu.uid, h.user.territory, all);
+            setUid(fu.uid);
+            setPendingIds(h.pendingIds);
+            setUser({ ...h.user, runs: all });
+            setTerritory(rec.stored && rec.progress ? { progress: rec.progress, areaId: rec.stored.areaId } : null);
             if (!all.some((r) => r.km > 0)) {
-              setStatus(serverOk ? "empty" : "error");
+              setStatus(h.serverOk ? "empty" : "error");
               return;
             }
             const params = new URLSearchParams(window.location.search);
@@ -120,33 +112,55 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
   const activityIndexes = useMemo(() => runs.map((r, i) => (r.km > 0 ? i : -1)).filter((i) => i >= 0), [runs]);
   const run = selected !== null ? runs[selected] : undefined;
 
-  const cardProps = useMemo(() => {
+  /* The GPS track this activity really recorded. Missing for older activities: the card then says nothing about a route. */
+  const runId = run?.id;
+  useEffect(() => {
+    if (!uid || !runId) return;
+    let cancelled = false;
+    loadTrack(uid, runId).then((t) => !cancelled && setLoadedTrack({ id: runId, points: t })).catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, runId]);
+
+  const track = loadedTrack && loadedTrack.id === runId ? loadedTrack.points : null;
+
+  const facts = useMemo(() => {
     if (!run || selected === null) return null;
     const kind = toKind(run.activity);
     const route = findRoute(run.routeName ?? user?.currentRoute);
     const routeStartKm = journeyOffsetKm(route, user?.startCheckpointIndex);
-    return {
-      kind,
-      km: run.km,
-      duration: run.duration,
-      pace: run.pace,
-      dateLabel: formatCardDate(run.date),
-      route,
-      routeStartKm,
+    const def = territory ? getTerritory(territory.areaId) : undefined;
+    const territoryFacts = territory && def && run.id ? territoryFactsAt(territory.progress, run.id) : null;
+    const url = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("ctx");
+    const shareFacts = { runId: run.id, hasJourney: Boolean(route), territory: def ? territory?.progress ?? null : null, hint: hint ?? url };
+    const options = availableContexts(shareFacts);
+    const auto = decideShareContext(shareFacts);
+    const context = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
+    return { run, kind, route, routeStartKm, def, territoryFacts, options, context };
+  }, [run, selected, user, territory, hint, chosenCtx]);
+
+  const common = { photo, ratio, tone } as const;
+  const card = (() => {
+    if (!facts) return null;
+    const { run: r, kind, route, routeStartKm, def, territoryFacts, context } = facts;
+    if ((context === "TERRITORY_PROGRESS" || context === "TERRITORY_CONQUERED") && def && territoryFacts) return <TerritoryCard def={def} facts={territoryFacts} {...common} />;
+    if (context === "JOURNEY_PROGRESS" && route) {
       // journeyKm is absolute; older activities fall back to the current progress.
-      journeyKm: run.journeyKm ?? routeStartKm + (user?.completedKm ?? 0),
-      achievement: detectAchievement(runs, selected),
-      photo,
-      ratio,
-      tone,
-    };
-  }, [run, selected, runs, user, photo, ratio, tone]);
+      return <JourneyProgressCard route={route} routeStartKm={routeStartKm} today={{ kind, km: r.km, duration: r.duration, pace: r.pace }} journeyKm={r.journeyKm ?? routeStartKm + (user?.completedKm ?? 0)} {...common} />;
+    }
+    return <NormalActivityCard kind={kind} km={r.km} duration={r.duration} pace={r.pace} calories={r.calories} dateLabel={formatCardDate(r.date)} track={track} {...common} />;
+  })();
+  const cardProps = facts ? { kind: facts.kind, km: facts.run.km } : null;
 
   const step = (dir: -1 | 1) => {
     if (selected === null) return;
     const pos = activityIndexes.indexOf(selected);
     const next = activityIndexes[pos + dir];
-    if (next !== undefined) setSelected(next);
+    if (next !== undefined) {
+      setSelected(next);
+      setChosenCtx(null);
+    }
   };
 
   const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -258,11 +272,20 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
 
       <div style={{ width: CARD_WIDTH * scale, height: H * scale, borderRadius: 24 * scale, overflow: "hidden", flexShrink: 0 }}>
         <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: CARD_WIDTH, height: H }}>
-          <ShareCard {...cardProps} />
+          {card}
         </div>
       </div>
 
       <div style={{ width: "100%", maxWidth: 440, marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+        {facts && facts.options.length > 1 && (
+          <div role="group" aria-label="Card type" style={{ display: "flex", gap: 8 }}>
+            {facts.options.map((o) => (
+              <button key={o} onClick={() => setChosenCtx(o)} aria-pressed={facts.context === o} className={facts.context === o ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 44, borderRadius: 22, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
+                {SHARE_CONTEXT_LABEL[o]}
+              </button>
+            ))}
+          </div>
+        )}
         <div role="group" aria-label="Card format" style={{ display: "flex", gap: 8 }}>
           {(["story", "post"] as const).map((r) => (
             <button key={r} onClick={() => setRatio(r)} aria-pressed={ratio === r} className={ratio === r ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 44, borderRadius: 22, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
@@ -306,7 +329,7 @@ export function ShareScreen({ activityId }: { activityId?: string } = {}) {
       {exporting && (
         <div aria-hidden="true" style={{ position: "fixed", left: -10000, top: 0, width: CARD_WIDTH, height: H }}>
           <div ref={exportRef} style={{ width: CARD_WIDTH, height: H }}>
-            <ShareCard {...cardProps} />
+            {card}
           </div>
         </div>
       )}

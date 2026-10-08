@@ -397,7 +397,7 @@ async function scenarioTerritory() {
     const box = await pg.locator(".leaflet-tooltip", { hasText: new RegExp(`^${name}$`) }).first().boundingBox();
     await tap(box.x + box.width / 2, box.y + box.height / 2);
   };
-  await pg.goto(`${BASE}/territory`);
+  await pg.goto(`${BASE}/territory/areas`);
   await pg.waitForSelector("text=Select this area", { timeout: 30000 });
   await pg.waitForTimeout(2200);
   check("T1. opens on Bangladesh with 8 divisions", (await title()) === "Bangladesh" && /8 divisions/.test(await text(pg)));
@@ -434,12 +434,8 @@ async function scenarioTerritory() {
   const navText = (await n.pg.locator("nav[aria-label='Main']").innerText()).replace(/\s+/g, " ");
   check("T12. main navigation is Home, Journeys, Territory, Profile (no Ranks, no fifth tab)", navText === "Home Journeys Territory Profile", navText);
   await n.pg.locator("nav[aria-label='Main'] a", { hasText: "Territory" }).click();
-  await n.pg.waitForSelector("text=Select this area", { timeout: 30000 });
-  check("T13. the Territory tab opens the map and is marked current", (await n.pg.locator("nav[aria-label='Main'] a[aria-current=page]").innerText()) === "Territory");
-  await n.pg.waitForTimeout(1500);
-  const sheet = await n.pg.locator("section[aria-label='Selected area']").boundingBox();
-  const bar = await n.pg.locator("nav[aria-label='Main']").boundingBox();
-  check("T14. the area panel sits above the navigation, not under it", sheet.y + sheet.height <= bar.y + 1, `${Math.round(sheet.y + sheet.height)} vs ${Math.round(bar.y)}`);
+  await n.pg.waitForSelector("text=Your next Territory", { timeout: 30000 });
+  check("T13. the Territory tab opens the Territory hub and is marked current", (await n.pg.locator("nav[aria-label='Main'] a[aria-current=page]").innerText()) === "Territory");
   await n.pg.goto(`${BASE}/profile`);
   await n.pg.waitForSelector("text=Personal records", { timeout: 15000 });
   const profileText = await text(n.pg);
@@ -456,9 +452,126 @@ async function scenarioTerritory() {
   // the geographic data failing must show a retry screen, not a blank map
   const f = await fresh();
   await f.pg.route("**/geo/bd/index.json", (r) => r.abort());
-  await f.pg.goto(`${BASE}/territory`);
+  await f.pg.goto(`${BASE}/territory/areas`);
   await f.pg.waitForSelector("text=Try again", { timeout: 20000 }).then(() => check("T11. missing map data shows a retry screen", true)).catch(() => check("T11. missing map data", false));
   await f.ctx.close();
+}
+
+async function scenarioConquest() {
+  // Distance-based Territory hub: choose Mohammadpur, then see credit from past Walks/Runs, wherever they were.
+  const a = await fresh();
+  await a.pg.goto(`${BASE}/territory`);
+  await a.pg.waitForSelector("text=Choose Mohammadpur", { timeout: 30000 });
+  const t0 = await text(a.pg);
+  check("C1. start screen shows MOHAMMADPUR, the real 19.4 km target and 0%", /Mohammadpur/i.test(t0) && /19\.4/.test(t0) && /0% conquered/.test(t0));
+  await a.pg.getByRole("button", { name: "Choose Mohammadpur" }).click();
+  await a.pg.waitForSelector("text=Start moving", { timeout: 15000 });
+  const saved = (await dbOf(a.pg))["users/u1"].territory;
+  check("C2. choosing stores the area, target 19.4 km and the rule/target versions", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.targetKm === 19.4 && /territory-target/.test(saved.targetVersion) && /territory-conquest/.test(saved.rulesVersion), JSON.stringify(saved));
+  check("C3. START MOVING opens the Territory run", (await a.pg.getByRole("link", { name: /start moving/i }).getAttribute("href")) === "/run?territory=1");
+  check("C4. no uncaught page errors on the hub", a.pg.errors.length === 0, a.pg.errors.join(" | ").slice(0, 200));
+  await a.ctx.close();
+
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const db = baseDb();
+  db["users/u1"].territory = { areaId: "bd-upa-dhaka-mohammadpur", selectedAt: now - 3 * 86400000, targetKm: 19.4, rulesVersion: "territory-conquest/1", targetVersion: "territory-target/1" };
+  db["users/u1"].runs = [{ id: "r1", km: 13, duration: "1:20:00", date: iso(now - 86400000), activity: "walking" }];
+  const b = await fresh({ db });
+  await b.pg.goto(`${BASE}/territory`);
+  await b.pg.waitForSelector("text=Start moving", { timeout: 30000 });
+  const t1 = await text(b.pg);
+  check("C5. a past 13 km walk anywhere counts: 67% conquered, 6.4 km remaining", /67% conquered/i.test(t1) && /6\.4 km remaining/.test(t1), t1.slice(0, 300));
+  await b.ctx.close();
+
+  const db2 = baseDb();
+  db2["users/u1"].territory = { areaId: "bd-upa-dhaka-mohammadpur", selectedAt: now - 3 * 86400000, targetKm: 19.4, rulesVersion: "territory-conquest/1", targetVersion: "territory-target/1" };
+  db2["users/u1"].runs = [
+    { id: "r1", km: 15, duration: "1:30:00", date: iso(now - 2 * 86400000), activity: "walking" },
+    { id: "r2", km: 15, duration: "1:30:00", date: iso(now - 86400000), activity: "walking" },
+  ];
+  const c = await fresh({ db: db2 });
+  await c.pg.goto(`${BASE}/territory`);
+  await c.pg.waitForSelector("text=Share your conquest", { timeout: 30000 });
+  const t2 = await text(c.pg);
+  check("C6. completing shows 100% and never exceeds the target", /Territory conquered/i.test(t2) && /100/.test(t2) && /19\.4 \/ 19\.4/.test(t2), t2.slice(0, 300));
+  const stored = (await dbOf(c.pg))["users/u1"].territory;
+  check("C7. completion is saved once with the finishing activity", stored.completion && stored.completion.runId === "r2", JSON.stringify(stored.completion));
+  await c.ctx.close();
+}
+
+async function scenarioShare() {
+  // Share Cards: the card follows what the activity really counted towards, and shows only real data.
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const TERR = { areaId: "bd-upa-dhaka-mohammadpur", selectedAt: now - 5 * 86400000, targetKm: 19.4, rulesVersion: "territory-conquest/1", targetVersion: "territory-target/1" };
+  const track = { seq: 0, count: 4, flat: [1, 23.7640, 90.3600, 5, -9999, 0, 2, 23.7650, 90.3620, 5, -9999, 0, 3, 23.7665, 90.3625, 5, -9999, 0, 4, 23.7680, 90.3650, 5, -9999, 0] };
+  const mk = ({ runs, territory, route = "Chandpur", withTrack = true }) => {
+    const db = baseDb();
+    db["users/u1"].currentRoute = route;
+    db["users/u1"].runs = runs;
+    if (territory) db["users/u1"].territory = territory;
+    if (withTrack) db["users/u1/activities/r1/tracks/0"] = track;
+    return db;
+  };
+  const card = (pg) => pg.locator("main").innerText();
+  const open = async (db, url, wait) => {
+    const s = await fresh({ db });
+    await s.pg.goto(`${BASE}${url}`);
+    await s.pg.waitForSelector(wait, { timeout: 20000 });
+    await s.pg.waitForTimeout(600);
+    return s;
+  };
+  const run1 = { id: "r1", km: 5.2, duration: "30:00", date: iso(now - 3600000), activity: "running", calories: 412, pace: 5.77, journeyKm: 5.2, routeName: "Chandpur" };
+
+  // normal: no Journey, no Territory
+  let s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "" }), "/share?a=r1", "text=Save image");
+  let t = await card(s.pg);
+  check("S1. plain activity card: distance, duration, pace, calories", /5\.2/.test(t) && /30:00/.test(t) && /412 kcal/.test(t), t.slice(0, 200));
+  check("S2. the card draws the real GPS route", (await s.pg.locator("svg[aria-label='Route']").count()) === 1);
+  check("S3. no Journey or Territory text on the plain card, and no card switcher", !/DHAKA →|CONQUERED|REMAINING/.test(t) && (await s.pg.locator("[aria-label='Card type']").count()) === 0);
+  check("S4. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+  await s.ctx.close();
+
+  // no GPS track recorded: no route is drawn, nothing is made up
+  s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "", withTrack: false }), "/share?a=r1", "text=Save image");
+  check("S5. no recorded track means no route drawn", (await s.pg.locator("svg[aria-label='Route']").count()) === 0 && /5\.2/.test(await card(s.pg)));
+  await s.ctx.close();
+
+  // journey
+  s = await open(mk({ runs: [run1] }), "/share?a=r1", "text=Save image");
+  t = await card(s.pg);
+  check("S6. Journey card: DHAKA → CHANDPUR and km completed, no Territory", /DHAKA → CHANDPUR/.test(t) && /completed/.test(t) && /km today/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 200));
+  await s.ctx.close();
+
+  // territory progress, opened from the Territory screen
+  s = await open(mk({ runs: [{ ...run1, km: 13, journeyKm: 13, activity: "walking" }], territory: TERR }), "/share?a=r1&ctx=territory", "text=Save image");
+  t = await card(s.pg);
+  check("S7. Territory card: MOHAMMADPUR, 67% CONQUERED, 13.0 / 19.4 KM, 6.4 KM REMAINING", /MOHAMMADPUR/.test(t) && /67%/.test(t) && /CONQUERED/.test(t) && /13\.0 \/ 19\.4/.test(t) && /6\.4 KM REMAINING/.test(t), t.slice(0, 260));
+  check("S8. Territory card has no Journey map and offers Journey and Activity cards", !/DHAKA →/.test(t) && (await s.pg.locator("[aria-label='Card type'] button").count()) === 3);
+  await s.pg.locator("[aria-label='Card type'] button", { hasText: "Journey" }).click();
+  await s.pg.waitForTimeout(300);
+  check("S9. switching to Journey shows the Journey card", /DHAKA → CHANDPUR/.test(await card(s.pg)));
+  await s.ctx.close();
+
+  // territory conquered
+  s = await open(mk({ runs: [{ ...run1, id: "r0", km: 15, date: iso(now - 2 * 86400000) }, { ...run1, id: "r1", km: 15 }], territory: TERR }), "/share?a=r1", "text=Save image");
+  t = await card(s.pg);
+  check("S10. conquered card is chosen automatically: TERRITORY CONQUERED, MOHAMMADPUR, 100%, 19.4 km", /TERRITORY CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /100%/.test(t) && /19\.4 km/.test(t) && !/REMAINING/.test(t), t.slice(0, 260));
+  const dl = s.pg.waitForEvent("download", { timeout: 20000 });
+  await s.pg.getByRole("button", { name: "Save image" }).click();
+  const file = await dl.then((d) => d.suggestedFilename()).catch(() => "");
+  check("S11. the card exports to a PNG", /\.png$/.test(file), file);
+  check("S12. no uncaught page errors on the Territory cards", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+  await s.ctx.close();
+
+  // small phone
+  const small = await fresh({ db: mk({ runs: [{ ...run1, km: 13, journeyKm: 13 }], territory: TERR }) });
+  await small.pg.setViewportSize({ width: 320, height: 640 });
+  await small.pg.goto(`${BASE}/share?a=r1&ctx=territory`);
+  await small.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  check("S13. no sideways scrolling on a 320 px phone", await small.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+  await small.ctx.close();
 }
 
 async function scenarioRegression() {
@@ -550,7 +663,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);
