@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isTerritoryArea } from "../lib/territory/active";
 import { TERRITORIES } from "../lib/territory/conquest/registry";
 import { loadBoundaries } from "../lib/territory/data";
@@ -9,7 +9,9 @@ import { locateArea } from "../lib/territory/locate";
 import { STORAGE_KEY as LEGACY_SELECTION_KEY } from "../lib/territory/selection";
 import type { GeoArea, Geometry } from "../lib/territory/types";
 import type { SavedTerritory } from "../lib/territoryState";
+import { resolveMode, useThemePrefs } from "../lib/theme";
 import { AreaShape } from "./AreaShape";
+import { BangladeshMap } from "./BangladeshMap";
 
 const OPEN = new Set(TERRITORIES.map((t) => t.id));
 const fold = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -75,7 +77,9 @@ export function TerritoryPicker({ index, activeId, saved, running, onChoose, onC
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [here, setHere] = useState<Locate>({ status: "idle" });
-  const listTop = useRef<HTMLDivElement>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const prefs = useThemePrefs();
+  const dark = resolveMode(prefs.mode) === "dark";
 
   const areas = useMemo(() => index.all.filter(isTerritoryArea), [index]);
   const active = activeId ? index.get(activeId) : undefined;
@@ -123,9 +127,13 @@ export function TerritoryPicker({ index, activeId, saved, running, onChoose, onC
   const focus = index.get(focusId) ?? index.root;
   const path = index.pathTo(focus.id);
   const children = index.childrenOf(focus.id);
-  const go = (id: string) => {
-    setFocusId(id);
-    listTop.current?.scrollIntoView({ block: "start" });
+  const go = (id: string) => setFocusId(id);
+  // a tap on the map: a division or district opens it; an upazila or city area is the choice
+  const tapMap = (id: string) => {
+    const a = index.get(id);
+    if (!a) return;
+    if (isTerritoryArea(a)) setPick(a);
+    else go(id);
   };
 
   const locateMe = () => {
@@ -169,7 +177,9 @@ export function TerritoryPicker({ index, activeId, saved, running, onChoose, onC
     return a ? [{ s, a }] : [];
   });
   const openRows = areas.filter((a) => OPEN.has(a.id));
-  const currentKing = saved.find((s) => s.areaId === activeId)?.king;
+  const activeSaved = saved.find((s) => s.areaId === activeId);
+  const currentKing = activeSaved?.king;
+  const otherSaved = savedRows.filter(({ s }) => s.areaId !== activeId);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Choose Territory" style={{ position: "fixed", inset: 0, zIndex: 900, background: "var(--bg)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
@@ -204,9 +214,10 @@ export function TerritoryPicker({ index, activeId, saved, running, onChoose, onC
           </Section>
         ) : (
           <>
-            <Section title="Near you">
+            <Section title="Current">
+              {active && <AreaRow area={active} index={index} activeId={activeId} onPick={setPick} extra={activeSaved && <>{activeSaved.king && <Badge kind="king" />}{activeSaved.percent !== null && <span className="mute" style={{ fontSize: 12, fontWeight: 700 }}>{activeSaved.percent.toFixed(1)}%</span>}</>} />}
               {here.status === "found" ? (
-                <AreaRow area={here.area} index={index} activeId={activeId} onPick={setPick} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>You&apos;re here</span>} />
+                here.area.id !== activeId && <AreaRow area={here.area} index={index} activeId={activeId} onPick={setPick} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>You&apos;re here</span>} />
               ) : (
                 <button className="row" onClick={locateMe} disabled={here.status === "busy"} style={{ minHeight: 60 }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -218,55 +229,66 @@ export function TerritoryPicker({ index, activeId, saved, running, onChoose, onC
                   </span>
                 </button>
               )}
+              {here.status === "found" && here.area.id === activeId && <p className="mute" style={{ fontSize: 12, padding: "8px 0" }}>📍 You&apos;re in your active Territory.</p>}
               {legacy && isTerritoryArea(legacy) && <AreaRow area={legacy} index={index} activeId={activeId} onPick={setPick} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>Picked earlier</span>} />}
             </Section>
 
-            {savedRows.length > 0 && (
-              <Section title="Your Territories">
-                {savedRows.map(({ s, a }) => (
+            {otherSaved.length > 0 && (
+              <Section title="Your other Territories">
+                {otherSaved.map(({ s, a }) => (
                   <AreaRow key={a.id} area={a} index={index} activeId={activeId} onPick={setPick} extra={<>{s.king && <Badge kind="king" />}{s.percent !== null && <span className="mute" style={{ fontSize: 12, fontWeight: 700 }}>{s.percent.toFixed(1)}%</span>}</>} />
                 ))}
               </Section>
             )}
 
-            {openRows.length > 0 && (
-              <Section title="Open now">
-                {openRows.map((a) => (
-                  <AreaRow key={a.id} area={a} index={index} activeId={activeId} onPick={setPick} />
+            <Section title="Choose on the map">
+              <div style={{ position: "relative", height: "min(62vh, 470px)", minHeight: 320, borderRadius: 24, overflow: "hidden", isolation: "isolate", marginTop: 8, border: "1px solid var(--cardbd)" }}>
+                <BangladeshMap index={index} focusId={focus.id} activeId={activeId} openIds={OPEN} dark={dark} accent={prefs.accent} onFocus={tapMap} onProblem={setProblem} />
+                <div style={{ position: "absolute", zIndex: 500, top: 10, left: 10, right: 10, display: "flex", gap: 8, alignItems: "center", pointerEvents: "none" }}>
+                  {path.length > 1 && (
+                    <button className="icon-btn glass" aria-label={`Up to ${index.get(focus.parentId ?? "")?.name ?? "Bangladesh"}`} onClick={() => go(focus.parentId ?? index.root.id)} style={{ pointerEvents: "auto", width: 40, height: 40 }}>
+                      <svg className="ic" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 20, height: 20 }}><path d="M15 6l-6 6 6 6" /></svg>
+                    </button>
+                  )}
+                  <nav aria-label="Where you are" className="glass" style={{ pointerEvents: "auto", minWidth: 0, display: "flex", alignItems: "center", gap: 2, height: 40, borderRadius: 20, padding: "0 10px", overflowX: "auto", scrollbarWidth: "none" }}>
+                    {path.map((a, i) => (
+                      <span key={a.id} style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                        {i > 0 && <span className="mute" aria-hidden="true">›</span>}
+                        <button onClick={() => go(a.id)} aria-current={a.id === focus.id ? "location" : undefined} style={{ background: "none", border: 0, padding: "6px 4px", cursor: "pointer", font: `${a.id === focus.id ? 800 : 600} 13px Archivo, sans-serif`, color: a.id === focus.id ? "var(--ink)" : "var(--mute)" }}>
+                          {a.name}
+                        </button>
+                      </span>
+                    ))}
+                  </nav>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+                <span className="mute" style={{ fontSize: 12 }}>{focus.type === "COUNTRY" ? "Tap a division, then a district, then your area." : focus.type === "DIVISION" ? "Tap a district." : children.length > 20 ? "Tap your area, or pinch to zoom for small city areas." : "Tap your area to choose it."}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--acc-text)" }}><span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 3, background: "var(--accent)" }} />Open now</span>
+                {openRows.filter((a) => a.id !== activeId).map((a) => (
+                  <button key={a.id} className="pill" onClick={() => setPick(a)} style={{ height: 30, background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--acc-text)", border: 0 }}>{a.name}</button>
                 ))}
+              </div>
+              {problem && <p role="status" className="notice warn" style={{ marginTop: 10, fontSize: 12 }}>{problem}</p>}
+            </Section>
+
+            {focus.id !== index.root.id && (
+              <Section title={`In ${focus.name}`}>
+                {children.map((c) =>
+                  isTerritoryArea(c) ? (
+                    <AreaRow key={c.id} area={c} index={index} activeId={activeId} onPick={setPick} />
+                  ) : (
+                    <button key={c.id} className="row" onClick={() => go(c.id)} style={{ minHeight: 56 }}>
+                      <span>
+                        <span style={{ display: "block", fontWeight: 700 }}>{c.name}</span>
+                        <span className="mute" style={{ display: "block", fontSize: 12, fontWeight: 500, marginTop: 2 }}>District · {index.childrenOf(c.id).length} areas</span>
+                      </span>
+                      <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 18, height: 18 }}><path d="M9 6l6 6-6 6" /></svg>
+                    </button>
+                  )
+                )}
               </Section>
             )}
-
-            <div ref={listTop} style={{ scrollMarginTop: 140 }} />
-            <Section title={focus.id === index.root.id ? "Browse Bangladesh" : "Browse"}>
-              {path.length > 1 && (
-                <nav aria-label="Where you are" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, padding: "6px 0 4px" }}>
-                  {path.map((a, i) => (
-                    <span key={a.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      {i > 0 && <span className="mute" aria-hidden="true">›</span>}
-                      <button onClick={() => go(a.id)} aria-current={a.id === focus.id ? "location" : undefined} style={{ background: "none", border: 0, padding: "6px 2px", cursor: "pointer", font: `${a.id === focus.id ? 800 : 600} 13px Archivo, sans-serif`, color: a.id === focus.id ? "var(--ink)" : "var(--mute)" }}>
-                        {a.name}
-                      </button>
-                    </span>
-                  ))}
-                </nav>
-              )}
-              {children.map((c) =>
-                isTerritoryArea(c) ? (
-                  <AreaRow key={c.id} area={c} index={index} activeId={activeId} onPick={setPick} />
-                ) : (
-                  <button key={c.id} className="row" onClick={() => go(c.id)} style={{ minHeight: 56 }}>
-                    <span>
-                      <span style={{ display: "block", fontWeight: 700 }}>{c.name}</span>
-                      <span className="mute" style={{ display: "block", fontSize: 12, fontWeight: 500, marginTop: 2 }}>
-                        {c.type === "DIVISION" ? "Division" : "District"} · {index.childrenOf(c.id).length} {c.type === "DIVISION" ? "districts" : "areas"}
-                      </span>
-                    </span>
-                    <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 18, height: 18 }}><path d="M9 6l6 6-6 6" /></svg>
-                  </button>
-                )
-              )}
-            </Section>
             <p className="mute" style={{ fontSize: 10, textAlign: "center", marginTop: 24, lineHeight: 1.5 }}>Borders: BBS and OCHA ROAP via geoBoundaries (CC BY 3.0 IGO). Streets: © OpenStreetMap contributors.</p>
           </>
         )}

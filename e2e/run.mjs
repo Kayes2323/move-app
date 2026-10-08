@@ -470,11 +470,16 @@ async function scenarioSwitch() {
     // browse the real hierarchy: Chittagong division > Chandpur district > Chandpur Sadar
     await s.pg.getByRole("button", { name: "Choose Territory" }).click();
     const dlg = s.pg.getByRole("dialog", { name: "Choose Territory" });
-    await dlg.getByRole("button", { name: /^Chittagong/ }).click();
+    // the real map: tap the Chittagong division on it (labels let taps through to the border underneath)
+    await s.pg.waitForSelector(".leaflet-tooltip.terr-tip", { timeout: 20000 });
+    await s.pg.waitForTimeout(1200);
+    const lbl = await s.pg.locator(".leaflet-tooltip", { hasText: /^Chittagong$/ }).first().boundingBox();
+    await s.pg.mouse.click(lbl.x + lbl.width / 2, lbl.y + lbl.height / 2);
+    await dlg.getByRole("heading", { name: "In Chittagong" }).waitFor({ timeout: 10000 });
     await dlg.getByRole("button", { name: /^Chandpur\s/ }).click();
     await dlg.getByRole("button", { name: /^Chandpur Sadar,/ }).click();
     const confirmText = await s.pg.getByRole("alertdialog").innerText();
-    check("W2a. browsing Division > District > Upazila reaches Chandpur Sadar, and the confirm step says it is not open yet", /Chandpur Sadar/.test(confirmText) && /not open yet/i.test(confirmText) && /won't count yet/.test(confirmText), confirmText.replace(/\s+/g, " ").slice(0, 200));
+    check("W2a. the Bangladesh map (Division) then District > Upazila reaches Chandpur Sadar, and the confirm step says it is not open yet", /Chandpur Sadar/.test(confirmText) && /not open yet/i.test(confirmText) && /won't count yet/.test(confirmText), confirmText.replace(/\s+/g, " ").slice(0, 200));
     await s.pg.getByRole("alertdialog").getByRole("button", { name: "Choose Territory" }).click();
     await ready(s.pg, "text=isn't open for Territory yet");
     const t = await hubText(s.pg);
