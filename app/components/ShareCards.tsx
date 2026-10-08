@@ -1,5 +1,6 @@
 "use client";
 import type { CSSProperties, ReactNode } from "react";
+import type { Route } from "../data/routes";
 import { ACTIVITY_META, formatDuration, formatKm, formatPerformance, type ActivityKind } from "../lib/activity";
 import { cardLayout, photoFit, type CardLayout, type CardRatio, type CardTone, type Rect, type ShareMode } from "../lib/share/cardLayout";
 import type { TerritoryCardFacts } from "../lib/share/context";
@@ -7,6 +8,7 @@ import { drawRoute } from "../lib/share/trackPath";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
 import type { TrackPoint } from "../lib/tracking/types";
 import { TerritoryEmblem, type EmblemColors } from "../territory/TerritoryEmblem";
+import { JourneyRoute } from "./JourneyRoute";
 
 /* Cards are exported to PNG, so every colour here is a literal and nothing relies on CSS variables or filters. */
 
@@ -28,8 +30,8 @@ export interface ShareCardProps {
   activity: { kind: ActivityKind; km: number; duration: string; pace?: number; calories?: number; dateLabel: string };
   /** The recorded GPS track, or null when none exists. Never invented. */
   track: readonly TrackPoint[] | null;
-  /** The Journey this activity counted towards, shown as one line on the Routes card. */
-  journey?: { name: string; completedKm: number } | null;
+  /** The Journey this activity counted towards: the Routes card draws this route (from where the journey began) and how far along it is. */
+  journey?: { route: Route; startKm: number; progressKm: number; startName: string } | null;
   territory?: { def: TerritoryDefinition; facts: TerritoryCardFacts; actualKm?: number } | null;
 }
 
@@ -57,6 +59,22 @@ const bigSize = (text: string, a: number, b: number, c: number) => (text.length 
 function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMode; props: ShareCardProps; L: Look }): ReactNode {
   const r = layout.visual;
   if (!r || mode === "NORMAL") return null;
+  if (mode === "ROUTES" && props.journey) {
+    const j = props.journey;
+    const roomy = r.h >= 200;
+    // Short, wide stretches (a journey begun near the end) get big marks with names above them; a long, tall route keeps names beside its dots.
+    const stops = j.route.checkpoints.filter((c) => c.distanceFromStart >= j.startKm).length + (j.startKm <= 0 ? 1 : 0);
+    const short = stops <= 3;
+    return (
+      <div style={{ ...rectStyle(r), display: "flex", alignItems: "center", justifyContent: "center" }} data-zone="visual">
+        {short ? (
+          <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={34} padR={34} padY={26} labels="auto" accent={L.accent} line={roomy ? 6 : 4.6} fontSize={roomy ? 15 : 12.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted fromStart labelsAbove />
+        ) : (
+          <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={r.w > 200 ? 92 : 62} padR={r.w > 200 ? 92 : 22} padY={14} labels="auto" accent={L.accent} line={roomy ? 3.4 : 2.8} fontSize={roomy ? 12 : 10.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted fromStart />
+        )}
+      </div>
+    );
+  }
   if (mode === "ROUTES") {
     const route = drawRoute(props.track, r.w, r.h, 14);
     return (
@@ -102,16 +120,29 @@ function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: Card
 }
 
 function RoutesStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
-  const { kind, km, duration, pace, dateLabel } = props.activity;
+  const { kind, km, duration, pace, calories, dateLabel } = props.activity;
   const distance = formatKm(km);
-  const size = layout.compact ? bigSize(distance, 40, 34, 28) : bigSize(distance, 48, 42, 36);
+  const c = layout.compact;
+  const size = c ? bigSize(distance, 36, 32, 27) : bigSize(distance, 46, 40, 34);
   const j = props.journey;
+  const kcal = calories && calories > 0 ? Math.round(calories) : null;
+  const done = j ? Math.max(j.progressKm - j.startKm, 0) : 0;
+  const left = j ? Math.max(j.route.totalKm - j.progressKm, 0) : 0;
+  const sub = c ? 12 : 15;
   return (
     <>
-      <div style={label(L, layout.compact ? 11 : 13)}>ROUTE · {ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
-      <div style={big(size, 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.3), marginLeft: 5, color: L.soft }}>km</span></div>
-      <div style={{ fontSize: layout.compact ? 13 : 16, fontWeight: 600, marginTop: 6 }}>{formatDuration(duration)}<span style={{ opacity: 0.5, margin: "0 7px" }}>·</span>{formatPerformance(kind, pace)}</div>
-      {j && <div style={{ fontSize: layout.compact ? 10 : 12, fontWeight: 600, marginTop: 6, color: L.soft, letterSpacing: 1 }}>DHAKA → {j.name.toUpperCase()} · {formatKm(j.completedKm)} KM</div>}
+      <div style={label(L, c ? 10 : 13)}>{j ? `${j.startName.toUpperCase()} → ${j.route.destination.toUpperCase()}` : `ROUTE · ${ACTIVITY_META[kind].label}${dateLabel ? ` · ${dateLabel}` : ""}`}</div>
+      <div style={big(size, 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.34), marginLeft: 5, color: L.soft }}>km today</span></div>
+      {j && (
+        <div style={{ fontSize: sub, fontWeight: 700, marginTop: 6 }}>
+          {formatKm(done)} km completed
+          {!c && <span style={{ color: L.soft, fontWeight: 600 }}>{` · ${formatKm(left)} km to go`}</span>}
+        </div>
+      )}
+      <div style={{ fontSize: sub - 1, fontWeight: 600, marginTop: 4, color: L.soft }}>
+        {formatDuration(duration)}<span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{formatPerformance(kind, pace)}
+        {kcal && <><span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{kcal} kcal</>}
+      </div>
     </>
   );
 }

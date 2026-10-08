@@ -38,9 +38,9 @@ test("the route/boundary visual and the stats never overlap each other or the lo
   }
 });
 
-test("the photo stays large: at least 53% of the card height on stories and 50% on posts, full width", () => {
+test("the photo stays large: at least 51% of the card height on stories and 50% on posts, full width", () => {
   for (const mode of MODES) {
-    assert.ok(cardLayout(mode, "story", true).photo!.h / 640 >= 0.53, `${mode} story`);
+    assert.ok(cardLayout(mode, "story", true).photo!.h / 640 >= 0.51, `${mode} story`);
     assert.ok(cardLayout(mode, "post", true).photo!.h / 450 >= 0.5, `${mode} post`);
     assert.equal(cardLayout(mode, "story", true).photo!.w, 360);
   }

@@ -28,12 +28,16 @@ interface Props {
   halo?: string;
   /** Fill of the "you are here" dot centre. */
   here?: string;
+  /** Draw only from where the journey began to the destination (share cards), instead of the whole route from Dhaka. */
+  fromStart?: boolean;
+  /** Put each name above (or, if that collides, below) its dot instead of beside it. Suits short, wide routes. */
+  labelsAbove?: boolean;
 }
 
 interface Placed {
   x: number;
   y: number;
-  anchor: "start" | "end";
+  anchor: "start" | "end" | "middle";
 }
 
 function chooseLabels(points: RoutePoint[], mode: LabelMode): number[] {
@@ -65,10 +69,28 @@ function hitsLine(points: RoutePoint[], x1: number, y1: number, x2: number, y2: 
 }
 
 /** Places each wanted label on the side (left/right of its dot) where it crosses the line and other labels least. */
-function placeLabels(points: RoutePoint[], wanted: number[], fontSize: number, width: number): Map<number, Placed> {
+function placeLabels(points: RoutePoint[], wanted: number[], fontSize: number, width: number, above = false): Map<number, Placed> {
   const out = new Map<number, Placed>();
   const rects: { x1: number; y1: number; x2: number; y2: number }[] = [];
   const last = points.length - 1;
+
+  if (above) {
+    for (const i of wanted) {
+      const p = points[i];
+      const w = p.name.length * fontSize * 0.58;
+      const x = Math.min(Math.max(p.x, w / 2 + 2), width - w / 2 - 2);
+      for (const dy of [-(fontSize * 1.1 + 6), fontSize * 1.1 + 14]) {
+        const y1 = p.y + dy - fontSize * 0.7;
+        const y2 = p.y + dy + fontSize * 0.5;
+        const r = { x1: x - w / 2, y1, x2: x + w / 2, y2 };
+        if (rects.some((o) => r.x1 < o.x2 && r.x2 > o.x1 && r.y1 < o.y2 && r.y2 > o.y1)) continue;
+        rects.push(r);
+        out.set(i, { x, y: p.y + dy + fontSize * 0.35, anchor: "middle" });
+        break;
+      }
+    }
+    return out;
+  }
 
   for (const i of wanted) {
     const p = points[i];
@@ -94,17 +116,17 @@ function placeLabels(points: RoutePoint[], wanted: number[], fontSize: number, w
   return out;
 }
 
-function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL, padR, padY, labels, accent, line = 2.5, fontSize = 11, dotted = true, pulse = false, ink = "#FFFFFF", trail, halo = "rgba(0,0,0,0.6)", here = "#FFFFFF" }: Props) {
+function JourneyRouteBase({ route, progressKm, startKm = 0, width, height, padL, padR, padY, labels, accent, line = 2.5, fontSize = 11, dotted = true, pulse = false, ink = "#FFFFFF", trail, halo = "rgba(0,0,0,0.6)", here = "#FFFFFF", fromStart = false, labelsAbove = false }: Props) {
   const box = useMemo(() => ({ x: padL, y: padY, w: Math.max(width - padL - padR, 1), h: Math.max(height - padY * 2, 1) }), [width, height, padL, padR, padY]);
-  const geo = useMemo(() => projectRoute(route, box, progressKm, startKm), [route, box, progressKm, startKm]);
-  const placed = useMemo(() => placeLabels(geo.points, chooseLabels(geo.points, labels), fontSize, width), [geo.points, labels, fontSize, width]);
+  const geo = useMemo(() => projectRoute(route, box, progressKm, startKm, fromStart), [route, box, progressKm, startKm, fromStart]);
+  const placed = useMemo(() => placeLabels(geo.points, chooseLabels(geo.points, labels), fontSize, width, labelsAbove), [geo.points, labels, fontSize, width, labelsAbove]);
 
   const toPoints = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
   const s = line / 2.5;
   const last = geo.points.length - 1;
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block", width: "100%", maxWidth: width, height: "auto" }} role="img" aria-label={`Route from Dhaka to ${route.destination}`}>
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block", width: "100%", maxWidth: width, height: "auto" }} role="img" aria-label={`Route to ${route.destination}`}>
       <polyline
         points={toPoints(geo.points)}
         fill="none"

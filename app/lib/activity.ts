@@ -155,11 +155,12 @@ export interface RouteGeometry {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Projects the journey's real checkpoint coordinates into `box` (aspect preserved, centred). */
-export function projectRoute(route: Route, box: PlotBox, progressKm: number, startKm = 0): RouteGeometry {
+export function projectRoute(route: Route, box: PlotBox, progressKm: number, startKm = 0, fromStart = false): RouteGeometry {
+  // With `fromStart`, a journey that began at a later checkpoint (e.g. Hajiganj) is drawn from there, not from Dhaka: only the road the user is on.
   const raw = [
     { name: "Dhaka", type: "start" as const, km: 0, lat: DHAKA.lat, lng: DHAKA.lng },
     ...route.checkpoints.map((c) => ({ name: c.name, type: c.type, km: c.distanceFromStart, lat: c.coords[0], lng: c.coords[1] })),
-  ];
+  ].filter((p, i) => !fromStart || (i === 0 ? startKm <= 0 : p.km >= startKm));
   const meanLat = raw.reduce((s, p) => s + p.lat, 0) / raw.length;
   const k = Math.cos((meanLat * Math.PI) / 180);
   const xs = raw.map((p) => p.lng * k);

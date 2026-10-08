@@ -585,9 +585,9 @@ async function scenarioShare() {
   const labels = await s.pg.locator("[aria-label='Card type'] button").allInnerTexts();
   check("S1. the selector has exactly three modes: Territory, Routes, Normal", JSON.stringify(labels) === JSON.stringify(["Territory", "Routes", "Normal"]), JSON.stringify(labels));
   check("S2. no Journey or Activity mode anywhere on the screen", !/Journey|Activity/.test(await s.pg.locator("[aria-label='Card type']").innerText()));
-  check("S3. with a real track the default is Routes, drawing the real GPS route", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label='Route']").count()) === 1);
+  check("S3. the default is Routes, drawing the journey route this activity was done on", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label='Route to Chandpur']").count()) === 1);
   let t = await card(s.pg);
-  check("S4. Routes card: distance, duration, pace, and the Journey as one line, no Territory text", /5\.2/.test(t) && /30:00/.test(t) && /DHAKA → CHANDPUR/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 220));
+  check("S4. Routes card: today's km, km completed, duration, pace, calories, route name; no Territory text", /5\.2 ?km today/.test(t) && /5\.2 km completed/.test(t) && /30:00/.test(t) && /412 kcal/.test(t) && /DHAKA → CHANDPUR/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 260));
   await mode(s.pg, "Normal");
   t = await card(s.pg);
   check("S5. Normal card: stats and calories, and no map or route layer", /5\.2/.test(t) && /412 kcal/.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg").count()) === 0 && !/CONQUERED/.test(t));
@@ -597,9 +597,24 @@ async function scenarioShare() {
   check("S7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
 
-  s = await open(mk({ runs: [run1], withTrack: false }));
-  check("S8. without a recorded track Routes is disabled and the default is Normal", (await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Routes$/ }).isDisabled()) && (await s.pg.locator("[data-card-mode='NORMAL']").count()) === 1);
+  s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "", withTrack: false }));
+  check("S8. with neither a journey route nor a recorded track Routes is disabled and the default is Normal", (await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Routes$/ }).isDisabled()) && (await s.pg.locator("[data-card-mode='NORMAL']").count()) === 1);
   check("S9. without a chosen Territory the Territory mode is disabled", await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Territory$/ }).isDisabled());
+  await s.ctx.close();
+
+  // a journey that began at Hajiganj: the card shows Hajiganj -> Chandpur and only that road
+  {
+    const db = mk({ runs: [{ ...run1, km: 5.02, journeyKm: 117.02 }] });
+    db["users/u1"].startCheckpointIndex = 5;
+    s = await open(db);
+    t = await card(s.pg);
+    check("S8b. a journey begun at Hajiganj reads HAJIGANJ → CHANDPUR with 5.02 km completed and 14.98 km to go", /HAJIGANJ → CHANDPUR/.test(t) && /5\.02 km completed/.test(t) && /14\.98 km to go/.test(t) && !/DHAKA/.test(t), t.slice(0, 260));
+    check("S8c. the map shows only Hajiganj and Chandpur, not the stretch before", /Hajiganj/.test(t) && !/Kanchpur|Jatrabari|Gouripur/.test(t));
+    await s.ctx.close();
+  }
+  // no journey, but a recorded GPS track: Routes draws the real track
+  s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "" }));
+  check("S8d. an activity with no journey draws its real GPS track on Routes", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label='Route']").count()) === 1);
   await s.ctx.close();
 
   s = await open(mk({ runs: [{ ...run1, id: "r0", km: 15, activity: "walking", date: iso(now - 86400000) }, { ...run1, activity: "walking" }], territory: DONE }));

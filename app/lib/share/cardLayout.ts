@@ -53,6 +53,12 @@ export function cardLayout(mode: ShareMode, ratio: CardRatio, hasPhoto: boolean)
   const base = { width: CARD_WIDTH, height: H };
 
   if (hasPhoto) {
+    if (ratio === "story" && mode === "ROUTES") {
+      // The route is the point of this card, so it gets a big zone; the photo is still over half the card. The logo sits at the
+      // right of the first stats line so it costs no extra row.
+      const photoH = 330;
+      return { ...base, photo: { x: 0, y: 0, w: CARD_WIDTH, h: photoH }, visual: { x: 24, y: photoH + 12, w: 312, h: 152 }, logo: { x: 294, y: photoH + 172, w: LOGO_W, h: LOGO_H }, stats: { x: 24, y: photoH + 172, w: 262, h: H - photoH - 172 - 12 }, compact: false };
+    }
     if (ratio === "story") {
       const photoH = hasVisual ? 340 : 400;
       const logo = { x: 24, y: photoH + 16, w: LOGO_W, h: LOGO_H };

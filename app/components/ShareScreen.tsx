@@ -138,18 +138,21 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
   const facts = useMemo(() => {
     if (!run || selected === null) return null;
     const kind = toKind(run.activity);
-    const route = findRoute(run.routeName ?? user?.currentRoute);
-    const routeStartKm = journeyOffsetKm(route, user?.startCheckpointIndex);
+    // The route this activity was done on, as recorded with it; and where that journey began (only meaningful for the same route).
+    const route = findRoute(run.routeName ?? undefined);
+    const sameJourney = route && findRoute(user?.currentRoute)?.id === route.id;
+    const routeStartKm = sameJourney ? journeyOffsetKm(route, user?.startCheckpointIndex) : 0;
+    const startName = route && sameJourney && user?.startCheckpointIndex ? route.checkpoints[user.startCheckpointIndex]?.name ?? "Dhaka" : "Dhaka";
     const def = territory?.def;
     const territoryFacts = territory ? (run.id ? territoryFactsAt(territory.state, territory.mask, run.id) : null) ?? territoryNowFacts(territory.state, territory.mask, territory.scope) : null;
     const territoryKm = territory ? Math.round(runs.filter((r) => r.id && territory.state.applied.some((a) => a.id === r.id && a.added > 0)).reduce((sum, r) => sum + r.km, 0) * 10) / 10 : 0;
     const url = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("ctx");
-    const shareFacts = { runId: run.id, hasTrack: Boolean(track), territory: territory?.state ?? null, hint: hint ?? url };
+    const shareFacts = { runId: run.id, hasTrack: Boolean(track), hasJourney: Boolean(route), territory: territory?.state ?? null, hint: hint ?? url };
     const options = availableModes(shareFacts);
     const auto = decideShareMode(shareFacts);
     const mode = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
     const journeyKm = run.journeyKm ?? routeStartKm + (user?.completedKm ?? 0);
-    return { run, kind, route, routeStartKm, journeyKm, def, territoryFacts, territoryKm, options, mode };
+    return { run, kind, route, routeStartKm, startName, journeyKm, def, territoryFacts, territoryKm, options, mode };
   }, [run, selected, user, territory, hint, chosenCtx, runs, track]);
 
   const card = facts ? (
@@ -160,7 +163,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
       photo={photo}
       activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, dateLabel: formatCardDate(facts.run.date) }}
       track={track}
-      journey={facts.route && facts.run.routeName ? { name: facts.route.name, completedKm: Math.max(facts.journeyKm - facts.routeStartKm, 0) } : null}
+      journey={facts.route ? { route: facts.route, startKm: facts.routeStartKm, progressKm: facts.journeyKm, startName: facts.startName } : null}
       territory={facts.def && facts.territoryFacts ? { def: facts.def, facts: facts.territoryFacts, actualKm: facts.territoryKm } : null}
     />
   ) : null;

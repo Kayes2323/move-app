@@ -13,6 +13,8 @@ export const SHARE_MODE_LABEL: Record<ShareMode, string> = { TERRITORY: "Territo
 export interface ShareFacts {
   /** The activity has a recorded GPS track. */
   hasTrack: boolean;
+  /** The activity counted towards a Journey route. */
+  hasJourney?: boolean;
   /** The chosen Territory's explored state, or null when none is chosen. */
   territory: CoverageState | null;
   runId?: string;
@@ -20,9 +22,9 @@ export interface ShareFacts {
   hint?: string | null;
 }
 
-/** Which modes can truthfully be shown for this activity. Normal always can; Routes needs a real track; Territory needs a chosen Territory. */
+/** Which modes can truthfully be shown for this activity. Normal always can; Routes needs a Journey route or a real track; Territory needs a chosen Territory. */
 export function availableModes(f: ShareFacts): ShareMode[] {
-  return SHARE_MODES.filter((m) => (m === "TERRITORY" ? f.territory !== null : m === "ROUTES" ? f.hasTrack : true));
+  return SHARE_MODES.filter((m) => (m === "TERRITORY" ? f.territory !== null : m === "ROUTES" ? f.hasTrack || Boolean(f.hasJourney) : true));
 }
 
 /**
