@@ -24,10 +24,27 @@ type UserData = UserDoc;
 
 type Status = "loading" | "ready" | "empty" | "error";
 
+/** A 16 x 28 px copy of the photo, which the card stretches to the full card: a soft colour wash without any blur filter. */
+const makeBackdrop = (img: HTMLImageElement): string | undefined => {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 16;
+    c.height = 28;
+    const g = c.getContext("2d");
+    if (!g) return undefined;
+    const scale = Math.max(c.width / img.naturalWidth, c.height / img.naturalHeight);
+    g.imageSmoothingEnabled = true;
+    g.drawImage(img, (c.width - img.naturalWidth * scale) / 2, (c.height - img.naturalHeight * scale) / 2, img.naturalWidth * scale, img.naturalHeight * scale);
+    return c.toDataURL("image/png");
+  } catch {
+    return undefined;
+  }
+};
+
 const imageSize = (src: string) =>
-  new Promise<{ width: number; height: number }>((resolve, reject) => {
+  new Promise<{ width: number; height: number; backdrop?: string }>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight, backdrop: makeBackdrop(img) });
     img.onerror = () => reject(new Error("Photo unreadable"));
     img.src = src;
   });
@@ -142,7 +159,6 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     const route = findRoute(run.routeName ?? undefined);
     const sameJourney = route && findRoute(user?.currentRoute)?.id === route.id;
     const routeStartKm = sameJourney ? journeyOffsetKm(route, user?.startCheckpointIndex) : 0;
-    const startName = route && sameJourney && user?.startCheckpointIndex ? route.checkpoints[user.startCheckpointIndex]?.name ?? "Dhaka" : "Dhaka";
     const def = territory?.def;
     const territoryFacts = territory ? (run.id ? territoryFactsAt(territory.state, territory.mask, run.id) : null) ?? territoryNowFacts(territory.state, territory.mask, territory.scope) : null;
     const territoryKm = territory ? Math.round(runs.filter((r) => r.id && territory.state.applied.some((a) => a.id === r.id && a.added > 0)).reduce((sum, r) => sum + r.km, 0) * 10) / 10 : 0;
@@ -152,7 +168,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     const auto = decideShareMode(shareFacts);
     const mode = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
     const journeyKm = run.journeyKm ?? routeStartKm + (user?.completedKm ?? 0);
-    return { run, kind, route, routeStartKm, startName, journeyKm, def, territoryFacts, territoryKm, options, mode };
+    return { run, kind, route, routeStartKm, journeyKm, def, territoryFacts, territoryKm, options, mode };
   }, [run, selected, user, territory, hint, chosenCtx, runs, track]);
 
   const card = facts ? (
@@ -163,7 +179,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
       photo={photo}
       activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, dateLabel: formatCardDate(facts.run.date) }}
       track={track}
-      journey={facts.route ? { route: facts.route, startKm: facts.routeStartKm, progressKm: facts.journeyKm, startName: facts.startName } : null}
+      journey={facts.route ? { route: facts.route, startKm: facts.routeStartKm, progressKm: facts.journeyKm } : null}
       territory={facts.def && facts.territoryFacts ? { def: facts.def, facts: facts.territoryFacts, actualKm: facts.territoryKm } : null}
     />
   ) : null;

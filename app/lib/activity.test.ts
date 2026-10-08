@@ -120,18 +120,3 @@ test("activity grid follows real dates", () => {
   assert.equal(grid[31], 1); // three days ago
   assert.equal(grid.reduce((a, b) => a + b, 0), 2); // the old one is outside the window
 });
-
-test("a journey that began at Hajiganj is drawn from Hajiganj to Chandpur, not from Dhaka", () => {
-  const r = findRoute("Chandpur")!;
-  const box = { x: 0, y: 0, w: 300, h: 200 };
-  const full = projectRoute(r, box, 5, 0);
-  assert.equal(full.points[0].name, "Dhaka");
-  const startKm = journeyOffsetKm(r, r.checkpoints.findIndex((c) => c.name === "Hajiganj"));
-  assert.equal(startKm, 112);
-  const g = projectRoute(r, box, startKm + 5.02, startKm, true);
-  assert.deepEqual(g.points.map((p) => p.name), ["Hajiganj", "Chandpur"]);
-  assert.equal(g.progress.length, 2, "completed part runs from Hajiganj to where the user is");
-  assert.deepEqual(g.progress[0], { x: g.points[0].x, y: g.points[0].y });
-  assert.equal(g.next?.name, "Chandpur");
-  assert.ok(Math.abs((g.next?.km ?? 0) - (20 - 5.02)) < 1e-9);
-});

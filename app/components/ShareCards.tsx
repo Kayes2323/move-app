@@ -20,6 +20,8 @@ export interface CardPhoto {
   src: string;
   width: number;
   height: number;
+  /** A tiny copy of the photo, stretched to fill the card behind a photo that doesn't fill it. Soft by construction (no CSS filters). */
+  backdrop?: string;
 }
 
 export interface ShareCardProps {
@@ -30,8 +32,8 @@ export interface ShareCardProps {
   activity: { kind: ActivityKind; km: number; duration: string; pace?: number; calories?: number; dateLabel: string };
   /** The recorded GPS track, or null when none exists. Never invented. */
   track: readonly TrackPoint[] | null;
-  /** The Journey this activity counted towards: the Routes card draws this route (from where the journey began) and how far along it is. */
-  journey?: { route: Route; startKm: number; progressKm: number; startName: string } | null;
+  /** The Journey this activity counted towards: the Routes card draws this whole route and how far along it is. */
+  journey?: { route: Route; startKm: number; progressKm: number } | null;
   territory?: { def: TerritoryDefinition; facts: TerritoryCardFacts; actualKm?: number } | null;
 }
 
@@ -55,49 +57,60 @@ const label = (L: Look, size: number): CSSProperties => ({ fontSize: size, fontW
 const big = (size: number, marginTop: number): CSSProperties => ({ fontFamily: DISPLAY, fontSize: size, lineHeight: 1, marginTop, whiteSpace: "nowrap" });
 const bigSize = (text: string, a: number, b: number, c: number) => (text.length <= 4 ? a : text.length <= 5 ? b : c);
 
-/** The route or boundary, drawn inside its own rectangle and clipped to it. */
+/** A recorded GPS track, thinned only. On a photo it gets a dark casing so it reads against any picture. */
+function TrackDrawing({ track, r, L, onPhoto }: { track: readonly TrackPoint[] | null; r: Rect; L: Look; onPhoto: boolean }) {
+  const route = drawRoute(track, r.w, r.h, 16);
+  if (!route) {
+    // No GPS route was recorded (older activities): a quiet watermark, never a made-up line.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={L.light ? "/move-mark-dark.png" : "/move-mark.png"} alt="" aria-hidden="true" style={{ width: Math.min(150, r.w * 0.5), height: "auto", opacity: onPhoto ? 0.18 : 0.08 }} />;
+  }
+  return (
+    <svg width={r.w} height={r.h} viewBox={`0 0 ${r.w} ${r.h}`} role="img" aria-label="Route" style={{ display: "block" }}>
+      <path d={route.d} fill="none" stroke={onPhoto ? "rgba(0,0,0,0.5)" : L.light ? "rgba(15,15,15,0.16)" : "rgba(255,255,255,0.14)"} strokeWidth={onPhoto ? 8.5 : 9} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={route.d} fill="none" stroke={L.accent} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={route.start.x} cy={route.start.y} r={5} fill={L.bg} stroke={L.accent} strokeWidth={2.5} />
+      <circle cx={route.end.x} cy={route.end.y} r={6} fill={L.accent} stroke={onPhoto ? "#FFFFFF" : L.bg} strokeWidth={2.5} />
+    </svg>
+  );
+}
+
+/**
+ * The visual, drawn inside its own rectangle and clipped to it:
+ *  - Normal: the route walked today (the real GPS track);
+ *  - Routes: the active journey, e.g. Dhaka to Chandpur, with how far along it you are (the real GPS track if there is no journey);
+ *  - Territory: the boundary as a progress meter.
+ */
 function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMode; props: ShareCardProps; L: Look }): ReactNode {
   const r = layout.visual;
-  if (!r || mode === "NORMAL") return null;
+  const onPhoto = Boolean(props.photo);
+  const box: CSSProperties = { ...rectStyle(r), display: "flex", alignItems: "center", justifyContent: "center" };
   if (mode === "ROUTES" && props.journey) {
     const j = props.journey;
     const roomy = r.h >= 200;
-    // Short, wide stretches (a journey begun near the end) get big marks with names above them; a long, tall route keeps names beside its dots.
-    const stops = j.route.checkpoints.filter((c) => c.distanceFromStart >= j.startKm).length + (j.startKm <= 0 ? 1 : 0);
-    const short = stops <= 3;
     return (
-      <div style={{ ...rectStyle(r), display: "flex", alignItems: "center", justifyContent: "center" }} data-zone="visual">
-        {short ? (
-          <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={34} padR={34} padY={26} labels="auto" accent={L.accent} line={roomy ? 6 : 4.6} fontSize={roomy ? 15 : 12.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted fromStart labelsAbove />
-        ) : (
-          <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={r.w > 200 ? 92 : 62} padR={r.w > 200 ? 92 : 22} padY={14} labels="auto" accent={L.accent} line={roomy ? 3.4 : 2.8} fontSize={roomy ? 12 : 10.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted fromStart />
-        )}
+      <div style={box} data-zone="visual">
+        <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={r.w > 200 ? 92 : 62} padR={r.w > 200 ? 92 : 22} padY={14} labels={r.w > 200 ? "auto" : "mini"} accent={L.accent} line={roomy ? 3.4 : 2.8} fontSize={roomy ? 12 : 10.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : onPhoto ? "rgba(255,255,255,0.7)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted={!onPhoto} />
       </div>
     );
   }
-  if (mode === "ROUTES") {
-    const route = drawRoute(props.track, r.w, r.h, 14);
+  if (mode === "TERRITORY") {
+    const t = props.territory;
+    if (!t) return null;
+    const colors: EmblemColors = L.light
+      ? { fill: "#E4E7F1", base: "#C5CAD8", progressFrom: "#4F6EF7", progressTo: "#7C8DF9", head: "#0F0F0F" }
+      : onPhoto
+        ? { fill: "rgba(10,10,12,0.45)", base: "rgba(255,255,255,0.55)", progressFrom: "#8EA2FF", progressTo: "#FFFFFF", head: "#FFFFFF" }
+        : { fill: "#15151B", base: "#2C2C36", progressFrom: "#6F8AFF", progressTo: "#B6C2FF", head: "#FFFFFF" };
     return (
-      <div style={rectStyle(r)} data-zone="visual">
-        {route ? (
-          <svg width={r.w} height={r.h} viewBox={`0 0 ${r.w} ${r.h}`} role="img" aria-label="Route" style={{ display: "block" }}>
-            <path d={route.d} fill="none" stroke={L.light ? "rgba(15,15,15,0.16)" : "rgba(255,255,255,0.14)"} strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />
-            <path d={route.d} fill="none" stroke={L.accent} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx={route.start.x} cy={route.start.y} r={5} fill={L.bg} stroke={L.accent} strokeWidth={2.5} />
-            <circle cx={route.end.x} cy={route.end.y} r={6} fill={L.accent} stroke={L.bg} strokeWidth={2.5} />
-          </svg>
-        ) : null}
+      <div style={box} data-zone="visual">
+        <TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={r.w} height={r.h} pad={10} colors={colors} stroke={4} glow={false} label={`${t.def.name} boundary`} />
       </div>
     );
   }
-  const t = props.territory;
-  if (!t) return null;
-  const colors: EmblemColors = L.light
-    ? { fill: "#E4E7F1", base: "#C5CAD8", progressFrom: "#4F6EF7", progressTo: "#7C8DF9", head: "#0F0F0F" }
-    : { fill: "#15151B", base: "#2C2C36", progressFrom: "#6F8AFF", progressTo: "#B6C2FF", head: "#FFFFFF" };
   return (
-    <div style={{ ...rectStyle(r), display: "flex", alignItems: "center", justifyContent: "center" }} data-zone="visual">
-      <TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={r.w} height={r.h} pad={10} colors={colors} stroke={4} glow={false} label={`${t.def.name} boundary`} />
+    <div style={box} data-zone="visual">
+      <TrackDrawing track={props.track} r={r} L={L} onPhoto={onPhoto} />
     </div>
   );
 }
@@ -105,10 +118,10 @@ function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMod
 function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
   const { kind, km, duration, pace, calories, dateLabel } = props.activity;
   const distance = formatKm(km);
-  const roomy = layout.stats.h >= 230;
-  const size = layout.compact ? bigSize(distance, 46, 40, 34) : roomy ? bigSize(distance, 92, 78, 64) : bigSize(distance, 66, 58, 48);
+  const roomy = layout.stats.h >= 140;
+  const size = layout.compact ? bigSize(distance, 36, 32, 27) : roomy ? bigSize(distance, 92, 78, 64) : bigSize(distance, 46, 40, 34);
   const kcal = calories && calories > 0 ? Math.round(calories) : null;
-  const sub = layout.compact ? 13 : roomy ? 20 : 17;
+  const sub = layout.compact ? 12 : roomy ? 20 : 15;
   return (
     <>
       <div style={label(L, layout.compact ? 11 : 13)}>{ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
@@ -131,7 +144,7 @@ function RoutesStats({ props, layout, L }: { props: ShareCardProps; layout: Card
   const sub = c ? 12 : 15;
   return (
     <>
-      <div style={label(L, c ? 10 : 13)}>{j ? `${j.startName.toUpperCase()} → ${j.route.destination.toUpperCase()}` : `ROUTE · ${ACTIVITY_META[kind].label}${dateLabel ? ` · ${dateLabel}` : ""}`}</div>
+      <div style={label(L, c ? 10 : 13)}>{j ? `DHAKA → ${j.route.destination.toUpperCase()}` : `ROUTE · ${ACTIVITY_META[kind].label}${dateLabel ? ` · ${dateLabel}` : ""}`}</div>
       <div style={big(size, 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.34), marginLeft: 5, color: L.soft }}>km today</span></div>
       {j && (
         <div style={{ fontSize: sub, fontWeight: 700, marginTop: 6 }}>
@@ -141,8 +154,9 @@ function RoutesStats({ props, layout, L }: { props: ShareCardProps; layout: Card
       )}
       <div style={{ fontSize: sub - 1, fontWeight: 600, marginTop: 4, color: L.soft }}>
         {formatDuration(duration)}<span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{formatPerformance(kind, pace)}
-        {kcal && <><span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{kcal} kcal</>}
+        {kcal && !c && <><span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{kcal} kcal</>}
       </div>
+      {kcal && c && <div style={{ fontSize: sub - 1, fontWeight: 600, marginTop: 2, color: L.soft }}>{kcal} kcal</div>}
     </>
   );
 }
@@ -186,20 +200,22 @@ function TerritoryStats({ props, layout, L }: { props: ShareCardProps; layout: C
  */
 export function ShareCardView(props: ShareCardProps) {
   const { mode, ratio, photo, tone = "dark" } = props;
-  const layout = cardLayout(mode, ratio, Boolean(photo));
+  const layout = cardLayout(mode, ratio, Boolean(photo), photo ? photo.width / photo.height : undefined);
   const accent = mode === "TERRITORY" ? ["#6F8AFF", "#4F6EF7"] : [ACTIVITY_META[props.activity.kind].accent, LIGHT_ACCENT[props.activity.kind]];
   const L = look(tone, Boolean(photo), accent[0], accent[1]);
   const fit = photo ? photoFit(photo.width, photo.height) : null;
 
   return (
     <div data-card-mode={mode} style={{ position: "relative", width: layout.width, height: layout.height, overflow: "hidden", background: L.bg, color: L.ink, fontFamily: TEXT }}>
+      {photo && layout.backdrop && (
+        <div data-zone="backdrop" style={{ position: "absolute", inset: 0, backgroundColor: "#0A0A0C", backgroundImage: photo.backdrop ? `url(${photo.backdrop})` : undefined, backgroundSize: "100% 100%" }} />
+      )}
       {photo && layout.photo && fit && (
         <div data-zone="photo" style={{ ...rectStyle(layout.photo), backgroundColor: "#0A0A0C", backgroundImage: `url(${photo.src})`, backgroundRepeat: "no-repeat", backgroundSize: fit.size, backgroundPosition: fit.position }} />
       )}
-
-      {!photo && mode === "NORMAL" && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src="/move-mark.png" alt="" aria-hidden="true" style={{ position: "absolute", left: "50%", top: layout.stats.y + layout.stats.h / 2, width: 190, height: "auto", transform: "translate(-50%, -50%)", opacity: L.light ? 0.08 : 0.06 }} />
+      {/* The fade lives entirely in the overlay zone: the protected top of the photo is never darkened. */}
+      {photo && layout.overlay && (
+        <div data-zone="scrim" style={{ ...rectStyle(layout.overlay), background: "linear-gradient(to bottom, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.62) 56px, rgba(0,0,0,0.84) 100%)" }} />
       )}
 
       {/* eslint-disable-next-line @next/next/no-img-element */}

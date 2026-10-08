@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CARD_HEIGHT, CARD_WIDTH, cardLayout, inside, intersects, photoFit, visibleWindow, type CardRatio, type ShareMode } from "./cardLayout";
+import { CARD_HEIGHT, CARD_WIDTH, cardLayout, inside, intersects, photoFit, type CardRatio, type ShareMode } from "./cardLayout";
 
 const MODES: ShareMode[] = ["TERRITORY", "ROUTES", "NORMAL"];
 const RATIOS: CardRatio[] = ["story", "post"];
@@ -15,52 +15,61 @@ test("card dimensions are fixed: 360 x 640 story, 360 x 450 post", () => {
   }
 });
 
-test("with a photo, nothing is drawn inside the photo zone: logo, route/boundary and stats all sit outside it", () => {
+test("with a photo, the protected top holds only the photo: logo, route/boundary, numbers and the fade all sit below it", () => {
   for (const ratio of RATIOS) for (const mode of MODES) {
     const l = cardLayout(mode, ratio, true);
-    assert.ok(l.photo, `${mode}/${ratio} has a photo zone`);
-    for (const [name, r] of [["logo", l.logo], ["visual", l.visual], ["stats", l.stats]] as const) {
-      if (r) assert.ok(!intersects(r, l.photo!), `${mode}/${ratio}: ${name} overlaps the photo zone`);
+    assert.ok(l.photo && l.protect && l.overlay, `${mode}/${ratio} has photo, protected and overlay zones`);
+    assert.deepEqual(l.photo, { x: 0, y: 0, w: 360, h: CARD_HEIGHT[ratio] }, "a tall portrait fills the whole card (no solid panel)");
+    assert.equal(l.backdrop, false);
+    // a squarer photo is shown sharp in the protected top and a soft photo-coloured backdrop fills the rest
+    for (const aspect of [0.8, 1, 1.6, 2]) {
+      const q = cardLayout(mode, ratio, true, aspect);
+      assert.deepEqual(q.photo, q.protect, `${mode}/${ratio}/${aspect}: the sharp photo is exactly the protected top`);
+      assert.equal(q.backdrop, true);
+      assert.deepEqual(q.visual, l.visual, "the overlay layout does not depend on the photo");
     }
+    for (const [name, r] of [["logo", l.logo], ["visual", l.visual], ["stats", l.stats], ["overlay", l.overlay]] as const) {
+      assert.ok(!intersects(r, l.protect!), `${mode}/${ratio}: ${name} overlaps the protected zone`);
+    }
+    for (const [name, r] of [["logo", l.logo], ["visual", l.visual], ["stats", l.stats]] as const) assert.ok(inside(r, l.overlay!), `${mode}/${ratio}: ${name} is outside the overlay zone`);
+    assert.equal(l.protect!.h + l.overlay!.h, l.height, "protected + overlay = the card");
   }
 });
 
-test("the route/boundary visual and the stats never overlap each other or the logo, and everything stays on the card", () => {
+test("the visual, the stats and the logo never overlap each other, and everything stays on the card", () => {
   for (const ratio of RATIOS) for (const mode of MODES) for (const photo of [true, false]) {
     const l = cardLayout(mode, ratio, photo);
     const card = { x: 0, y: 0, w: l.width, h: l.height };
-    const parts = [["logo", l.logo], ["stats", l.stats], ...(l.visual ? [["visual", l.visual] as const] : [])] as const;
+    const parts = [["logo", l.logo], ["stats", l.stats], ["visual", l.visual]] as const;
     for (const [n, r] of parts) assert.ok(inside(r, card), `${mode}/${ratio}/${photo}: ${n} leaves the card`);
     for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
       assert.ok(!intersects(parts[i][1], parts[j][1]), `${mode}/${ratio}/${photo}: ${parts[i][0]} overlaps ${parts[j][0]}`);
     }
-    if (l.photo) assert.ok(inside(l.photo, card));
   }
 });
 
-test("the photo stays large: at least 51% of the card height on stories and 50% on posts, full width", () => {
+test("the protected top stays large: at least half of a story, over half of a post", () => {
   for (const mode of MODES) {
-    assert.ok(cardLayout(mode, "story", true).photo!.h / 640 >= 0.51, `${mode} story`);
-    assert.ok(cardLayout(mode, "post", true).photo!.h / 450 >= 0.5, `${mode} post`);
-    assert.equal(cardLayout(mode, "story", true).photo!.w, 360);
-  }
-  assert.equal(cardLayout("NORMAL", "story", true).photo!.h, 400);
-});
-
-test("Normal has no map layer; Territory and Routes have one", () => {
-  for (const ratio of RATIOS) for (const photo of [true, false]) {
-    assert.equal(cardLayout("NORMAL", ratio, photo).visual, null);
-    assert.ok(cardLayout("ROUTES", ratio, photo).visual);
-    assert.ok(cardLayout("TERRITORY", ratio, photo).visual);
+    assert.ok(cardLayout(mode, "story", true).protect!.h / 640 >= 0.5, `${mode} story`);
+    assert.ok(cardLayout(mode, "post", true).protect!.h / 450 >= 0.55, `${mode} post`);
   }
 });
 
-test("no photo: no photo zone, and the card still has a visual (or hero stats) with room to breathe", () => {
+test("every mode has its visual: today's route (Normal), the active journey (Routes), the boundary (Territory)", () => {
+  for (const ratio of RATIOS) for (const photo of [true, false]) for (const mode of MODES) {
+    const v = cardLayout(mode, ratio, photo).visual;
+    assert.ok(v.w >= 150 && v.h >= 150, `${mode}/${ratio}/${photo} visual ${v.w}x${v.h}`);
+  }
+});
+
+test("no photo: no photo zone and no fade, and the visual still has room to breathe", () => {
   for (const ratio of RATIOS) for (const mode of MODES) {
     const l = cardLayout(mode, ratio, false);
     assert.equal(l.photo, null);
+    assert.equal(l.protect, null);
+    assert.equal(l.overlay, null);
     assert.ok(l.stats.h >= 130, `${mode}/${ratio} stats height ${l.stats.h}`);
-    if (l.visual) assert.ok(l.visual.h >= 200, `${mode}/${ratio} visual height ${l.visual.h}`);
+    assert.ok(l.visual.h >= 200, `${mode}/${ratio} visual height ${l.visual.h}`);
   }
 });
 
@@ -72,16 +81,25 @@ test("photo fit: portrait photos are anchored near the top, landscape centred, p
   assert.deepEqual(photoFit(0, 0), { size: "cover", position: "50% 30%" }, "unknown size falls back safely");
 });
 
-test("a subject in the upper part of a portrait photo, and one slightly off-centre in a landscape photo, stay in view in every layout", () => {
+test("a head-and-shoulders portrait keeps its face inside the protected top, whatever the photo's shape", () => {
   for (const ratio of RATIOS) for (const mode of MODES) {
-    const zone = cardLayout(mode, ratio, true).photo!;
-    // portrait 3:4, head and shoulders: face centred at 27% of the height (a disc of 12% of the width)
-    const p = visibleWindow(900, 1200, zone, photoFit(900, 1200));
-    assert.ok(p.y0 <= 0.27 - 0.1 && p.y1 >= 0.27 + 0.1, `${mode}/${ratio}: portrait face cut (${p.y0.toFixed(2)}..${p.y1.toFixed(2)})`);
-    assert.ok(p.x0 <= 0.5 - 0.1 && p.x1 >= 0.5 + 0.1);
-    // landscape 16:10, subject 18% left of centre
-    const l = visibleWindow(1600, 1000, zone, photoFit(1600, 1000));
-    assert.ok(l.x0 <= 0.32 - 0.1 && l.x1 >= 0.32 + 0.1, `${mode}/${ratio}: landscape subject cut (${l.x0.toFixed(2)}..${l.x1.toFixed(2)})`);
-    assert.ok(l.y0 <= 0.5 - 0.15 && l.y1 >= 0.5 + 0.15);
+    const cases = [
+      { name: "tall portrait 3:4", w: 900, h: 1200, face: { x: 0.5, y: 0.27, r: 108 } },
+      { name: "square, face in the middle", w: 1071, h: 1012, face: { x: 0.55, y: 0.55, r: 150 } },
+      { name: "landscape 16:10, subject at 45%", w: 1600, h: 1000, face: { x: 0.45, y: 0.38, r: 120 } },
+    ];
+    for (const c of cases) {
+      const l = cardLayout(mode, ratio, true, c.w / c.h);
+      const zone = l.photo!;
+      const fit = photoFit(c.w, c.h);
+      const scale = Math.max(zone.w / c.w, zone.h / c.h);
+      const [px, py] = fit.position.split(" ").map((v) => parseFloat(v) / 100);
+      const cx = c.face.x * c.w * scale - (c.w * scale - zone.w) * px;
+      const cy = c.face.y * c.h * scale - (c.h * scale - zone.h) * py;
+      const r = c.face.r * scale;
+      assert.ok(cx - r >= 0 && cx + r <= zone.w, `${mode}/${ratio}/${c.name}: the face is cut sideways (${Math.round(cx - r)}..${Math.round(cx + r)})`);
+      assert.ok(cy - r >= 0, `${mode}/${ratio}/${c.name}: the face is cut at the top`);
+      assert.ok(cy + r <= l.protect!.h, `${mode}/${ratio}/${c.name}: the face reaches ${Math.round(cy + r)} px, past the protected ${l.protect!.h}`);
+    }
   }
 });

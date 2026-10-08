@@ -585,12 +585,12 @@ async function scenarioShare() {
   const labels = await s.pg.locator("[aria-label='Card type'] button").allInnerTexts();
   check("S1. the selector has exactly three modes: Territory, Routes, Normal", JSON.stringify(labels) === JSON.stringify(["Territory", "Routes", "Normal"]), JSON.stringify(labels));
   check("S2. no Journey or Activity mode anywhere on the screen", !/Journey|Activity/.test(await s.pg.locator("[aria-label='Card type']").innerText()));
-  check("S3. the default is Routes, drawing the journey route this activity was done on", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label='Route to Chandpur']").count()) === 1);
+  check("S3. the default is Routes, drawing the active journey route (Dhaka to Chandpur)", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label^='Route from']").count()) === 1);
   let t = await card(s.pg);
   check("S4. Routes card: today's km, km completed, duration, pace, calories, route name; no Territory text", /5\.2 ?km today/.test(t) && /5\.2 km completed/.test(t) && /30:00/.test(t) && /412 kcal/.test(t) && /DHAKA → CHANDPUR/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 260));
   await mode(s.pg, "Normal");
   t = await card(s.pg);
-  check("S5. Normal card: stats and calories, and no map or route layer", /5\.2/.test(t) && /412 kcal/.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg").count()) === 0 && !/CONQUERED/.test(t));
+  check("S5. Normal card: stats, calories and today's real GPS route (not the journey map)", /5\.2/.test(t) && /412 kcal/.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg[aria-label='Route']").count()) === 1 && (await s.pg.locator("[data-card-mode='NORMAL'] svg[aria-label^='Route from']").count()) === 0 && !/CONQUERED/.test(t));
   await mode(s.pg, "Territory");
   t = await card(s.pg);
   check("S6. Territory card: MOHAMMADPUR, 50.0% CONQUERED, +50.0% new ground, 50.0% REMAINING", /MOHAMMADPUR/.test(t) && /50\.0%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /50\.0% REMAINING/.test(t), t.slice(0, 260));
@@ -602,14 +602,14 @@ async function scenarioShare() {
   check("S9. without a chosen Territory the Territory mode is disabled", await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Territory$/ }).isDisabled());
   await s.ctx.close();
 
-  // a journey that began at Hajiganj: the card shows Hajiganj -> Chandpur and only that road
+  // a journey begun at Hajiganj: still the active route, Dhaka to Chandpur, with the position and the km done since it began
   {
     const db = mk({ runs: [{ ...run1, km: 5.02, journeyKm: 117.02 }] });
     db["users/u1"].startCheckpointIndex = 5;
     s = await open(db);
     t = await card(s.pg);
-    check("S8b. a journey begun at Hajiganj reads HAJIGANJ → CHANDPUR with 5.02 km completed and 14.98 km to go", /HAJIGANJ → CHANDPUR/.test(t) && /5\.02 km completed/.test(t) && /14\.98 km to go/.test(t) && !/DHAKA/.test(t), t.slice(0, 260));
-    check("S8c. the map shows only Hajiganj and Chandpur, not the stretch before", /Hajiganj/.test(t) && !/Kanchpur|Jatrabari|Gouripur/.test(t));
+    check("S8b. the active route reads DHAKA → CHANDPUR with 5.02 km completed and 14.98 km to go", /DHAKA → CHANDPUR/.test(t) && /5\.02 km completed/.test(t) && /14\.98 km to go/.test(t), t.slice(0, 260));
+    check("S8c. the map shows the whole route including Hajiganj and Chandpur", /Hajiganj/.test(t) && /Chandpur/.test(t));
     await s.ctx.close();
   }
   // no journey, but a recorded GPS track: Routes draws the real track
@@ -626,7 +626,7 @@ async function scenarioShare() {
   const makePhoto = (pg, kind) => pg.evaluate(async (k) => {
     const portrait = k === "portrait";
     const W = portrait ? 900 : 1600, H = portrait ? 1200 : 1000;
-    const face = portrait ? { x: 450, y: 324, r: 108 } : { x: 512, y: 500, r: 130 };
+    const face = portrait ? { x: 450, y: 324, r: 108 } : { x: 720, y: 380, r: 120 };
     const c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d");
     g.fillStyle = "#7a7f88"; g.fillRect(0, 0, W, H);
@@ -671,16 +671,16 @@ async function scenarioShare() {
       await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(400);
-      const L = cardLayout(layoutMode, "story", true);
+      const L = cardLayout(layoutMode, "story", true, photo.W / photo.H);
       const scale = Math.max(L.photo.w / photo.W, L.photo.h / photo.H);
       const expected = Math.PI * (photo.face.r * scale * 3) ** 2;
       const png = await exportPng(sp.pg);
-      const r = await analyse(sp.pg, png, [L.photo.x, L.photo.y, L.photo.w, L.photo.h], BLUE, 3);
+      const r = await analyse(sp.pg, png, [L.protect.x, L.protect.y, L.protect.w, L.protect.h], BLUE, 3);
       check(`P1. ${photoKind} photo, ${label}: exported PNG is 1080 x 1920`, r.width === 1080 && r.height === 1920, `${r.width}x${r.height}`);
       check(`P2. ${photoKind} photo, ${label}: the face is fully visible in the export (${Math.round((100 * r.redInPhoto) / expected)}% of its area)`, r.redInPhoto >= expected * 0.85 && r.redInPhoto <= expected * 1.15, `${r.redInPhoto} vs ${Math.round(expected)}`);
-      check(`P3. ${photoKind} photo, ${label}: no route, map, text or logo colour inside the photo zone`, r.accentInPhoto === 0, String(r.accentInPhoto));
-      check(`P4. ${photoKind} photo, ${label}: the overlay lives below the photo (${r.accentBelow} px)`, m === "Normal" ? r.accentBelow > 20 : r.accentBelow > 300, String(r.accentBelow));
-      check(`P5. ${photoKind} photo, ${label}: no face colour leaks outside the photo zone`, r.redBelow === 0, String(r.redBelow));
+      check(`P3. ${photoKind} photo, ${label}: no route, map, text or logo colour inside the protected top`, r.accentInPhoto === 0, String(r.accentInPhoto));
+      check(`P4. ${photoKind} photo, ${label}: the overlay lives below the protected top (${r.accentBelow} px)`, m === "Normal" ? r.accentBelow > 20 : r.accentBelow > 300, String(r.accentBelow));
+      check(`P5. ${photoKind} photo, ${label}: no face colour leaks below the protected top`, r.redBelow === 0, String(r.redBelow));
       await sp.ctx.close();
     }
   }
@@ -695,9 +695,9 @@ async function scenarioShare() {
     for (const [m, layoutMode] of [["Routes", "ROUTES"], ["Territory", "TERRITORY"], ["Normal", "NORMAL"]]) {
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(300);
-      const L = cardLayout(layoutMode, "post", true);
+      const L = cardLayout(layoutMode, "post", true, photo.W / photo.H);
       const expected = Math.PI * (photo.face.r * Math.max(L.photo.w / photo.W, L.photo.h / photo.H) * 3) ** 2;
-      const r = await analyse(sp.pg, await exportPng(sp.pg), [L.photo.x, L.photo.y, L.photo.w, L.photo.h], BLUE, 3);
+      const r = await analyse(sp.pg, await exportPng(sp.pg), [L.protect.x, L.protect.y, L.protect.w, L.protect.h], BLUE, 3);
       check(`P6. post 4:5, ${m}: 1080 x 1350, face visible, nothing over the photo`, r.width === 1080 && r.height === 1350 && r.redInPhoto >= expected * 0.85 && r.accentInPhoto === 0 && r.redBelow === 0, `${r.width}x${r.height} red ${r.redInPhoto}/${Math.round(expected)} accent ${r.accentInPhoto}`);
     }
     await sp.ctx.close();
@@ -709,9 +709,9 @@ async function scenarioShare() {
     await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
     await sp.pg.waitForTimeout(400);
     check("P7. 320 px phone: no sideways scrolling with a photo card", await sp.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-    const L = cardLayout("TERRITORY", "story", true);
+    const L = cardLayout("TERRITORY", "story", true, photo.W / photo.H);
     const expected = Math.PI * (photo.face.r * Math.max(L.photo.w / photo.W, L.photo.h / photo.H) * 3) ** 2;
-    const r = await analyse(sp.pg, await exportPng(sp.pg), [L.photo.x, L.photo.y, L.photo.w, L.photo.h], BLUE, 3);
+    const r = await analyse(sp.pg, await exportPng(sp.pg), [L.protect.x, L.protect.y, L.protect.w, L.protect.h], BLUE, 3);
     check("P8. 320 px phone: the export is still 1080 x 1920 with the face visible and nothing over it", r.width === 1080 && r.height === 1920 && r.redInPhoto >= expected * 0.85 && r.accentInPhoto === 0, `${r.width}x${r.height} red ${r.redInPhoto}/${Math.round(expected)}`);
     check("P9. no uncaught page errors with photos", sp.pg.errors.length === 0, sp.pg.errors.join(" | ").slice(0, 200));
     await sp.ctx.close();
