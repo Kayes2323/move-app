@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { BottomNav } from "../components/BottomNav";
 import { Loading } from "../components/Loading";
 import { LoadError } from "../components/LoadError";
 import { AREA_TYPE_LABEL, AREA_TYPE_LABEL_PLURAL, contextLine, type AreaIndex } from "../lib/territory/hierarchy";
@@ -50,12 +51,12 @@ export default function TerritoryPage() {
       </div>
 
       {/* top: back + where you are */}
-      <header style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 500, padding: "calc(env(safe-area-inset-top, 0px) + 12px) 12px 0", pointerEvents: "none" }}>
+      <header style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 40, padding: "calc(env(safe-area-inset-top, 0px) + 12px) 12px 0", pointerEvents: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, maxWidth: 480, margin: "0 auto" }}>
           <button
             className="icon-btn"
-            aria-label={atRoot ? "Back to Move" : `Up to ${index.get(focus.parentId ?? "")?.name ?? "Bangladesh"}`}
-            onClick={() => (atRoot ? router.push("/profile") : actions.up())}
+            aria-label={atRoot ? "Back to Home" : `Up to ${index.get(focus.parentId ?? "")?.name ?? "Bangladesh"}`}
+            onClick={() => (atRoot ? router.push("/") : actions.up())}
             style={{ ...glass, pointerEvents: "auto", boxShadow: "0 2px 12px rgba(0,0,0,0.18)" }}
           >
             <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
@@ -83,7 +84,7 @@ export default function TerritoryPage() {
       </header>
 
       {/* bottom: the focused area and the one action */}
-      <section aria-label="Selected area" style={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 500, padding: "0 12px calc(env(safe-area-inset-bottom, 0px) + 12px)" }}>
+      <section aria-label="Selected area" style={{ position: "absolute", left: 0, right: 0, zIndex: 40, bottom: "calc(env(safe-area-inset-bottom, 0px) + 74px)", padding: "0 12px 10px" }}>
         <div style={{ ...glass, maxWidth: 456, margin: "0 auto", borderRadius: 28, padding: "18px 18px 12px", boxShadow: "0 -4px 30px rgba(0,0,0,0.25)" }}>
           <p className="lab" style={{ color: "var(--acc-text)" }}>{AREA_TYPE_LABEL[focus.type]}{focus.status === "boundary-pending" ? " · boundary pending" : ""}</p>
           <h1 className="title-blk" style={{ marginTop: 6, fontSize: 26, textTransform: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{focus.name}</h1>
@@ -114,6 +115,7 @@ export default function TerritoryPage() {
           </p>
         </div>
       </section>
+      <BottomNav active="territory" />
     </main>
   );
 }

@@ -392,15 +392,20 @@ async function scenarioTerritory() {
   const title = () => pg.locator("h1").innerText();
   const crumbs = async () => (await pg.locator("nav[aria-label='Where you are']").innerText()).replace(/\s+/g, " ");
   const tap = async (x, y) => { await pg.mouse.click(x, y); await pg.waitForTimeout(2300); };
+  // Labels let clicks through to the polygon underneath, so tapping a label's centre taps that area.
+  const tapLabel = async (name) => {
+    const box = await pg.locator(".leaflet-tooltip", { hasText: new RegExp(`^${name}$`) }).first().boundingBox();
+    await tap(box.x + box.width / 2, box.y + box.height / 2);
+  };
   await pg.goto(`${BASE}/territory`);
   await pg.waitForSelector("text=Select this area", { timeout: 30000 });
   await pg.waitForTimeout(2200);
   check("T1. opens on Bangladesh with 8 divisions", (await title()) === "Bangladesh" && /8 divisions/.test(await text(pg)));
-  await tap(188, 390);
+  await tapLabel("Dhaka");
   check("T2. tapping Dhaka opens the Dhaka division", (await title()) === "Dhaka" && (await crumbs()) === "Bangladesh Dhaka", await crumbs());
-  await tap(193, 340);
+  await tapLabel("Dhaka");
   check("T3. tapping Dhaka opens the district, with upazilas and local areas separate", /5 upazilas/.test(await text(pg)) && /42 local areas/.test(await text(pg)), await crumbs());
-  await pg.mouse.move(260, 340);
+  await pg.mouse.move(250, 300);
   for (let i = 0; i < 3; i++) { await pg.mouse.wheel(0, -300); await pg.waitForTimeout(350); }
   await pg.waitForTimeout(1500);
   check("T4. zooming in labels the local areas", /Mohammadpur/.test(await pg.locator(".leaflet-tooltip").allInnerTexts().then((t) => t.join(" "))));
@@ -421,6 +426,32 @@ async function scenarioTerritory() {
   check("T9. a saved area that no longer exists is ignored", (await title()) === "Bangladesh");
   check("T10. no uncaught page errors on the territory screen", pg.errors.length === 0, pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
+
+  // navigation: Territory is a tab where Ranks used to be, and the leaderboard is still reachable from Profile
+  const n = await fresh();
+  await n.pg.goto(`${BASE}/`);
+  await n.pg.waitForSelector("text=Start moving", { timeout: 15000 });
+  const navText = (await n.pg.locator("nav[aria-label='Main']").innerText()).replace(/\s+/g, " ");
+  check("T12. main navigation is Home, Journeys, Territory, Profile (no Ranks, no fifth tab)", navText === "Home Journeys Territory Profile", navText);
+  await n.pg.locator("nav[aria-label='Main'] a", { hasText: "Territory" }).click();
+  await n.pg.waitForSelector("text=Select this area", { timeout: 30000 });
+  check("T13. the Territory tab opens the map and is marked current", (await n.pg.locator("nav[aria-label='Main'] a[aria-current=page]").innerText()) === "Territory");
+  await n.pg.waitForTimeout(1500);
+  const sheet = await n.pg.locator("section[aria-label='Selected area']").boundingBox();
+  const bar = await n.pg.locator("nav[aria-label='Main']").boundingBox();
+  check("T14. the area panel sits above the navigation, not under it", sheet.y + sheet.height <= bar.y + 1, `${Math.round(sheet.y + sheet.height)} vs ${Math.round(bar.y)}`);
+  await n.pg.goto(`${BASE}/profile`);
+  await n.pg.waitForSelector("text=Personal records", { timeout: 15000 });
+  const profileText = await text(n.pg);
+  check("T15. Profile has one Territory entry (plus the tab) and a Leaderboard entry, none inside Settings", (profileText.match(/Territory/gi) || []).length === 2 && /Leaderboard/.test(profileText), String((profileText.match(/Territory/gi) || []).length));
+  await n.pg.getByRole("link", { name: "Leaderboard" }).click();
+  await n.pg.waitForSelector("text=Tania", { timeout: 15000 });
+  check("T16. the leaderboard still opens from Profile and shows runners", /Tania/.test(await text(n.pg)));
+  await n.pg.getByRole("link", { name: "Back to Profile" }).click();
+  await n.pg.waitForSelector("text=Personal records", { timeout: 15000 });
+  check("T17. back from the leaderboard returns to Profile", true);
+  check("T18. no uncaught page errors across the navigation", n.pg.errors.length === 0, n.pg.errors.join(" | ").slice(0, 200));
+  await n.ctx.close();
 
   // the geographic data failing must show a retry screen, not a blank map
   const f = await fresh();

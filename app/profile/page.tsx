@@ -152,6 +152,20 @@ export default function Profile() {
         ))}
       </section>
 
+      <section aria-label="Explore and compete" style={{ marginTop: 24 }}>
+        <Link href="/territory" className="card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <span className="av" style={{ width: 44, height: 44 }}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.4-6-10a6 6 0 1112 0c0 4.6-6 10-6 10z" /><circle cx="12" cy="11" r="2.2" /></svg>
+          </span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>Territory</span>
+            <span className="mute" style={{ display: "block", fontSize: 13, marginTop: 2 }}>Choose an area and explore it</span>
+          </span>
+          <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </Link>
+        <Link href="/leaderboard" className="row" style={{ marginTop: 4 }}><span>Leaderboard</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
+      </section>
+
       <section style={{ marginTop: 24 }}>
         <p className="lab">Personal records</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
@@ -197,7 +211,6 @@ export default function Profile() {
         <p className="lab">Settings</p>
         <div style={{ marginTop: 4 }}>
           <Link href="/profile/appearance" className="row"><span>Appearance</span><span className="mute" style={{ fontSize: 14 }}>Theme and accent</span></Link>
-          <Link href="/territory" className="row"><span>Territory</span><span className="mute" style={{ fontSize: 14 }}>Explore the map</span></Link>
           <Link href="/onboarding" className="row"><span>Update weight</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <Link href="/share" className="row"><span>Share your journey</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <button onClick={handleSignOut} className="row" style={{ color: "var(--danger)" }}><span>Sign out</span></button>

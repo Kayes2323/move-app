@@ -182,7 +182,7 @@ export function TerritoryMap({ index, focusId, activeId, dark, accent, onFocus, 
         if (fitted.current !== focusId) {
           fitted.current = focusId;
           const box = boundsOf(children.length ? [focus, ...children] : [focus]);
-          const opts = { paddingTopLeft: [24, 96] as [number, number], paddingBottomRight: [24, 230] as [number, number], animate: !reduceMotion(), duration: 0.7 };
+          const opts = { paddingTopLeft: [24, 96] as [number, number], paddingBottomRight: [24, 320] as [number, number], animate: !reduceMotion(), duration: 0.7 };
           if (box) map.flyToBounds(box, { ...opts, maxZoom: focus.boundary ? 14 : 12 });
           else map.flyTo([focus.center.lat, focus.center.lng], 14, { animate: opts.animate, duration: 0.7 });
         }

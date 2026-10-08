@@ -54,6 +54,26 @@ area may take part in later Territory calculations. `activeId` is saved on this 
   (it falls in the Mohammadpur thana polygon, close to its edge). It gets a real boundary only when one is sourced.
 * Other metropolitan thanas (Chattogram, Khulna, Rajshahi and others) are not flagged in the source and are currently `UPAZILA`.
 
+## Product direction (Phase 1.1): the rules later phases must follow
+* **Where it lives.** Territory is a main-navigation tab (Home, Journeys, Territory, Profile), in the slot Ranks used to
+  occupy; there is no fifth tab. Profile has a Territory card and a Leaderboard row; the leaderboard (`/leaderboard`) is
+  unchanged and now opens from Profile with a back button.
+* **Real movement is the source.** Running and Walking use one rule set and both count. Cycling will count too, under its
+  own distance and speed limits that are not decided yet, so it contributes nothing today (`contributionPolicy`).
+* **Roads and ordinary routes count.** Exploration comes from legitimate movement along roads and everyday routes inside
+  the active area. There is no rule that movement must be off-road or near a boundary.
+* **Distance and exploration are different things.** Activity distance is total Run/Walk distance and stays in tracking.
+  Territory exploration is how much new ground a route discovers. Walking the same road again adds distance, not new
+  exploration, and distance is never converted into a percentage.
+* **Only the active area is live.** Movement inside the active area may contribute to it. Movement outside it activates nothing, and
+  never a different area (`contributionTarget`).
+* **Loose coupling.** Tracking stays the source of truth for GPS points, distance, timestamps, type and route. Territory reads
+  a verified, finished activity through `TerritoryActivityInput` (`contribution.ts`), never writes to tracking, and a unit
+  test fails if either side imports the other.
+
+Not decided yet, deliberately: how "new ground" is measured (the unit of coverage), the full-resolution boundaries used
+to test containment, how much of an area counts as explored, and anti-cheat.
+
 ## Not in Phase 1
 GPS coverage, explored percentage, ownership, King, conquest, 2x takeover, reclaim, battles, run/walk/cycling rules,
 anti-cheat, scoring, history, higher-level conquest, notifications, celebrations. Selection is not yet synced to Firestore:

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type NavTab = "home" | "routes" | "ranks" | "profile";
+export type NavTab = "home" | "routes" | "territory" | "profile";
 
 const TABS: { id: NavTab; href: string; label: string; icon: React.ReactNode }[] = [
   { id: "home", href: "/", label: "Home", icon: <path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1z" /> },
@@ -16,7 +16,17 @@ const TABS: { id: NavTab; href: string; label: string; icon: React.ReactNode }[]
       </>
     ),
   },
-  { id: "ranks", href: "/leaderboard", label: "Ranks", icon: <path d="M3 20h18M5 20v-6h4v6M10 20V8h4v12M15 20v-9h4v9" /> },
+  {
+    id: "territory",
+    href: "/territory",
+    label: "Territory",
+    icon: (
+      <>
+        <path d="M12 21s-6-5.4-6-10a6 6 0 1112 0c0 4.6-6 10-6 10z" />
+        <circle cx="12" cy="11" r="2.2" />
+      </>
+    ),
+  },
   {
     id: "profile",
     href: "/profile",

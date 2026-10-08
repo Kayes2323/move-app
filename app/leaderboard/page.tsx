@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { BottomNav } from "../components/BottomNav";
 import { LoadError } from "../components/LoadError";
 
@@ -76,6 +77,9 @@ export default function Leaderboard() {
   return (
     <main className="app">
       <header>
+        <Link href="/profile" className="icon-btn" aria-label="Back to Profile" style={{ marginBottom: 16 }}>
+          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        </Link>
         <h1 className="title-blk">Leaderboard</h1>
         <p className="body mute" style={{ marginTop: 6 }}>
           All-time distance{me >= 0 ? ` · you are #${me + 1}` : ""}
@@ -134,7 +138,7 @@ export default function Leaderboard() {
         </>
       )}
 
-      <BottomNav active="ranks" />
+      <BottomNav active="profile" />
     </main>
   );
 }
