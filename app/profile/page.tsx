@@ -197,6 +197,7 @@ export default function Profile() {
         <p className="lab">Settings</p>
         <div style={{ marginTop: 4 }}>
           <Link href="/profile/appearance" className="row"><span>Appearance</span><span className="mute" style={{ fontSize: 14 }}>Theme and accent</span></Link>
+          <Link href="/territory" className="row"><span>Territory</span><span className="mute" style={{ fontSize: 14 }}>Explore the map</span></Link>
           <Link href="/onboarding" className="row"><span>Update weight</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <Link href="/share" className="row"><span>Share your journey</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <button onClick={handleSignOut} className="row" style={{ color: "var(--danger)" }}><span>Sign out</span></button>

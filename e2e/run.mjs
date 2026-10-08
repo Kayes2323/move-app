@@ -385,6 +385,51 @@ async function scenarioBackgroundFinish() {
   await ctx.close();
 }
 
+async function scenarioTerritory() {
+  // Territory Phase 1: browsing and selecting areas. Taps are tied to the 390x800 viewport the harness uses.
+  const s = await fresh();
+  const { pg } = s;
+  const title = () => pg.locator("h1").innerText();
+  const crumbs = async () => (await pg.locator("nav[aria-label='Where you are']").innerText()).replace(/\s+/g, " ");
+  const tap = async (x, y) => { await pg.mouse.click(x, y); await pg.waitForTimeout(2300); };
+  await pg.goto(`${BASE}/territory`);
+  await pg.waitForSelector("text=Select this area", { timeout: 30000 });
+  await pg.waitForTimeout(2200);
+  check("T1. opens on Bangladesh with 8 divisions", (await title()) === "Bangladesh" && /8 divisions/.test(await text(pg)));
+  await tap(188, 390);
+  check("T2. tapping Dhaka opens the Dhaka division", (await title()) === "Dhaka" && (await crumbs()) === "Bangladesh Dhaka", await crumbs());
+  await tap(193, 340);
+  check("T3. tapping Dhaka opens the district, with upazilas and local areas separate", /5 upazilas/.test(await text(pg)) && /42 local areas/.test(await text(pg)), await crumbs());
+  await pg.mouse.move(260, 340);
+  for (let i = 0; i < 3; i++) { await pg.mouse.wheel(0, -300); await pg.waitForTimeout(350); }
+  await pg.waitForTimeout(1500);
+  check("T4. zooming in labels the local areas", /Mohammadpur/.test(await pg.locator(".leaflet-tooltip").allInnerTexts().then((t) => t.join(" "))));
+  await pg.getByRole("button", { name: "Select this area" }).click();
+  await pg.waitForTimeout(400);
+  check("T5. selecting makes the district the active area and saves it on this phone", /Active area/.test(await text(pg)) && (await pg.evaluate(() => localStorage.getItem("move.territory.selection"))) === '{"v":1,"active":"bd-dis-dhaka"}');
+  await pg.getByRole("button", { name: /^Up to/ }).click();
+  await pg.waitForTimeout(1800);
+  check("T6. going up keeps the active area and shows it", (await title()) === "Dhaka" && /Active: Dhaka/.test(await text(pg)) && (await crumbs()) === "Bangladesh Dhaka", await crumbs());
+  await pg.reload();
+  await pg.waitForSelector("text=Active area", { timeout: 30000 });
+  check("T7. after a reload the map reopens on the active area", (await crumbs()) === "Bangladesh Dhaka Dhaka", await crumbs());
+  await pg.getByRole("button", { name: "Clear" }).click();
+  check("T8. clearing removes the saved selection", (await pg.evaluate(() => localStorage.getItem("move.territory.selection"))) === null);
+  await pg.evaluate(() => localStorage.setItem("move.territory.selection", '{"v":1,"active":"bd-dis-atlantis"}'));
+  await pg.reload();
+  await pg.waitForSelector("text=Select this area", { timeout: 30000 });
+  check("T9. a saved area that no longer exists is ignored", (await title()) === "Bangladesh");
+  check("T10. no uncaught page errors on the territory screen", pg.errors.length === 0, pg.errors.join(" | ").slice(0, 200));
+  await s.ctx.close();
+
+  // the geographic data failing must show a retry screen, not a blank map
+  const f = await fresh();
+  await f.pg.route("**/geo/bd/index.json", (r) => r.abort());
+  await f.pg.goto(`${BASE}/territory`);
+  await f.pg.waitForSelector("text=Try again", { timeout: 20000 }).then(() => check("T11. missing map data shows a retry screen", true)).catch(() => check("T11. missing map data", false));
+  await f.ctx.close();
+}
+
 async function scenarioRegression() {
   // signed-out screens redirect
   let s = await fresh({ user: null });
@@ -474,7 +519,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

@@ -374,3 +374,18 @@ a {
   .skel, .spinner { animation: none; }
   .btn { transition: none; }
 }
+
+/* ---------- territory map ---------- */
+.leaflet-tooltip.terr-tip {
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  color: var(--ink);
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  font: 700 11px "Archivo", system-ui, sans-serif;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.leaflet-tooltip.terr-tip::before { display: none; }
+.leaflet-container { font-family: "Archivo", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+.leaflet-interactive:focus { outline: none; }
