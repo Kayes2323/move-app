@@ -1,10 +1,12 @@
 /**
  * Share Card layout: where everything sits, as pure data.
  *
- * With a photo, the real photo fills the whole card and the numbers sit directly on it, over a soft dark fade at the bottom.
- * The route (or boundary) takes one of two slots, TOP or BOTTOM, whichever has less of a person in it: `placement.ts` finds
- * where faces are (skin tones in the photo as it will be drawn) and picks the slot that stays clear of them, and the user
- * can override it. Nothing else is ever placed in the other slot, so that part of the photo stays untouched.
+ * With a photo, the card is split into two zones:
+ *  - the PROTECTED zone (the top): nothing is drawn there except the photo. No route, map, boundary, gradient, logo, badge or text.
+ *    This is where people's faces are in a portrait or a selfie.
+ *  - the OVERLAY zone (the bottom): a soft dark fade over the photo, and in it the logo, the route/boundary and the numbers,
+ *    each in its own rectangle and clipped to it.
+ * `cardLayout` is the single source of those rectangles, and tests assert that none of them touches the protected zone.
  *
  *   Face visibility > readability > route/map visual > decoration.
  */
@@ -12,7 +14,6 @@ export type CardRatio = "story" | "post";
 export type CardTone = "dark" | "light";
 /** The three user-facing card modes. */
 export type ShareMode = "TERRITORY" | "ROUTES" | "NORMAL";
-export type VisualSlot = "top" | "bottom";
 
 export const CARD_WIDTH = 360;
 export const CARD_HEIGHT: Record<CardRatio, number> = { story: 640, post: 450 };
@@ -27,44 +28,52 @@ export interface Rect {
 export interface CardLayout {
   width: number;
   height: number;
-  /** The photo covers the whole card. Null when the card has no photo. */
+  /** Where the sharp photo is drawn: the whole card for a tall portrait, the protected top for anything squarer. Null when the card has no photo. */
   photo: Rect | null;
-  /** The two places the route/boundary can go on a photo card. Without a photo only `visual` is used. */
-  slots: { top: Rect; bottom: Rect } | null;
+  /** True when the photo does not fill the card, so a soft, photo-coloured backdrop fills the rest (never a solid black block). */
+  backdrop: boolean;
+  /** Only the photo may appear here. Null when there is no photo. */
+  protect: Rect | null;
+  /** Where the fade and everything else lives (photo cards). */
+  overlay: Rect | null;
   /** The route (Normal: today's GPS track, Routes: the active journey) or the Territory boundary. */
   visual: Rect;
-  /** Mode label, numbers and lines. Always at the bottom. */
+  /** Mode label, numbers and lines. */
   stats: Rect;
   logo: Rect;
-  /** Dark fades behind the text and the visual (photo cards): the bottom one always, the top one only when the visual is there. */
-  scrims: Rect[];
+  /** True when the stats block is a narrow column and must use the compact type scale. */
+  compact: boolean;
 }
 
 const LOGO_W = 42;
 const LOGO_H = 29;
 
-export function cardLayout(_mode: ShareMode, ratio: CardRatio, hasPhoto: boolean, slot: VisualSlot = "bottom"): CardLayout {
+/** A photo narrower than this (width / height) is tall enough to fill a 9:16 card without being blown up too far. */
+export const FULL_BLEED_MAX_ASPECT = 0.8;
+
+export function cardLayout(_mode: ShareMode, ratio: CardRatio, hasPhoto: boolean, photoAspect: number = 0.5625): CardLayout {
   const H = CARD_HEIGHT[ratio];
   const base = { width: CARD_WIDTH, height: H };
+  const card: Rect = { x: 0, y: 0, w: CARD_WIDTH, h: H };
 
   if (hasPhoto) {
-    const story = ratio === "story";
-    // The numbers: the bottom 126 px of a story, 116 px of a post, logo at their right.
-    const statsH = story ? 126 : 116;
-    const statsY = H - 12 - statsH;
-    const stats = { x: 24, y: statsY, w: 262, h: statsH };
-    const logo = { x: 294, y: statsY, w: LOGO_W, h: LOGO_H };
-    const slotH = story ? 152 : 104;
-    const slots = { top: { x: 24, y: story ? 40 : 16, w: 312, h: slotH }, bottom: { x: 24, y: statsY - 10 - slotH, w: 312, h: slotH } };
-    const visual = slots[slot];
-    const scrims: Rect[] = [{ x: 0, y: (slot === "bottom" ? visual.y : statsY) - 36, w: CARD_WIDTH, h: H - ((slot === "bottom" ? visual.y : statsY) - 36) }];
-    if (slot === "top") scrims.push({ x: 0, y: 0, w: CARD_WIDTH, h: visual.y + visual.h + 16 });
-    return { ...base, photo: { x: 0, y: 0, w: CARD_WIDTH, h: H }, slots, visual, stats, logo, scrims };
+    if (ratio === "story") {
+      // Top 330 px (52%) is protected. The overlay holds the route (152 px), then the numbers with the logo at their right.
+      const y0 = 330;
+      const protect = { x: 0, y: 0, w: CARD_WIDTH, h: y0 };
+      const full = photoAspect < FULL_BLEED_MAX_ASPECT;
+      return { ...base, photo: full ? card : protect, backdrop: !full, protect: { x: 0, y: 0, w: CARD_WIDTH, h: y0 }, overlay: { x: 0, y: y0, w: CARD_WIDTH, h: H - y0 }, visual: { x: 24, y: y0 + 12, w: 312, h: 152 }, logo: { x: 294, y: y0 + 172, w: LOGO_W, h: LOGO_H }, stats: { x: 24, y: y0 + 172, w: 262, h: H - y0 - 172 - 12 }, compact: false };
+    }
+    // post: the top 256 px (57%) is protected; below it the route sits left of the numbers.
+    const y0 = 256;
+    const protect = { x: 0, y: 0, w: CARD_WIDTH, h: y0 };
+    const full = photoAspect < FULL_BLEED_MAX_ASPECT;
+    return { ...base, photo: full ? card : protect, backdrop: !full, protect: { x: 0, y: 0, w: CARD_WIDTH, h: y0 }, overlay: { x: 0, y: y0, w: CARD_WIDTH, h: H - y0 }, visual: { x: 16, y: y0 + 14, w: 156, h: H - y0 - 28 }, logo: { x: 294, y: H - 14 - LOGO_H, w: LOGO_W, h: LOGO_H }, stats: { x: 186, y: y0 + 14, w: 150, h: H - y0 - 14 - 14 - LOGO_H - 6 }, compact: true };
   }
 
   // No photo: the visual takes the room, the numbers sit below it.
-  if (ratio === "story") return { ...base, photo: null, slots: null, visual: { x: 20, y: 132, w: 320, h: 310 }, logo: { x: 28, y: 84, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 462, w: 304, h: 150 }, scrims: [] };
-  return { ...base, photo: null, slots: null, visual: { x: 20, y: 64, w: 320, h: 214 }, logo: { x: 28, y: 24, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 292, w: 304, h: 138 }, scrims: [] };
+  if (ratio === "story") return { ...base, photo: null, backdrop: false, protect: null, overlay: null, visual: { x: 20, y: 132, w: 320, h: 310 }, logo: { x: 28, y: 84, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 462, w: 304, h: 150 }, compact: false };
+  return { ...base, photo: null, backdrop: false, protect: null, overlay: null, visual: { x: 20, y: 64, w: 320, h: 214 }, logo: { x: 28, y: 24, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 292, w: 304, h: 138 }, compact: false };
 }
 
 export const intersects = (a: Rect, b: Rect): boolean => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;

@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CARD_HEIGHT, CARD_WIDTH, type CardRatio, type CardTone } from "./ShareCard";
 import { ShareCardView, type CardPhoto } from "./ShareCards";
-import { photoFit, type VisualSlot } from "../lib/share/cardLayout";
-import { sampleFromRgba, type Sample } from "../lib/share/placement";
 import {
   ACTIVITY_META,
   findRoute,
@@ -26,38 +24,27 @@ type UserData = UserDoc;
 
 type Status = "loading" | "ready" | "empty" | "error";
 
-/** Where the skin is in the photo as the card will draw it (same crop and position), on a small grid. Lets the route stay off the face. */
-const makeSamples = (img: HTMLImageElement): Partial<Record<CardRatio, Sample>> => {
-  const out: Partial<Record<CardRatio, Sample>> = {};
+/** A 16 x 28 px copy of the photo, which the card stretches to the full card: a soft colour wash without any blur filter. */
+const makeBackdrop = (img: HTMLImageElement): string | undefined => {
   try {
-    const fit = photoFit(img.naturalWidth, img.naturalHeight);
-    for (const ratio of ["story", "post"] as const) {
-      const w = 45;
-      const h = Math.round(CARD_HEIGHT[ratio] / 8);
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const g = c.getContext("2d", { willReadFrequently: true });
-      if (!g) continue;
-      const scale = fit.size === "cover" ? Math.max(w / img.naturalWidth, h / img.naturalHeight) : Math.min(w / img.naturalWidth, h / img.naturalHeight);
-      const [px, py] = fit.position.split(" ").map((v) => parseFloat(v) / 100);
-      const dw = img.naturalWidth * scale;
-      const dh = img.naturalHeight * scale;
-      g.fillStyle = "#0A0A0C";
-      g.fillRect(0, 0, w, h);
-      g.drawImage(img, (w - dw) * px, (h - dh) * py, dw, dh);
-      out[ratio] = sampleFromRgba(g.getImageData(0, 0, w, h).data, w, h);
-    }
+    const c = document.createElement("canvas");
+    c.width = 16;
+    c.height = 28;
+    const g = c.getContext("2d");
+    if (!g) return undefined;
+    const scale = Math.max(c.width / img.naturalWidth, c.height / img.naturalHeight);
+    g.imageSmoothingEnabled = true;
+    g.drawImage(img, (c.width - img.naturalWidth * scale) / 2, (c.height - img.naturalHeight * scale) / 2, img.naturalWidth * scale, img.naturalHeight * scale);
+    return c.toDataURL("image/png");
   } catch {
-    // an unreadable photo just means the route goes to its default place
+    return undefined;
   }
-  return out;
 };
 
 const imageSize = (src: string) =>
-  new Promise<{ width: number; height: number; samples: Partial<Record<CardRatio, Sample>> }>((resolve, reject) => {
+  new Promise<{ width: number; height: number; backdrop?: string }>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight, samples: makeSamples(img) });
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight, backdrop: makeBackdrop(img) });
     img.onerror = () => reject(new Error("Photo unreadable"));
     img.src = src;
   });
@@ -82,7 +69,6 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
   const [ratio, setRatio] = useState<CardRatio>("story");
   const [tone, setTone] = useState<CardTone>("dark");
   const [photo, setPhoto] = useState<CardPhoto | null>(null);
-  const [slotPref, setSlotPref] = useState<"auto" | VisualSlot>("auto");
   const [exporting, setExporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
@@ -191,7 +177,6 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
       ratio={ratio}
       tone={tone}
       photo={photo}
-      slot={slotPref === "auto" ? undefined : slotPref}
       activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, dateLabel: formatCardDate(facts.run.date) }}
       track={track}
       journey={facts.route ? { route: facts.route, startKm: facts.routeStartKm, progressKm: facts.journeyKm } : null}
@@ -355,16 +340,6 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
           </div>
         )}
 
-        {photo && (
-          <div role="group" aria-label="Route position" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span className="mute" style={{ fontSize: 12, minWidth: 74 }}>Map position</span>
-            {(["auto", "top", "bottom"] as const).map((v) => (
-              <button key={v} onClick={() => setSlotPref(v)} aria-pressed={slotPref === v} className={slotPref === v ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 40, borderRadius: 20, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
-                {v === "auto" ? "Auto" : v === "top" ? "Top" : "Bottom"}
-              </button>
-            ))}
-          </div>
-        )}
         <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: "none" }} />
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn btn-line" style={{ flex: 1 }} onClick={() => fileRef.current?.click()}>
