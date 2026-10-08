@@ -1,6 +1,7 @@
 "use client";
 import { useId, useMemo } from "react";
 import { conquestRing, fitProjector, pathD, ringProgress, toLngLat } from "../lib/territory/conquest/outline";
+import type { LngLat } from "../lib/territory/conquest/geodesy";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
 
 export interface EmblemColors {
@@ -17,18 +18,28 @@ export const THEME_COLORS: EmblemColors = { fill: "var(--surf)", base: "var(--tr
  * The Territory's real boundary, drawn as its own progress meter. It is a picture of conquest, not a route to follow:
  * the lit part of the outline grows with the share of the target conquered, starting from the north and running clockwise.
  */
-export function TerritoryEmblem({ def, fraction, conquered, width, height, pad = 18, colors = THEME_COLORS, stroke = 5, label, glow = true }: { def: TerritoryDefinition; fraction: number; conquered: boolean; width: number; height: number; pad?: number; colors?: EmblemColors; stroke?: number; label?: string; glow?: boolean }) {
+export function TerritoryEmblem({ def, fraction, conquered, width, height, pad = 18, colors = THEME_COLORS, stroke = 5, label, glow = true, explored, draw = false }: { def: TerritoryDefinition; fraction: number; conquered: boolean; width: number; height: number; pad?: number; colors?: EmblemColors; stroke?: number; label?: string; glow?: boolean; explored?: readonly LngLat[]; draw?: boolean }) {
   const id = useId().replace(/:/g, "");
   const { ring, project } = useMemo(() => {
     const r = conquestRing(toLngLat(def.boundary.coordinates[0]));
     return { ring: r, project: fitProjector(r, width, height, pad) };
   }, [def, width, height, pad]);
   const f = conquered ? 1 : Math.min(Math.max(fraction, 0), 0.999);
+  // a dot a little wider than a hidden cell (~35 m), so neighbouring explored cells merge into one painted area
+  const dot = useMemo(() => {
+    const [w, s, e] = def.bbox;
+    const widthM = (e - w) * 111_320 * Math.cos(((s + def.bbox[3]) / 2) * (Math.PI / 180));
+    const px = project({ lng: e, lat: s }).x - project({ lng: w, lat: s }).x;
+    return Math.max(1.2, (px / widthM) * 30);
+  }, [def, project]);
   const lit = useMemo(() => ringProgress(ring, f), [ring, f]);
   const head = lit.length ? project(lit[lit.length - 1]) : null;
   return (
     <svg viewBox={`0 0 ${width} ${height}`} width="100%" style={{ display: "block", maxWidth: width, height: "auto" }} role="img" aria-label={label ?? `${def.name} boundary, ${Math.round(f * 100)} percent conquered`}>
       <defs>
+        <clipPath id={`c${id}`}>
+          <path d={pathD(ring, project, true)} />
+        </clipPath>
         <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor={colors.progressFrom} />
           <stop offset="1" stopColor={colors.progressTo} />
@@ -37,7 +48,16 @@ export function TerritoryEmblem({ def, fraction, conquered, width, height, pad =
           <feGaussianBlur stdDeviation="6" />
         </filter>
       </defs>
-      <path d={pathD(ring, project, true)} fill={colors.fill} fillOpacity={conquered ? 0.9 : 0.6} stroke={colors.base} strokeWidth={stroke} strokeLinejoin="round" />
+      <path d={pathD(ring, project, true)} fill={colors.fill} fillOpacity={conquered ? 0.9 : 0.6} stroke={colors.base} strokeWidth={stroke} strokeLinejoin="round" className={draw ? "mv-draw" : undefined} />
+      {explored && explored.length > 0 && (
+        // The user's own explored ground, as soft overlapping dots clipped to the boundary: coverage, never the hidden grid.
+        <g clipPath={`url(#c${id})`} opacity={0.55}>
+          {explored.map((p, i) => {
+            const q = project(p);
+            return <circle key={i} cx={q.x} cy={q.y} r={dot} fill={colors.progressFrom} />;
+          })}
+        </g>
+      )}
       {lit.length > 1 && (
         <>
           {glow && <path d={pathD(lit, project)} fill="none" stroke={`url(#g${id})`} strokeWidth={stroke + 8} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} filter={`url(#b${id})`} />}

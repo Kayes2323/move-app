@@ -31,32 +31,42 @@ const apply = (cur: Json, data: Json) => {
   }
   return out;
 };
+// Like the real SDK: an array directly inside an array cannot be stored.
+const nested = (v: unknown): boolean => (Array.isArray(v) ? v.some((x) => Array.isArray(x) || nested(x)) : v !== null && typeof v === "object" && !(v as any).__op ? Object.values(v as Json).some(nested) : false);
+const check = (data: Json) => { if (nested(data)) throw Object.assign(new Error("Function setDoc() called with invalid data. Nested arrays are not supported."), { code: "invalid-argument" }); };
 const snap = (path: string, d: Json | undefined) => ({ id: path.split("/").pop(), exists: () => !!d, data: () => d });
 export const getDoc = async (r: Ref) => { gate("getDoc"); return snap(r.path, load()[r.path]); };
-export const setDoc = async (r: Ref, data: Json, o?: { merge?: boolean }) => { gate("setDoc"); const db = load(); db[r.path] = apply(o?.merge ? db[r.path] || {} : {}, data); save(db); };
-export const updateDoc = async (r: Ref, data: Json) => { gate("updateDoc"); const db = load(); if (!db[r.path]) throw new Error("not-found"); db[r.path] = apply(db[r.path], data); save(db); };
+export const setDoc = async (r: Ref, data: Json, o?: { merge?: boolean }) => { gate("setDoc"); check(data); const db = load(); db[r.path] = apply(o?.merge ? db[r.path] || {} : {}, data); save(db); };
+export const updateDoc = async (r: Ref, data: Json) => { gate("updateDoc"); check(data); const db = load(); if (!db[r.path]) throw new Error("not-found"); db[r.path] = apply(db[r.path], data); save(db); };
 export const writeBatch = (_d: unknown) => {
   const ops: { r: Ref; data: Json }[] = [];
   return { set: (r: Ref, data: Json) => { ops.push({ r, data }); }, commit: async () => { gate("batch"); const db = load(); for (const o of ops) db[o.r.path] = apply({}, o.data); save(db); } };
 };
 export const runTransaction = async <T,>(_d: unknown, fn: (tx: any) => Promise<T>): Promise<T> => {
-  gate("transaction");
-  const db = load();
-  const writes: { r: Ref; data: Json; update: boolean }[] = [];
-  const tx = {
-    get: async (r: Ref) => snap(r.path, db[r.path]),
-    set: (r: Ref, data: Json) => { writes.push({ r, data, update: false }); },
-    update: (r: Ref, data: Json) => { writes.push({ r, data, update: true }); },
-  };
-  const result = await fn(tx);
-  const fresh = load(); // commit against the current state, atomically
-  for (const w of writes) {
-    if (w.update && !fresh[w.r.path]) throw new Error("not-found");
-    fresh[w.r.path] = apply(w.update ? fresh[w.r.path] : {}, w.data);
+  // Optimistic concurrency like the real SDK: if a document read in the transaction changed before commit, run it again.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    gate("transaction");
+    const db = load();
+    const reads = new Map<string, string>();
+    const writes: { r: Ref; data: Json; update: boolean; merge?: boolean }[] = [];
+    const tx = {
+      get: async (r: Ref) => { reads.set(r.path, JSON.stringify(db[r.path] ?? null)); return snap(r.path, db[r.path]); },
+      set: (r: Ref, data: Json, o?: { merge?: boolean }) => { check(data); writes.push({ r, data, update: false, merge: o?.merge }); },
+      update: (r: Ref, data: Json) => { check(data); writes.push({ r, data, update: true }); },
+    };
+    const result = await fn(tx);
+    if (flags().includes("tx_delay")) await new Promise((res) => setTimeout(res, 400));
+    const fresh = load(); // commit against the current state, atomically
+    if ([...reads].some(([path, before]) => JSON.stringify(fresh[path] ?? null) !== before)) continue;
+    for (const w of writes) {
+      if (w.update && !fresh[w.r.path]) throw new Error("not-found");
+      fresh[w.r.path] = apply(w.update || w.merge ? fresh[w.r.path] || {} : {}, w.data);
+    }
+    save(fresh);
+    if (flags().includes("lose_ack")) throw Object.assign(new Error("response lost after commit"), { code: "unavailable" }); // committed, but the client never hears
+    return result;
   }
-  save(fresh);
-  if (flags().includes("lose_ack")) throw Object.assign(new Error("response lost after commit"), { code: "unavailable" }); // committed, but the client never hears
-  return result;
+  throw Object.assign(new Error("Transaction failed: too much contention"), { code: "aborted" });
 };
 export const getDocs = async (q: { path: string; cs?: any[] }) => {
   gate("getDocs");

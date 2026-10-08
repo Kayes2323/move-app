@@ -475,8 +475,10 @@ const streetChunk = (i, t0, { lat = 0, lng = 0 } = {}) => {
   return { seq: 0, count: n + 1, flat };
 };
 const ELIGIBLE = (() => { const out = []; for (const [s, l] of MASK.runs) for (let k = 0; k < l; k++) out.push(s + k); return out; })();
-const runsOf = (cells) => { const r = []; for (const c of cells) { const last = r[r.length - 1]; if (last && last[0] + last[1] === c) last[1]++; else r.push([c, 1]); } return r; };
-const stored = (over = {}) => ({ areaId: "bd-upa-dhaka-mohammadpur", selectedAt: Date.now() - 5 * 86400000, maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", coverageVersion: "territory-coverage/1", cellRuns: [], applied: [], ...over });
+/** Explored cells as the app stores them: a flat [start, length, start, length, ...] list (Firestore has no nested arrays). */
+const runsOf = (cells) => { const r = []; for (const c of cells) { const n = r.length; if (n && r[n - 2] + r[n - 1] === c) r[n - 1]++; else r.push(c, 1); } return r; };
+const ap = (i, n, t) => ({ i, n, t });
+const stored = (over = {}) => ({ areaId: "bd-upa-dhaka-mohammadpur", selectedAt: Date.now() - 5 * 86400000, maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", coverageVersion: "territory-coverage/2", rulesVersion: "territory-rules/1", cells: [], applied: [], ...over });
 const TRACK = (id) => `users/u1/activities/${id}/tracks/0`;
 
 async function scenarioConquest() {
@@ -487,10 +489,10 @@ async function scenarioConquest() {
   const t0 = await text(a.pg);
   check("C1. start screen shows MOHAMMADPUR and 0% conquered, with no distance target", /Mohammadpur/i.test(t0) && /0% conquered/.test(t0) && !/to conquer/.test(t0));
   await a.pg.getByRole("button", { name: "Choose Mohammadpur" }).click();
-  await a.pg.waitForSelector("text=Start moving", { timeout: 15000 });
+  await a.pg.waitForSelector("text=Start exploring", { timeout: 15000 });
   const saved = (await dbOf(a.pg))["users/u1"].territory;
-  check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cellRuns.length === 0 && saved.applied.length === 0, JSON.stringify(saved).slice(0, 200));
-  check("C3. START MOVING opens the Territory run", (await a.pg.getByRole("link", { name: /start moving/i }).getAttribute("href")) === "/run?territory=1");
+  check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cells.length === 0 && saved.applied.length === 0, JSON.stringify(saved).slice(0, 200));
+  check("C3. START EXPLORING opens the Territory run", (await a.pg.getByRole("link", { name: /start exploring/i }).getAttribute("href")) === "/run?territory=1");
   check("C4. no uncaught page errors on the hub", a.pg.errors.length === 0, a.pg.errors.join(" | ").slice(0, 200));
   await a.ctx.close();
 
@@ -504,7 +506,7 @@ async function scenarioConquest() {
     for (const [id, chunk] of Object.entries(tracks)) db[TRACK(id)] = chunk;
     return db;
   };
-  const percentOf = async (db, wait = "text=Start moving") => {
+  const percentOf = async (db, wait = "text=Start exploring") => {
     const s = await fresh({ db });
     await s.pg.goto(`${BASE}/territory`);
     await s.pg.waitForSelector(wait, { timeout: 30000 });
@@ -519,12 +521,12 @@ async function scenarioConquest() {
   const one = await percentOf(seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }));
   check("C5. a Walk along a real Mohammadpur street explores it: progress goes up", one.percent > 0 && one.percent < 5, one.text.slice(0, 200));
   const terr = one.db["users/u1"].territory;
-  check("C6. the explored cells and the processed activity are saved once", terr.applied.length === 1 && terr.applied[0][0] === "r1" && terr.applied[0][1] >= 12 && terr.cellRuns.length >= 1, JSON.stringify(terr.applied));
+  check("C6. the explored cells and the processed activity are saved once", terr.applied.length === 1 && terr.applied[0].i === "r1" && terr.applied[0].n >= 12 && terr.cells.length >= 2, JSON.stringify(terr.applied));
   check("C7. the activity's own distance is untouched", one.db["users/u1"].runs[0].km === 13);
 
   const again = await percentOf(seed([walk("r1", 3), walk("r2", 2), walk("r3", 1)], { r1: streetChunk(0, now - 3 * 86400000 - 300000), r2: streetChunk(0, now - 2 * 86400000 - 300000), r3: streetChunk(0, now - 86400000 - 300000) }));
   check("C8. the same street three times counts once: same progress as walking it once", again.percent === one.percent, `${again.percent} vs ${one.percent}`);
-  check("C9. repeats are recorded as processed with 0 new cells", again.db["users/u1"].territory.applied.map((x) => x[1]).slice(1).every((n) => n === 0), JSON.stringify(again.db["users/u1"].territory.applied));
+  check("C9. repeats are recorded as processed with 0 new cells", again.db["users/u1"].territory.applied.map((x) => x.n).slice(1).every((n) => n === 0), JSON.stringify(again.db["users/u1"].territory.applied));
 
   const other = await percentOf(seed([walk("r1", 3), walk("r2", 2)], { r1: streetChunk(0, now - 3 * 86400000 - 300000), r2: streetChunk(1, now - 2 * 86400000 - 300000) }));
   check("C10. a different eligible street adds new ground", other.percent > one.percent, `${other.percent} vs ${one.percent}`);
@@ -540,25 +542,113 @@ async function scenarioConquest() {
 
   const reload = await fresh({ db: seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }) });
   await reload.pg.goto(`${BASE}/territory`);
-  await reload.pg.waitForSelector("text=Start moving", { timeout: 30000 });
+  await reload.pg.waitForSelector("text=Start exploring", { timeout: 30000 });
   await reload.pg.waitForTimeout(500);
   const first = JSON.stringify((await dbOf(reload.pg))["users/u1"].territory);
   await reload.pg.reload();
-  await reload.pg.waitForSelector("text=Start moving", { timeout: 30000 });
+  await reload.pg.waitForSelector("text=Start exploring", { timeout: 30000 });
   await reload.pg.waitForTimeout(500);
   check("C14. reloading reprocesses nothing: the saved state is identical", JSON.stringify((await dbOf(reload.pg))["users/u1"].territory) === first);
   await reload.ctx.close();
 
-  const done = await percentOf(seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }, stored({ cellRuns: runsOf(ELIGIBLE), applied: [["r1", ELIGIBLE.length, now - 86400000]], completion: { activityId: "r1", atMs: now - 86400000 } })), "text=Share your conquest");
-  check("C15. a fully explored Territory shows TERRITORY CONQUERED at 100%", /Territory conquered/i.test(done.text) && /100/.test(done.text) && /Share your conquest/i.test(done.text), done.text.slice(0, 200));
+  // ---------- ownership: King, takeover, reclaim ----------
+  const day = 86400000;
+  const kingDoc = (uid, name, reign, startedAt) => ({ areaId: "bd-upa-dhaka-mohammadpur", name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: reign === 1 ? "conquest" : "takeover", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion });
+  const hub = async (db, wait) => {
+    const s = await fresh({ db });
+    await s.pg.goto(`${BASE}/territory`);
+    await s.pg.waitForSelector(wait, { timeout: 30000 });
+    await s.pg.waitForTimeout(700);
+    return s;
+  };
+
+  // K1-K4: reaching the threshold makes you the first King, once
+  {
+    const db = seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({ cells: runsOf(ELIGIBLE.slice(0, 3104)), applied: [ap("r0", 3104, now - 2 * day)] }));
+    const s = await hub(db, "text=CONQUERED");
+    const t = await text(s.pg);
+    const mem = await dbOf(s.pg);
+    const own = mem["territories/bd-upa-dhaka-mohammadpur"];
+    check("K1. reaching 80% makes you King: ownership saved with you as owner, reign 1", own && own.ownerUid === "u1" && own.reign === 1 && own.kind === "conquest" && own.requiredCells === 3104, JSON.stringify(own).slice(0, 200));
+    check("K2. the conquest is recorded once as an event, with your claim proof in your own document", mem["territories/bd-upa-dhaka-mohammadpur/events/1"]?.ownerUid === "u1" && mem["users/u1"].territory.claim?.reign === 1 && mem["users/u1"].territory.claim.explored >= 3104);
+    check("K3. the celebration: CONQUERED, MOHAMMADPUR, NEW KING, a Share action", /CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /NEW KING/.test(t) && (await s.pg.getByRole("dialog").getByRole("link", { name: "Share" }).count()) === 1, t.slice(0, 200));
+    check("K4. only public data is published: first name, no email", own.ownerName === "Rafi" && !JSON.stringify(own).includes("r@x.com"));
+    await s.pg.getByRole("button", { name: "Continue" }).click();
+    await s.pg.waitForTimeout(300);
+    const t2 = await text(s.pg);
+    check("K5. the hub then shows you as King with a Share action", /Your Territory/i.test(t2) && /King/i.test(t2) && /You/.test(t2) && /Share your Territory/i.test(t2));
+    await s.pg.reload();
+    await s.pg.waitForSelector("text=Share your Territory", { timeout: 30000 });
+    await s.pg.waitForTimeout(500);
+    const after = await dbOf(s.pg);
+    check("K6. reloading neither celebrates again nor creates a second conquest", (await s.pg.getByRole("dialog").count()) === 0 && after["territories/bd-upa-dhaka-mohammadpur"].reign === 1 && !after["territories/bd-upa-dhaka-mohammadpur/events/2"]);
+    check("K7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // K8-K10: another King holds it: you see them, and a takeover that only real exploration moves
+  {
+    const db = seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({ selectedAt: now - 5 * day }));
+    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 1, now - 3 * day);
+    const s = await hub(db, "text=Take over");
+    const t = await text(s.pg);
+    check("K8. the current King is shown: Tania, crowned, since a date", /Held by another King/i.test(t) && /Tania/.test(t) && /since/.test(t));
+    check("K9. TAKE OVER opens a Territory run", (await s.pg.getByRole("link", { name: /take over/i }).getAttribute("href")) === "/run?territory=1");
+    const credits = await dbOf(s.pg);
+    const camp = credits["users/u1"].territory.campaign;
+    const m = t.match(/([\d.]+)% to take over/i);
+    check("K10. a real walk inside Mohammadpur after the reign began earns takeover credit, but nowhere near 2x", camp && camp.reign === 1 && m && Number(m[1]) > 0 && Number(m[1]) < 1 && credits["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2", `${m && m[1]} ${JSON.stringify(camp).slice(0, 120)}`);
+    await s.ctx.close();
+  }
+
+  // K11-K14: with 2x the requirement earned since the reign began, the challenger takes it
+  {
+    const reignStart = now - 3 * day;
+    const db = seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({
+      selectedAt: now - 5 * day,
+      cells: runsOf(ELIGIBLE),
+      applied: [ap("r1", 0, now - day)],
+      campaign: { reign: 1, startedAt: reignStart, once: [], twice: runsOf(ELIGIBLE.slice(0, 3104)), applied: ["r1"] },
+    }));
+    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 1, reignStart);
+    const s = await hub(db, "text=TERRITORY TAKEN");
+    const mem = await dbOf(s.pg);
+    const own = mem["territories/bd-upa-dhaka-mohammadpur"];
+    check("K11. 2x the requirement takes the Territory: you are King, reign 2, a takeover", own.ownerUid === "u1" && own.reign === 2 && own.kind === "takeover", JSON.stringify(own).slice(0, 160));
+    check("K12. the takeover event names the previous King by account id only", mem["territories/bd-upa-dhaka-mohammadpur/events/2"]?.previousOwnerUid === "u2" && !("previousOwnerName" in mem["territories/bd-upa-dhaka-mohammadpur/events/2"]));
+    check("K13. the takeover celebration says TERRITORY TAKEN and offers Share", /TERRITORY TAKEN/.test(await text(s.pg)) && (await s.pg.getByRole("dialog").getByRole("link", { name: "Share" }).count()) === 1);
+    check("K14. your campaign is closed once you are King", mem["users/u1"].territory.campaign === undefined && mem["users/u1"].territory.claim.credits >= 6208);
+    await s.ctx.close();
+  }
+
+  // K15-K16: a former King who lost it sees the new King and a reclaim, earned the same way
+  {
+    const db = seed([], {}, stored({ selectedAt: now - 9 * day, cells: runsOf(ELIGIBLE.slice(0, 3200)), wins: [{ reign: 1, kind: "conquest", activityId: "r0", atMs: now - 8 * day }] }));
+    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 2, now - day);
+    const s = await hub(db, "text=Reclaim territory");
+    const t = await text(s.pg);
+    check("K15. Territory lost: the new King is shown, with RECLAIM TERRITORY", /Territory lost/i.test(t) && /Tania/.test(t) && /Reclaim territory/i.test(t) && /0\.0% to reclaim/i.test(t), t.slice(0, 240));
+    check("K16. having been King gives no automatic reclaim", (await dbOf(s.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2");
+    await s.ctx.close();
+  }
+
+  // K17: a takeover that is not earned is refused even if the screen were bypassed
+  {
+    const reignStart = now - 3 * day;
+    const db = seed([], {}, stored({ selectedAt: now - 5 * day, cells: runsOf(ELIGIBLE), campaign: { reign: 1, startedAt: reignStart, once: [{ d: 1, c: runsOf(ELIGIBLE) }], twice: [], applied: [] } }));
+    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 1, reignStart);
+    const s = await hub(db, "text=Take over");
+    check("K17. walking every street once (3,880 credits) is not 2x: no takeover", (await dbOf(s.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2" && /62\.5% to take over/i.test(await text(s.pg)), (await text(s.pg)).match(/[\d.]+% to take over/i)?.[0]);
+    await s.ctx.close();
+  }
 }
 
 async function scenarioShare() {
   // Share Cards: three modes (Territory, Routes, Normal), real data only, and a photo's subject is never covered.
   const now = Date.now();
   const iso = (ms) => new Date(ms).toISOString();
-  const HALF = stored({ cellRuns: runsOf(ELIGIBLE.slice(0, 1940)), applied: [["r1", 1940, now]] });
-  const DONE = stored({ cellRuns: runsOf(ELIGIBLE), applied: [["r0", 3000, now - 86400000], ["r1", 880, now]], completion: { activityId: "r1", atMs: now } });
+  const HALF = stored({ cells: runsOf(ELIGIBLE.slice(0, 1940)), applied: [ap("r1", 1940, now)] });
+  const DONE = stored({ cells: runsOf(ELIGIBLE), applied: [ap("r0", 3000, now - 86400000), ap("r1", 880, now)], wins: [{ reign: 1, kind: "conquest", activityId: "r1", atMs: now }] });
   const track = streetChunk(0, now - 3600000);
   const mk = ({ runs, territory, route = "Chandpur", withTrack = true }) => {
     const db = baseDb();
@@ -593,7 +683,7 @@ async function scenarioShare() {
   check("S5. Normal card: stats, calories and today's real GPS route (not the journey map)", /5\.2/.test(t) && /412 kcal/.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg[aria-label='Route']").count()) === 1 && (await s.pg.locator("[data-card-mode='NORMAL'] svg[aria-label^='Route from']").count()) === 0 && !/CONQUERED/.test(t));
   await mode(s.pg, "Territory");
   t = await card(s.pg);
-  check("S6. Territory card: MOHAMMADPUR, 50.0% CONQUERED, +50.0% new ground, 50.0% REMAINING", /MOHAMMADPUR/.test(t) && /50\.0%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /50\.0% REMAINING/.test(t), t.slice(0, 260));
+  check("S6. Territory card: MOHAMMADPUR, 62.5% CONQUERED (of the 80% requirement), +62.5% new ground, 37.5% REMAINING", /MOHAMMADPUR/.test(t) && /62\.5%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /37\.5% REMAINING/.test(t), t.slice(0, 260));
   check("S7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
 
@@ -794,7 +884,7 @@ async function scenarioLiveTerritory() {
   const done = await text(s.pg);
   check("L5. the finished move opens the Territory card with the same new-ground figure", /MOHAMMADPUR/.test(done) && /NEW GROUND/.test(done) && new RegExp(`${after.toFixed(1)}%`).test(done), done.slice(0, 240));
   const saved = (await dbOf(s.pg))["users/u1"].territory;
-  check("L6. the move is saved once on the Territory with its new cells", saved.applied.length === 1 && saved.applied[0][1] > 0, JSON.stringify(saved.applied));
+  check("L6. the move is saved once on the Territory with its new cells", saved.applied.length === 1 && saved.applied[0].n > 0, JSON.stringify(saved.applied));
   check("L7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
 

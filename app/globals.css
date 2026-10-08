@@ -404,3 +404,12 @@ a {
 .seg { display: inline-flex; background: color-mix(in srgb, var(--bg) 85%, transparent); border-radius: 18px; padding: 3px; backdrop-filter: blur(10px); }
 .seg button { border: 0; background: none; color: var(--mute); font: 700 12px "Archivo", sans-serif; padding: 7px 12px; border-radius: 15px; cursor: pointer; min-height: 32px; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* Territory: the boundary draws itself once (celebration), the crown settles in. */
+@keyframes mv-draw { from { stroke-dashoffset: 4000; } to { stroke-dashoffset: 0; } }
+.mv-draw { stroke-dasharray: 4000; animation: mv-draw 2.4s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes mv-rise { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+.mv-rise { animation: mv-rise .7s cubic-bezier(.2,.7,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .mv-draw, .mv-rise { animation: none; } }
+.crown { font-size: 40px; line-height: 1; filter: drop-shadow(0 4px 14px rgba(255, 196, 0, .35)); }
+.king-card { display: flex; align-items: center; gap: 14px; }

@@ -12,11 +12,11 @@ const cssVar = (name: string, fallback: string) => getComputedStyle(document.doc
  * Where the user really is, with the Territory they are conquering drawn on the same map. The user does not have to be inside
  * it: "You are here" is their true position, and the boundary is only the picture of the goal.
  */
-export function TerritoryLiveMap({ def, fraction, point, track, dark }: { def: TerritoryDefinition; fraction: number; point?: LngLat; track: LngLat[]; dark: boolean }) {
+export function TerritoryLiveMap({ def, fraction, point, track, dark, explored = [] }: { def: TerritoryDefinition; fraction: number; point?: LngLat; track: LngLat[]; dark: boolean; explored?: readonly LngLat[] }) {
   const host = useRef<HTMLDivElement>(null);
   const L = useRef<typeof Leaflet | null>(null);
   const map = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ track?: Leaflet.Polyline; marker?: Leaflet.Marker; lit?: Leaflet.Polyline; tiles?: Leaflet.TileLayer }>({});
+  const layers = useRef<{ track?: Leaflet.Polyline; marker?: Leaflet.Marker; lit?: Leaflet.Polyline; tiles?: Leaflet.TileLayer; explored?: Leaflet.LayerGroup }>({});
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<"me" | "territory">("me");
   const ring = useMemo(() => conquestRing(toLngLat(def.boundary.coordinates[0])), [def]);
@@ -79,6 +79,17 @@ export function TerritoryLiveMap({ def, fraction, point, track, dark }: { def: T
       if (view === "me") m.setView(at, Math.max(m.getZoom(), 16), { animate: false });
     }
   }, [ready, track, point, view]);
+
+  // Your own explored ground, as soft overlapping circles (never the hidden grid). Only ever drawn on your own screen.
+  useEffect(() => {
+    const lib = L.current;
+    const m = map.current;
+    if (!ready || !lib || !m) return;
+    layers.current.explored?.remove();
+    const renderer = lib.canvas({ padding: 0.2 });
+    const accent = cssVar("--accent", "#4f6ef7");
+    layers.current.explored = lib.layerGroup(explored.map((p) => lib.circle([p.lat, p.lng], { radius: 22, stroke: false, fillColor: accent, fillOpacity: 0.28, renderer, interactive: false }))).addTo(m);
+  }, [ready, explored]);
 
   useEffect(() => {
     const m = map.current;

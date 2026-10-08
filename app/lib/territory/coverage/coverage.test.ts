@@ -6,8 +6,13 @@ import { cellCenter, cellId, cellXY, haversineM } from "../exploration/cells";
 import { activity as syntheticActivity, offset, walk } from "../exploration/synthetic";
 import { explore } from "../exploration/explore";
 import { cellsOfMask, parseMask, scopeFromMask } from "../mask/scope";
+import { alignCampaign } from "./ownership";
+import { requiredCells, takeoverCredits } from "./rules";
 import {
+  APPLIED_KEEP,
   applyActivity,
+  applyToCampaign,
+  campaignProgress,
   coverageProgress,
   emptyCoverage,
   encodeCoverage,
@@ -23,6 +28,7 @@ const mask = parseMask(JSON.parse(readFileSync(join(process.cwd(), "public", "ge
 const scope = scopeFromMask(mask);
 const Z = mask.meta.cellZoom;
 const T0 = 1_800_000_000_000;
+const DAY = 86_400_000;
 const choice = newChoice(mask, T0 - 1000);
 
 /** Roads in the real mask: columns of consecutive eligible cells (cell ids are x * 2^zoom + y, so a run is a north-south street). */
@@ -168,48 +174,126 @@ test("cycling explores nothing yet", () => {
   assert.equal(r.added, 0);
 });
 
-test("progress formula: explored eligible cells / total eligible cells, rounded down, 100 only when everything is explored", () => {
+test("progress formula: explored eligible cells / required cells (80% of eligible), rounded down, 100 only at the threshold", () => {
   const eligible = [...cellsOfMask(mask)];
-  const some: CoverageState = { areaId: choice.areaId, cells: eligible.slice(0, 1940), applied: [] };
+  const some: CoverageState = { areaId: choice.areaId, cells: eligible.slice(0, 1552), applied: [] };
   const p = pct(some);
+  assert.equal(p.totalCells, 3880);
+  assert.equal(p.requiredCells, 3104);
   assert.equal(p.fraction, 0.5);
   assert.equal(p.percent, 50);
   assert.equal(p.remainingPercent, 50);
-  const almost = pct({ ...some, cells: eligible.slice(0, 3879) });
+  assert.equal(p.coverage, 1552 / 3880, "the raw share of all eligible cells is kept alongside");
+  const almost = pct({ ...some, cells: eligible.slice(0, 3103) });
   assert.equal(almost.percent, 99.9);
-  assert.equal(almost.conquered, false);
+  assert.equal(almost.thresholdMet, false);
   assert.equal(almost.remainingPercent, 0.1);
-  const all = pct({ ...some, cells: eligible });
-  assert.equal(all.percent, 100);
-  assert.equal(all.conquered, true);
-  assert.equal(all.remainingPercent, 0);
+  const met = pct({ ...some, cells: eligible.slice(0, 3104) });
+  assert.equal(met.percent, 100);
+  assert.equal(met.thresholdMet, true);
+  assert.equal(met.remainingPercent, 0);
+  assert.equal(pct({ ...some, cells: eligible }).percent, 100, "more than required stays at 100");
   // cells outside the mask are not counted
   assert.equal(pct({ ...some, cells: [...eligible.slice(0, 10), 5, 6, 7] }).exploredCells, 10);
 });
 
-test("conquest is recorded once, by the activity that explored the last cell", () => {
+test("reaching the threshold is recorded once, with the activity that got there", () => {
   const eligible = [...cellsOfMask(mask)];
-  const state: CoverageState = { areaId: choice.areaId, cells: eligible, applied: [{ id: "x", added: 3000, atMs: 1 }, { id: "y", added: 880, atMs: 2 }, { id: "z", added: 0, atMs: 3 }] };
+  const state: CoverageState = { areaId: choice.areaId, cells: eligible.slice(0, 3200), applied: [{ id: "x", added: 3000, atMs: 1 }, { id: "y", added: 200, atMs: 2 }, { id: "z", added: 0, atMs: 3 }] };
   const done = withCompletion(state, pct(state));
   assert.deepEqual(done.completion, { activityId: "y", atMs: 2 });
   assert.equal(withCompletion(done, pct(done)), done);
-  assert.equal(progressAfter(done, "x", mask)!.percent, 77.3);
-  assert.equal(progressAfter(done, "y", mask)!.conquered, true);
+  assert.equal(progressAfter(done, "x", mask)!.percent, 96.6);
+  assert.equal(progressAfter(done, "y", mask)!.thresholdMet, true);
   assert.equal(progressAfter(done, "nope", mask), null);
 });
 
-test("saved state round-trips and unknown data is ignored", () => {
-  const a = applyActivity(fresh(), choice, scope, act("s1", streetPoints(0, T0)));
-  const stored = encodeCoverage(choice, a.state);
-  assert.ok(stored.cellRuns.length < a.state.cells.length, "runs are compact");
+const hasNestedArray = (v: unknown): boolean => (Array.isArray(v) ? v.some((x) => Array.isArray(x) || hasNestedArray(x)) : v && typeof v === "object" ? Object.values(v).some(hasNestedArray) : false);
+
+test("saved state round-trips, has no nested arrays (Firestore rejects them), and unknown data is ignored", () => {
+  let st = alignCampaign(fresh(), { reign: 3, startedAt: T0 - 1 }).state;
+  st = applyActivity(st, choice, scope, act("s1", streetPoints(0, T0))).state;
+  st = applyActivity(st, choice, scope, act("s2", streetPoints(0, T0 + DAY), { startMs: T0 + DAY, endMs: T0 + DAY + 600_000 })).state;
+  st = { ...st, wins: [{ reign: 1, kind: "conquest", activityId: "s0", atMs: 5 }] };
+  const stored = encodeCoverage(choice, st);
+  assert.equal(hasNestedArray(stored), false);
+  assert.ok(stored.cells.length < st.cells.length, "runs are compact");
   const back = parseStoredCoverage(JSON.parse(JSON.stringify(stored)))!;
-  assert.deepEqual(back.state.cells, a.state.cells);
-  assert.deepEqual(back.state.applied, a.state.applied);
+  assert.deepEqual(back.state.cells, st.cells);
+  assert.deepEqual(back.state.applied, st.applied);
+  assert.deepEqual([...back.state.campaign!.once.entries()].sort(), [...st.campaign!.once.entries()].sort());
+  assert.deepEqual(back.state.campaign!.twice, st.campaign!.twice);
+  assert.deepEqual(back.state.wins, st.wins);
   assert.equal(back.choice.selectedAt, choice.selectedAt);
   assert.equal(parseStoredCoverage(null), null);
   assert.equal(parseStoredCoverage({ areaId: "x" }), null);
   assert.equal(parseStoredCoverage({ ...stored, coverageVersion: "old" }), null);
-  assert.equal(parseStoredCoverage({ ...stored, cellRuns: [[1, -3]] }), null);
+  assert.equal(parseStoredCoverage({ ...stored, cells: [1, -3] }), null);
+});
+
+test("a first-version record (nested arrays) is still read", () => {
+  const v1 = { ...choice, coverageVersion: "territory-coverage/1", cellRuns: [[100, 3], [200, 1]], applied: [["a", 4, 9]] };
+  const back = parseStoredCoverage(v1)!;
+  assert.deepEqual(back.state.cells, [100, 101, 102, 200]);
+  assert.deepEqual(back.state.applied, [{ id: "a", added: 4, atMs: 9 }]);
+  assert.equal(back.choice.coverageVersion, "territory-coverage/2");
+});
+
+test("the processed-activity list is bounded: old ids give way to a low-water mark, and stay processed", () => {
+  let st = fresh();
+  for (let i = 0; i < APPLIED_KEEP + 30; i++) st = applyActivity(st, choice, scope, act(`k${i}`, streetPoints(0, T0 + i * 10_000), { startMs: T0 + i * 10_000, endMs: T0 + i * 10_000 + 5000 })).state;
+  assert.equal(st.applied.length, APPLIED_KEEP);
+  assert.ok(st.appliedLowWater !== undefined);
+  assert.equal(applyActivity(st, choice, scope, act("k0", streetPoints(3, T0), { startMs: T0, endMs: T0 + 5000 })).status, "already-applied", "a dropped id is still known as processed");
+});
+
+/* ---------- takeover campaign ---------- */
+
+test("takeover needs 2x the conquest requirement in credits: 6,208 for Mohammadpur", () => {
+  assert.equal(requiredCells(3880), 3104);
+  assert.equal(takeoverCredits(3880), 6208);
+  assert.ok(takeoverCredits(3880) <= 2 * 3880, "achievable: every cell can give 2 credits");
+});
+
+test("campaign credits: a new cell gives 1; the same cell on another day gives a 2nd; never more, and never twice the same day", () => {
+  let st = alignCampaign(fresh(), { reign: 1, startedAt: T0 - 1 }).state;
+  const r1 = applyActivity(st, choice, scope, act("d1", streetPoints(0, T0)));
+  st = r1.state;
+  const first = campaignProgress(st.campaign!, mask, scope).credits;
+  assert.equal(first, r1.state.cells.length, "1 credit per newly explored cell");
+  const sameDay = applyActivity(st, choice, scope, act("d1b", streetPoints(0, T0 + 3_600_000), { startMs: T0 + 3_600_000, endMs: T0 + 3_700_000 }));
+  assert.equal(sameDay.credits, 0, "the same street again the same day earns nothing");
+  st = sameDay.state;
+  const nextDay = applyActivity(st, choice, scope, act("d2", streetPoints(0, T0 + DAY), { startMs: T0 + DAY, endMs: T0 + DAY + 600_000 }));
+  assert.ok(nextDay.credits >= first - 1, "another day: a second credit per cell");
+  st = nextDay.state;
+  const total2 = campaignProgress(st.campaign!, mask, scope).credits;
+  for (let d = 2; d < 8; d++) st = applyActivity(st, choice, scope, act(`d${d + 1}`, streetPoints(0, T0 + d * DAY), { startMs: T0 + d * DAY, endMs: T0 + d * DAY + 600_000 })).state;
+  assert.ok(campaignProgress(st.campaign!, mask, scope).credits <= total2 + 1, "a week on the same street cannot farm credits");
+  assert.ok(campaignProgress(st.campaign!, mask, scope).credits <= 2 * st.cells.length);
+});
+
+test("campaign: activities before the King's reign began, or outside the area, earn nothing", () => {
+  let st = alignCampaign(fresh(), { reign: 2, startedAt: T0 + DAY }).state;
+  const before = applyActivity(st, choice, scope, act("old", streetPoints(0, T0)));
+  assert.equal(before.credits, 0, "explored before the reign: coverage yes, takeover credit no");
+  assert.ok(before.added > 0);
+  st = before.state;
+  const far = applyActivity(st, choice, scope, act("far", walk({ from: { lat: 23.2476, lng: 90.8477 }, eastM: 0, northM: 3000, t0: T0 + 2 * DAY }), { startMs: T0 + 2 * DAY, endMs: T0 + 2 * DAY + 3_000_000 }));
+  assert.equal(far.credits, 0);
+});
+
+test("a new King restarts the campaign; recounting is idempotent", () => {
+  let st = alignCampaign(fresh(), { reign: 1, startedAt: T0 - 1 }).state;
+  st = applyActivity(st, choice, scope, act("a", streetPoints(0, T0))).state;
+  const moved = alignCampaign(st, { reign: 2, startedAt: T0 - 1 });
+  assert.equal(moved.restarted, true);
+  assert.equal(campaignProgress(moved.state.campaign!, mask, scope).credits, 0);
+  const again = applyToCampaign(moved.state, choice, scope, act("a", streetPoints(0, T0)));
+  const twice = applyToCampaign(again, choice, scope, act("a", streetPoints(0, T0)));
+  assert.equal(campaignProgress(twice.campaign!, mask, scope).credits, campaignProgress(again.campaign!, mask, scope).credits);
+  assert.equal(alignCampaign(again, { reign: 2, startedAt: T0 - 1 }).restarted, false);
+  assert.equal(alignCampaign(again, null).state.campaign, undefined, "no King (or you are King): no campaign");
 });
 
 test("offset helper sanity: a point 1 km away is about 1 km away", () => {

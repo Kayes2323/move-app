@@ -7,6 +7,16 @@
 //
 // Known limit: totals are written by the client, so a determined user could fake their own leaderboard entry.
 // Preventing that needs server-side validation (e.g. a Cloud Function that recomputes totals from activities).
+//
+// TERRITORY OWNERSHIP (territories/{areaId}) is shared, competitive state. These rules make sure that:
+//   - only you can make yourself King, never anyone else;
+//   - a change of King happens only as the next reign (reign + 1), so two simultaneous claims cannot both succeed;
+//   - the reign start is the server's clock, not the phone's;
+//   - the claim is backed, in the same transaction, by a claim proof in your own users/{uid} document whose explored
+//     cells (conquest) or takeover credits (2x) meet the Territory's requirement, counted from after the current reign began;
+//   - only a first name and an https photo are public; events are append-only.
+// Known limit: the claim proof is computed on the phone from its own GPS tracks. A determined user could forge it.
+// The data needed to check it server-side is kept (activities, tracks, mask and algorithm versions); see docs/TERRITORY.md.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,6 +36,60 @@ service cloud.firestore {
           allow create, update: if request.auth != null && request.auth.uid == uid; // idempotent retries overwrite the same chunk
           allow delete: if false;
         }
+      }
+    }
+
+    // Cells needed to conquer each Territory: ceil(80% of its eligible cells). Must match app/lib/territory/coverage/rules.ts.
+    function requiredCells(areaId) {
+      return ({ 'bd-upa-dhaka-mohammadpur': 3104 }).get(areaId, 1000000000);
+    }
+    function claimOf(uid) {
+      return getAfter(/databases/$(database)/documents/users/$(uid)).data.territory.claim;
+    }
+
+    match /territories/{areaId} {
+      allow read: if request.auth != null;
+
+      function validKing() {
+        let d = request.resource.data;
+        let c = claimOf(request.auth.uid);
+        return d.keys().hasOnly(['areaId', 'name', 'ownerUid', 'ownerName', 'ownerPhoto', 'reign', 'kind', 'reignStartedAt', 'updatedAt', 'requiredCells', 'requiredCredits', 'rulesVersion', 'maskVersion'])
+          && d.areaId == areaId
+          && d.ownerUid == request.auth.uid
+          && d.ownerName is string && d.ownerName.size() > 0 && d.ownerName.size() <= 40
+          && d.ownerPhoto is string && d.ownerPhoto.size() <= 500 && (d.ownerPhoto == '' || d.ownerPhoto.matches('https://.*'))
+          && d.reignStartedAt == request.time
+          && d.updatedAt == request.time
+          && d.requiredCells == requiredCells(areaId)
+          && c.areaId == areaId && c.reign == d.reign && c.kind == d.kind;
+      }
+
+      // first conquest: reign 1, the claimant's own coverage reaches the requirement
+      allow create: if request.auth != null && validKing()
+        && request.resource.data.reign == 1
+        && request.resource.data.kind == 'conquest'
+        && claimOf(request.auth.uid).explored >= requiredCells(areaId);
+
+      // takeover / reclaim: the next reign only, by someone else, with 2x the requirement in credits earned since this reign began
+      allow update: if request.auth != null && validKing()
+        && resource.data.ownerUid != request.auth.uid
+        && request.resource.data.reign == resource.data.reign + 1
+        && request.resource.data.kind == 'takeover'
+        && claimOf(request.auth.uid).credits >= 2 * requiredCells(areaId)
+        && claimOf(request.auth.uid).campaignStartedAt >= resource.data.reignStartedAt.toMillis();
+
+      allow delete: if false;
+
+      // one event per reign, written by the new King in the same transaction; never changed
+      match /events/{reign} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && getAfter(/databases/$(database)/documents/territories/$(areaId)).data.ownerUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/territories/$(areaId)).data.reign == int(reign)
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.reign == int(reign)
+          && request.resource.data.keys().hasOnly(['areaId', 'reign', 'kind', 'ownerUid', 'ownerName', 'ownerPhoto', 'previousOwnerUid', 'at']);
+        allow update, delete: if false;
       }
     }
 

@@ -181,7 +181,7 @@ function TerritoryStats({ props, L }: { props: ShareCardProps; L: Look }) {
     const nameSize = Math.min(c ? 22 : 34, Math.floor((c ? 146 : 308) / (def.name.length * 0.82)));
     return (
       <>
-        <div style={label(L, c ? 11 : 13)}>TERRITORY CONQUERED</div>
+        <div style={label(L, c ? 11 : 13)}>{facts.winKind === "takeover" ? "TERRITORY TAKEN · NEW KING" : "TERRITORY CONQUERED · KING"}</div>
         <div style={big(nameSize, 6)}>{def.name.toUpperCase()}</div>
         <div style={{ marginTop: 8, display: "flex", alignItems: "baseline", gap: 8, fontWeight: 600, fontSize: c ? 13 : 16 }}>
           <span style={{ fontFamily: DISPLAY, fontSize: c ? 24 : 30, color: L.accent }}>100%</span>explored

@@ -1,7 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
 import { LiveRouteCard, type LiveRouteCardProps } from "../components/LiveRouteCard";
-import { applyActivity, coverageProgress, withCompletion } from "../lib/territory/coverage/coverage";
+import { applyActivity, campaignProgress, coverageProgress } from "../lib/territory/coverage/coverage";
+import { cellCenter } from "../lib/territory/exploration/cells";
 import type { TerritorySnapshot } from "../lib/territory/coverage/snapshot";
 import { contributionPolicy } from "../lib/territory/contribution";
 import { conquestRing, pointInRing, simplifyTrack, toLngLat } from "../lib/territory/conquest/outline";
@@ -43,53 +44,73 @@ export function TerritoryLiveScreen({ snapshot, activity, points, here, ...card 
   const live = useMemo(() => {
     const out = applyActivity(state, choice, scope, { id: activity.id, userId: activity.userId, kind: activity.kind, startMs: activity.startedAt, endMs: points.length ? points[points.length - 1].t : activity.startedAt, points });
     const progress = coverageProgress(out.state, mask, scope);
-    return { added: out.added, state: withCompletion(out.state, progress), progress };
-  }, [state, choice, scope, mask, activity, points]);
+    const campaign = out.state.campaign && snapshot.campaign ? campaignProgress(out.state.campaign, mask, scope) : null;
+    return { added: out.added, state: out.state, progress, campaign };
+  }, [state, choice, scope, mask, activity, points, snapshot.campaign]);
 
-  const before = snapshot.progress;
-  const gain = Math.round((live.progress.percent - before.percent) * 10) / 10;
+  const explored = useMemo(() => live.state.cells.map((c) => cellCenter(c, mask.meta.cellZoom)), [live.state.cells, mask]);
+  const king = snapshot.standing === "king";
+  const challenging = snapshot.standing === "challenger" || snapshot.standing === "former-king";
+  const shown = challenging && live.campaign ? live.campaign : null;
+  const percent = shown ? shown.percent : live.progress.percent;
+  const fraction = king ? 1 : shown ? shown.fraction : live.progress.fraction;
+  const gainCoverage = Math.round((live.progress.percent - snapshot.progress.percent) * 10) / 10;
+  const gainCampaign = shown && snapshot.campaign ? Math.round((shown.percent - snapshot.campaign.percent) * 10) / 10 : 0;
+  const gain = shown ? gainCampaign : gainCoverage;
   const inside = here ? pointInRing(here, ring) : null;
+  const lastAcc = points.length ? points[points.length - 1].acc : null;
+  const met = shown ? shown.met : !king && live.progress.thresholdMet && !snapshot.ownership;
 
   const note = !counts
     ? "Cycling doesn't explore Territory yet."
-    : inside === false
-      ? `You're outside ${def.name}. Only moving inside it explores it.`
-      : gain > 0
-        ? `This move: +${gain.toFixed(1)}% new ground`
-        : `Reach ground you haven't explored in ${def.name} to move the percentage.`;
+    : lastAcc !== null && lastAcc > 25
+      ? "Weak GPS. This stretch may not count."
+      : inside === false
+        ? `You're outside ${def.name}. Only moving inside it counts.`
+        : met
+          ? "Requirement reached. Finish your move to claim the Territory."
+          : gain > 0
+            ? shown
+              ? `This move: +${gain.toFixed(1)}% towards ${snapshot.standing === "former-king" ? "reclaiming" : "taking"} it`
+              : `This move: +${gain.toFixed(1)}% new ground`
+            : `Reach streets you haven't explored${shown ? " today" : ""} to move the percentage.`;
 
   const header = (
     <div style={{ marginTop: 10 }}>
       <div className="bar">
-        <p className="lab" style={{ color: "var(--acc-text)" }}>{def.name}</p>
+        <p className="lab" style={{ color: king ? "#D9A520" : "var(--acc-text)" }}>{king ? "👑 " : ""}{def.name}</p>
         <span className="seg" role="group" aria-label="View">
           <button aria-pressed={tab === "territory"} onClick={() => setTab("territory")}>Territory</button>
           <button aria-pressed={tab === "map"} onClick={() => setTab("map")}>Map</button>
         </span>
       </div>
-      {live.progress.conquered ? (
+      {king ? (
         <>
-          <p className="blk" style={{ fontSize: 30, lineHeight: 1.1, marginTop: 2 }}>TERRITORY CONQUERED</p>
-          <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>100% explored · finish your move to claim it</p>
+          <p className="blk" style={{ fontSize: 30, lineHeight: 1.1, marginTop: 2 }}>YOU ARE KING</p>
+          <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>{(live.progress.coverage * 100).toFixed(1)}% of its streets explored</p>
         </>
       ) : (
         <>
-          <p className="blk" style={{ fontSize: 34, lineHeight: 1.1, marginTop: 2 }}>{live.progress.percent.toFixed(1)}<span className="unit">%</span></p>
+          <p className="blk" style={{ fontSize: 34, lineHeight: 1.1, marginTop: 2 }}>{percent.toFixed(1)}<span className="unit">%</span></p>
           <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>
-            <b style={{ color: "var(--acc-text)", letterSpacing: 0.5 }}>{live.progress.percent.toFixed(1)}% CONQUERED</b> · {live.progress.remainingPercent.toFixed(1)}% remaining
+            <b style={{ color: shown ? "#D9A520" : "var(--acc-text)", letterSpacing: 0.5 }}>{percent.toFixed(1)}% {shown ? (snapshot.standing === "former-king" ? "TO RECLAIM" : "TO TAKE OVER") : "CONQUERED"}</b> · {(shown ? shown.remainingPercent : live.progress.remainingPercent).toFixed(1)}% remaining
           </p>
         </>
       )}
-      <p role="status" className="mute" style={{ fontSize: 12, marginTop: 4, minHeight: 16 }}>{note}</p>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }} aria-label="This move">
+        <span className="chip">Distance {card.distanceKm.toFixed(2)} km</span>
+        <span className="chip" style={{ color: gain > 0 ? "var(--acc-text)" : undefined }}>New Territory +{Math.max(gain, 0).toFixed(1)}%</span>
+      </div>
+      <p role="status" className="mute" style={{ fontSize: 12, marginTop: 6, minHeight: 16 }}>{note}</p>
     </div>
   );
 
   const visual =
     tab === "map" ? (
-      <TerritoryLiveMap def={def} fraction={live.progress.fraction} point={here} track={track} dark={dark} />
+      <TerritoryLiveMap def={def} fraction={fraction} point={here} track={track} dark={dark} explored={explored} />
     ) : (
       <div style={{ width: "100%", padding: "8px 14px", display: "flex", justifyContent: "center" }}>
-        <TerritoryEmblem def={def} fraction={live.progress.fraction} conquered={live.progress.conquered} width={320} height={250} />
+        <TerritoryEmblem def={def} fraction={fraction} conquered={king} width={320} height={250} explored={explored} />
       </div>
     );
 

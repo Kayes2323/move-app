@@ -29,26 +29,29 @@ export function availableModes(f: ShareFacts): ShareMode[] {
 
 /**
  * The automatic default:
- * 1. the activity that conquered the Territory shows the conquest;
+ * 1. the activity that made the user King (conquest or takeover) shows that;
  * 2. an activity started from the Territory screen shows Territory;
  * 3. otherwise Routes when there is a real route to show, else Normal.
  */
 export function decideShareMode(f: ShareFacts): ShareMode {
   const ok = availableModes(f);
   const t = f.territory;
-  if (ok.includes("TERRITORY") && t?.completion && f.runId && t.completion.activityId === f.runId) return "TERRITORY";
+  if (ok.includes("TERRITORY") && f.runId && t?.wins?.some((w) => w.activityId === f.runId)) return "TERRITORY";
   if (ok.includes("TERRITORY") && f.hint === "territory") return "TERRITORY";
   if (ok.includes("ROUTES")) return "ROUTES";
   return "NORMAL";
 }
 
 export interface TerritoryCardFacts {
-  /** Explored share of the eligible ground right after this activity: one decimal, rounded down, 100 only when conquered. */
+  /** Share of the conquest requirement explored right after this activity: one decimal, rounded down, 100 only when met. */
   percent: number;
   remainingPercent: number;
-  /** What this activity added, in percentage points. */
+  /** What this activity added, in percentage points of the requirement. */
   addedPercent: number;
+  /** This activity made the user King. */
   conquered: boolean;
+  /** How: first conquest, or taking it from a King (a reclaim is a takeover too). */
+  winKind?: "conquest" | "takeover";
   /** Activities that explored something, for the conquered card. */
   moves?: number;
 }
@@ -56,19 +59,14 @@ export interface TerritoryCardFacts {
 /** Territory progress where the user stands now (no per-move gain). Used when the activity explored nothing new. */
 export function territoryNowFacts(state: CoverageState, mask: EligibilityMask, scope: CellScope): TerritoryCardFacts {
   const p = coverageProgress(state, mask, scope);
-  return { percent: p.percent, remainingPercent: p.remainingPercent, addedPercent: 0, conquered: p.conquered };
+  return { percent: p.percent, remainingPercent: p.remainingPercent, addedPercent: 0, conquered: false };
 }
 
 /** Territory progress as it stood right after this activity, so an older activity's card tells its own moment. Null if it never took part. */
 export function territoryFactsAt(state: CoverageState, mask: EligibilityMask, runId: string): TerritoryCardFacts | null {
+  const win = state.wins?.find((w) => w.activityId === runId);
   const p = progressAfter(state, runId, mask);
-  if (!p) return null;
-  const conquered = p.conquered && state.completion?.activityId === runId;
-  return {
-    percent: conquered ? 100 : Math.min(p.percent, 99.9),
-    remainingPercent: conquered ? 0 : p.remainingPercent,
-    addedPercent: p.addedPercent,
-    conquered,
-    ...(conquered ? { moves: state.applied.filter((a) => a.added > 0).length } : {}),
-  };
+  if (!p && !win) return null;
+  if (win) return { percent: 100, remainingPercent: 0, addedPercent: p?.addedPercent ?? 0, conquered: true, winKind: win.kind, moves: state.applied.filter((a) => a.added > 0).length };
+  return { percent: Math.min(p!.percent, 99.9), remainingPercent: p!.remainingPercent, addedPercent: p!.addedPercent, conquered: false };
 }
