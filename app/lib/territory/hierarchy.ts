@@ -138,3 +138,13 @@ export function contextLine(index: AreaIndex, id: string): string {
     .map((a) => a.name)
     .join(" · ");
 }
+
+/** Like contextLine, but each parent says what it is: "Dhaka District · Dhaka Division" (same-named levels stay clear). */
+export function placeLine(index: AreaIndex, id: string): string {
+  return index
+    .pathTo(id)
+    .slice(1, -1)
+    .reverse()
+    .map((a) => (a.type === "DISTRICT" || a.type === "DIVISION" ? `${a.name} ${AREA_TYPE_LABEL[a.type]}` : a.name))
+    .join(" · ");
+}

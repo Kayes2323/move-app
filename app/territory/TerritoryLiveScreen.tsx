@@ -66,7 +66,7 @@ export function TerritoryLiveScreen({ snapshot, activity, points, here, ...card 
     : lastAcc !== null && lastAcc > 25
       ? "Weak GPS. This stretch may not count."
       : inside === false
-        ? `You're outside ${def.name}. Only moving inside it counts.`
+        ? `You're outside your active Territory, ${def.name}. Moves here don't add Territory coverage.`
         : met
           ? "Requirement reached. Finish your move to claim the Territory."
           : gain > 0

@@ -23,13 +23,37 @@ const LEGACY_COVERAGE_VERSION = "territory-coverage/1";
 /** How many processed activities are remembered by id. Older ones are covered by `appliedLowWater`. */
 export const APPLIED_KEEP = 120;
 
-/** What the user chose. Only activities that START at or after `selectedAt` can ever count for it. */
+/**
+ * What the user chose. Only activities that START at or after `selectedAt` can ever count for it, and none that start while
+ * the area was not the user's active Territory (`gaps`: they switched to another Territory and later came back).
+ */
 export interface CoverageChoice {
   areaId: string;
   selectedAt: number;
   maskVersion: string;
   algorithmVersion: string;
   coverageVersion: string;
+  /** Periods when another Territory was active, flat: [from, to, from, to, ...] (ms). Firestore-safe, bounded (GAPS_KEEP). */
+  gaps?: readonly number[];
+}
+
+/** At most this many inactive periods are kept; older ones are merged into one (their activities were settled long before). */
+export const GAPS_KEEP = 40;
+
+/** Did an activity starting at `ms` start while this area was not the active Territory? */
+export function inGap(choice: CoverageChoice, ms: number): boolean {
+  const g = choice.gaps;
+  if (!g) return false;
+  for (let i = 0; i + 1 < g.length; i += 2) if (ms >= g[i] && ms < g[i + 1]) return true;
+  return false;
+}
+
+/** Records that the area was inactive from `from` to `to`. Pure; bounded. */
+export function withGap(choice: CoverageChoice, from: number, to: number): CoverageChoice {
+  if (!(to > from)) return choice;
+  let g = [...(choice.gaps ?? []), from, to];
+  while (g.length > GAPS_KEEP * 2) g = [g[0], g[3], ...g.slice(4)];
+  return { ...choice, gaps: g };
 }
 
 export interface AppliedActivity {
@@ -164,7 +188,7 @@ export function applyActivity(state: CoverageState, choice: CoverageChoice, scop
   const same = (status: ApplyStatus): ApplyOutcome => ({ state, added: 0, credits: 0, status });
   if (state.areaId !== choice.areaId || scope.areaId !== choice.areaId) return same("other-area");
   if (wasApplied(state, act)) return same("already-applied");
-  if (act.startMs < choice.selectedAt) return same("before-selection");
+  if (act.startMs < choice.selectedAt || inGap(choice, act.startMs)) return same("before-selection");
   const result = exploreActivity(choice, scope, act, config);
   if (!result) return same("not-counted");
 
@@ -185,7 +209,7 @@ export function applyActivity(state: CoverageState, choice: CoverageChoice, scop
 
 /** Counts activities into a (fresh) campaign only, e.g. after the King changed. Coverage is untouched. Pure and idempotent. */
 export function applyToCampaign(state: CoverageState, choice: CoverageChoice, scope: CellScope, act: CoverageActivity, config: ExplorationConfig = DEFAULT_EXPLORATION_CONFIG): CoverageState {
-  if (!state.campaign || act.startMs < state.campaign.startedAt || act.startMs < choice.selectedAt || state.campaign.applied.includes(act.id)) return state;
+  if (!state.campaign || act.startMs < state.campaign.startedAt || act.startMs < choice.selectedAt || inGap(choice, act.startMs) || state.campaign.applied.includes(act.id)) return state;
   const result = exploreActivity(choice, scope, act, config);
   if (!result) return { ...state, campaign: { ...state.campaign, applied: [...state.campaign.applied, act.id] } };
   return { ...state, campaign: creditCampaign(state.campaign, act, result.cells).campaign };
@@ -297,8 +321,9 @@ export function decodeRuns(flat: unknown): number[] | null {
 }
 
 /** What is saved in `users/{uid}.territory`. Size is bounded: cells by the mask, activity ids by APPLIED_KEEP. */
-export interface StoredCoverage extends CoverageChoice {
+export interface StoredCoverage extends Omit<CoverageChoice, "gaps"> {
   rulesVersion: string;
+  gaps?: number[];
   cells: number[];
   applied: { i: string; n: number; t: number }[];
   appliedLowWater?: number;
@@ -309,13 +334,15 @@ export interface StoredCoverage extends CoverageChoice {
 }
 
 export function encodeCoverage(choice: CoverageChoice, state: CoverageState): StoredCoverage {
+  const { gaps, ...rest } = choice;
   const out: StoredCoverage = {
-    ...choice,
+    ...rest,
     coverageVersion: COVERAGE_VERSION,
     rulesVersion: TERRITORY_RULES_VERSION,
     cells: encodeRuns(state.cells),
     applied: state.applied.map((a) => ({ i: a.id, n: a.added, t: a.atMs })),
   };
+  if (gaps?.length) out.gaps = [...gaps];
   if (state.appliedLowWater !== undefined) out.appliedLowWater = state.appliedLowWater;
   if (state.completion) out.completion = state.completion;
   if (state.campaign) {
@@ -342,6 +369,7 @@ export function parseStoredCoverage(raw: unknown): { choice: CoverageChoice; sta
   if (!o || typeof o !== "object" || typeof o.areaId !== "string" || !o.areaId) return null;
   if (!num(o.selectedAt) || typeof o.maskVersion !== "string") return null;
   const choice: CoverageChoice = { areaId: o.areaId, selectedAt: o.selectedAt, maskVersion: o.maskVersion, algorithmVersion: String(o.algorithmVersion ?? ""), coverageVersion: COVERAGE_VERSION };
+  if (Array.isArray(o.gaps) && o.gaps.length % 2 === 0 && o.gaps.every(num)) choice.gaps = o.gaps as number[];
 
   let cells: number[] | null = null;
   const applied: AppliedActivity[] = [];

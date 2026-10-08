@@ -9,6 +9,8 @@ export interface UserDoc {
   startCheckpointIndex?: number;
   runs?: RunEntry[];
   territory?: unknown;
+  territoryActive?: unknown;
+  territoryParked?: unknown;
   [key: string]: unknown;
 }
 

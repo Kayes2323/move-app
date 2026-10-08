@@ -3,6 +3,7 @@
 // It models what matters for these tests: nothing works while offline, transactions are atomic, and failures
 // (including "committed but the response was lost") can be injected through localStorage flags.
 type Json = Record<string, any>;
+const plain = (v: unknown): v is Json => v !== null && typeof v === "object" && !Array.isArray(v) && !(v as any).__op;
 const load = (): Json => { try { return JSON.parse(localStorage.getItem("__mock_db") || "{}"); } catch { return {}; } };
 const save = (d: Json) => localStorage.setItem("__mock_db", JSON.stringify(d));
 const flags = () => (localStorage.getItem("__mock_fail") || "").split(",");
@@ -20,23 +21,32 @@ export const collection = (_d: unknown, ...parts: string[]) => ({ path: parts.jo
 export const orderBy = (field: string, dir = "asc") => ({ t: "order", field, dir });
 export const limit = (n: number) => ({ t: "limit", n });
 export const query = (c: { path: string }, ...cs: any[]) => ({ path: c.path, cs });
-const apply = (cur: Json, data: Json) => {
+// `deep`: set(..., { merge: true }) merges nested maps like the real SDK (keys absent from `data` survive); update() and plain set() replace each field.
+const apply = (cur: Json, data: Json, deep = false): Json => {
   const out = { ...cur };
   for (const [k, v] of Object.entries(data)) {
     const op = (v as any)?.__op;
     if (op === "inc") out[k] = (out[k] || 0) + (v as any).n;
     else if (op === "union") { const a = out[k] || []; if (!a.some((x: unknown) => JSON.stringify(x) === JSON.stringify((v as any).v))) a.push((v as any).v); out[k] = a; }
     else if (op === "ts") out[k] = Date.now();
+    else if (op === "del") delete out[k];
+    else if (deep && plain(v) && plain(out[k])) out[k] = apply(out[k], v, true);
     else out[k] = v;
   }
   return out;
 };
+export const deleteField = () => ({ __op: "del" });
 // Like the real SDK: an array directly inside an array cannot be stored.
 const nested = (v: unknown): boolean => (Array.isArray(v) ? v.some((x) => Array.isArray(x) || nested(x)) : v !== null && typeof v === "object" && !(v as any).__op ? Object.values(v as Json).some(nested) : false);
-const check = (data: Json) => { if (nested(data)) throw Object.assign(new Error("Function setDoc() called with invalid data. Nested arrays are not supported."), { code: "invalid-argument" }); };
+// Like the real SDK (without ignoreUndefinedProperties): undefined is not a storable value.
+const undef = (v: unknown): boolean => v === undefined || (Array.isArray(v) ? v.some(undef) : plain(v) ? Object.values(v).some(undef) : false);
+const check = (data: Json) => {
+  if (nested(data)) throw Object.assign(new Error("Function setDoc() called with invalid data. Nested arrays are not supported."), { code: "invalid-argument" });
+  if (undef(data)) throw Object.assign(new Error("Function setDoc() called with invalid data. Unsupported field value: undefined"), { code: "invalid-argument" });
+};
 const snap = (path: string, d: Json | undefined) => ({ id: path.split("/").pop(), exists: () => !!d, data: () => d });
 export const getDoc = async (r: Ref) => { gate("getDoc"); return snap(r.path, load()[r.path]); };
-export const setDoc = async (r: Ref, data: Json, o?: { merge?: boolean }) => { gate("setDoc"); check(data); const db = load(); db[r.path] = apply(o?.merge ? db[r.path] || {} : {}, data); save(db); };
+export const setDoc = async (r: Ref, data: Json, o?: { merge?: boolean }) => { gate("setDoc"); check(data); const db = load(); db[r.path] = apply(o?.merge ? db[r.path] || {} : {}, data, Boolean(o?.merge)); save(db); };
 export const updateDoc = async (r: Ref, data: Json) => { gate("updateDoc"); check(data); const db = load(); if (!db[r.path]) throw new Error("not-found"); db[r.path] = apply(db[r.path], data); save(db); };
 export const writeBatch = (_d: unknown) => {
   const ops: { r: Ref; data: Json }[] = [];
@@ -60,7 +70,7 @@ export const runTransaction = async <T,>(_d: unknown, fn: (tx: any) => Promise<T
     if ([...reads].some(([path, before]) => JSON.stringify(fresh[path] ?? null) !== before)) continue;
     for (const w of writes) {
       if (w.update && !fresh[w.r.path]) throw new Error("not-found");
-      fresh[w.r.path] = apply(w.update || w.merge ? fresh[w.r.path] || {} : {}, w.data);
+      fresh[w.r.path] = apply(w.update || w.merge ? fresh[w.r.path] || {} : {}, w.data, Boolean(w.merge));
     }
     save(fresh);
     if (flags().includes("lose_ack")) throw Object.assign(new Error("response lost after commit"), { code: "unavailable" }); // committed, but the client never hears

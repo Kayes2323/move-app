@@ -59,7 +59,8 @@ const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline
   return { ctx, pg };
 };
 
-const text = (pg) => pg.locator("body").innerText();
+// the page's text, plus the progress ring's spoken label ("12.3% conquered"), which is drawn rather than written
+const text = async (pg) => [await pg.locator("body").innerText(), ...(await pg.locator("[data-progress]").evaluateAll((els) => els.map((e) => e.getAttribute("data-progress"))))].join("\n");
 const bigKm = (t) => parseFloat((t.match(/(\d+\.\d+)km/) || [])[1]);
 const secondsOf = (t) => { const m = t.match(/time\s+(\d+):(\d{2})/i); return m ? Number(m[1]) * 60 + Number(m[2]) : NaN; };
 const dbOf = (pg) => pg.evaluate(() => JSON.parse(localStorage.getItem("__mock_db") || "{}"));
@@ -119,6 +120,16 @@ const until = async (fn, ms = 10000) => {
     await new Promise((r) => setTimeout(r, 150));
   }
   return false;
+};
+
+/** Opens the Territory picker (from the first-time screen or the Change button), searches, picks and confirms. */
+const chooseArea = async (pg, name, { confirm = true } = {}) => {
+  const open = pg.getByRole("button", { name: /^(Choose Territory|Change Territory)$/ }).first();
+  await open.click();
+  await pg.getByLabel("Search areas").fill(name);
+  await pg.getByRole("dialog", { name: "Choose Territory" }).getByRole("button", { name: new RegExp(`^${name},`) }).first().click();
+  await pg.getByRole("alertdialog").waitFor({ timeout: 10000 });
+  if (confirm) await pg.getByRole("alertdialog").getByRole("button", { name: /^(Choose Territory|Change Territory)$/ }).click();
 };
 
 /* ---------- scenarios ---------- */
@@ -386,47 +397,6 @@ async function scenarioBackgroundFinish() {
 }
 
 async function scenarioTerritory() {
-  // Territory Phase 1: browsing and selecting areas. Taps are tied to the 390x800 viewport the harness uses.
-  const s = await fresh();
-  const { pg } = s;
-  const title = () => pg.locator("h1").innerText();
-  const crumbs = async () => (await pg.locator("nav[aria-label='Where you are']").innerText()).replace(/\s+/g, " ");
-  const tap = async (x, y) => { await pg.mouse.click(x, y); await pg.waitForTimeout(2300); };
-  // Labels let clicks through to the polygon underneath, so tapping a label's centre taps that area.
-  const tapLabel = async (name) => {
-    const box = await pg.locator(".leaflet-tooltip", { hasText: new RegExp(`^${name}$`) }).first().boundingBox();
-    await tap(box.x + box.width / 2, box.y + box.height / 2);
-  };
-  await pg.goto(`${BASE}/territory/areas`);
-  await pg.waitForSelector("text=Select this area", { timeout: 30000 });
-  await pg.waitForTimeout(2200);
-  check("T1. opens on Bangladesh with 8 divisions", (await title()) === "Bangladesh" && /8 divisions/.test(await text(pg)));
-  await tapLabel("Dhaka");
-  check("T2. tapping Dhaka opens the Dhaka division", (await title()) === "Dhaka" && (await crumbs()) === "Bangladesh Dhaka", await crumbs());
-  await tapLabel("Dhaka");
-  check("T3. tapping Dhaka opens the district, with upazilas and local areas separate", /5 upazilas/.test(await text(pg)) && /42 local areas/.test(await text(pg)), await crumbs());
-  await pg.mouse.move(250, 300);
-  for (let i = 0; i < 3; i++) { await pg.mouse.wheel(0, -300); await pg.waitForTimeout(350); }
-  await pg.waitForTimeout(1500);
-  check("T4. zooming in labels the local areas", /Mohammadpur/.test(await pg.locator(".leaflet-tooltip").allInnerTexts().then((t) => t.join(" "))));
-  await pg.getByRole("button", { name: "Select this area" }).click();
-  await pg.waitForTimeout(400);
-  check("T5. selecting makes the district the active area and saves it on this phone", /Active area/.test(await text(pg)) && (await pg.evaluate(() => localStorage.getItem("move.territory.selection"))) === '{"v":1,"active":"bd-dis-dhaka"}');
-  await pg.getByRole("button", { name: /^Up to/ }).click();
-  await pg.waitForTimeout(1800);
-  check("T6. going up keeps the active area and shows it", (await title()) === "Dhaka" && /Active: Dhaka/.test(await text(pg)) && (await crumbs()) === "Bangladesh Dhaka", await crumbs());
-  await pg.reload();
-  await pg.waitForSelector("text=Active area", { timeout: 30000 });
-  check("T7. after a reload the map reopens on the active area", (await crumbs()) === "Bangladesh Dhaka Dhaka", await crumbs());
-  await pg.getByRole("button", { name: "Clear" }).click();
-  check("T8. clearing removes the saved selection", (await pg.evaluate(() => localStorage.getItem("move.territory.selection"))) === null);
-  await pg.evaluate(() => localStorage.setItem("move.territory.selection", '{"v":1,"active":"bd-dis-atlantis"}'));
-  await pg.reload();
-  await pg.waitForSelector("text=Select this area", { timeout: 30000 });
-  check("T9. a saved area that no longer exists is ignored", (await title()) === "Bangladesh");
-  check("T10. no uncaught page errors on the territory screen", pg.errors.length === 0, pg.errors.join(" | ").slice(0, 200));
-  await s.ctx.close();
-
   // navigation: Territory is a tab where Ranks used to be, and the leaderboard is still reachable from Profile
   const n = await fresh();
   await n.pg.goto(`${BASE}/`);
@@ -434,7 +404,7 @@ async function scenarioTerritory() {
   const navText = (await n.pg.locator("nav[aria-label='Main']").innerText()).replace(/\s+/g, " ");
   check("T12. main navigation is Home, Journeys, Territory, Profile (no Ranks, no fifth tab)", navText === "Home Journeys Territory Profile", navText);
   await n.pg.locator("nav[aria-label='Main'] a", { hasText: "Territory" }).click();
-  await n.pg.waitForSelector("text=Your next Territory", { timeout: 30000 });
+  await n.pg.waitForSelector("text=Choose a place to explore", { timeout: 30000 });
   check("T13. the Territory tab opens the Territory hub and is marked current", (await n.pg.locator("nav[aria-label='Main'] a[aria-current=page]").innerText()) === "Territory");
   await n.pg.goto(`${BASE}/profile`);
   await n.pg.waitForSelector("text=Personal records", { timeout: 15000 });
@@ -452,7 +422,7 @@ async function scenarioTerritory() {
   // the geographic data failing must show a retry screen, not a blank map
   const f = await fresh();
   await f.pg.route("**/geo/bd/index.json", (r) => r.abort());
-  await f.pg.goto(`${BASE}/territory/areas`);
+  await f.pg.goto(`${BASE}/territory`);
   await f.pg.waitForSelector("text=Try again", { timeout: 20000 }).then(() => check("T11. missing map data shows a retry screen", true)).catch(() => check("T11. missing map data", false));
   await f.ctx.close();
 }
@@ -481,17 +451,128 @@ const ap = (i, n, t) => ({ i, n, t });
 const stored = (over = {}) => ({ areaId: "bd-upa-dhaka-mohammadpur", selectedAt: Date.now() - 5 * 86400000, maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", coverageVersion: "territory-coverage/2", rulesVersion: "territory-rules/1", cells: [], applied: [], ...over });
 const TRACK = (id) => `users/u1/activities/${id}/tracks/0`;
 
+/* ---------- the active Territory: chosen by the user, switchable, never defaulted, progress and ownership preserved ---------- */
+async function scenarioSwitch() {
+  const MOH = "bd-upa-dhaka-mohammadpur";
+  const CHP = "bd-upa-chandpur-chandpur-sadar";
+  const day = 86400000;
+  const now = Date.now();
+  const kingDoc = (uid, name, reign, startedAt) => ({ areaId: MOH, name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: reign === 1 ? "conquest" : "takeover", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion });
+  const hubText = async (pg) => { await pg.waitForTimeout(600); return text(pg); };
+  const ready = (pg, sel) => pg.waitForSelector(sel, { timeout: 30000 });
+
+  // W1-W4: a new user, Chandpur, refresh, and back to Mohammadpur, all from the Territory screen
+  {
+    const s = await fresh();
+    await s.pg.goto(`${BASE}/territory`);
+    await ready(s.pg, "text=Choose a place to explore");
+    check("W1. a new user is not given Mohammadpur: a Choose Territory screen, nothing saved", !/Mohammadpur/i.test(await text(s.pg)) && !(await dbOf(s.pg))["users/u1"].territoryActive);
+    // browse the real hierarchy: Chittagong division > Chandpur district > Chandpur Sadar
+    await s.pg.getByRole("button", { name: "Choose Territory" }).click();
+    const dlg = s.pg.getByRole("dialog", { name: "Choose Territory" });
+    await dlg.getByRole("button", { name: /^Chittagong/ }).click();
+    await dlg.getByRole("button", { name: /^Chandpur\s/ }).click();
+    await dlg.getByRole("button", { name: /^Chandpur Sadar,/ }).click();
+    const confirmText = await s.pg.getByRole("alertdialog").innerText();
+    check("W2a. browsing Division > District > Upazila reaches Chandpur Sadar, and the confirm step says it is not open yet", /Chandpur Sadar/.test(confirmText) && /not open yet/i.test(confirmText) && /won't count yet/.test(confirmText), confirmText.replace(/\s+/g, " ").slice(0, 200));
+    await s.pg.getByRole("alertdialog").getByRole("button", { name: "Choose Territory" }).click();
+    await ready(s.pg, "text=isn't open for Territory yet");
+    const t = await hubText(s.pg);
+    const db1 = await dbOf(s.pg);
+    check("W2. choosing Chandpur Sadar: the Territory screen shows Chandpur Sadar, saved with the account", /CHANDPUR SADAR/i.test(t) && !/Mohammadpur/i.test(t) && db1["users/u1"].territoryActive?.areaId === CHP && db1["users/u1"].territory === null, t.slice(0, 200));
+    await s.pg.reload();
+    await ready(s.pg, "text=isn't open for Territory yet");
+    check("W3. after a refresh Chandpur Sadar is still the active Territory", /CHANDPUR SADAR/i.test(await hubText(s.pg)));
+    check("W9. Change Territory is on the Territory screen itself", (await s.pg.getByRole("button", { name: "Change Territory" }).count()) >= 1);
+    await chooseArea(s.pg, "Mohammadpur");
+    await ready(s.pg, "text=Start exploring");
+    const db2 = await dbOf(s.pg);
+    check("W4. changing Chandpur Sadar to Mohammadpur makes Mohammadpur active and starts it empty from now", db2["users/u1"].territoryActive?.areaId === MOH && db2["users/u1"].territory?.areaId === MOH && db2["users/u1"].territory.cells.length === 0 && db2["users/u1"].territory.selectedAt >= now, JSON.stringify(db2["users/u1"].territoryActive));
+    check("W4b. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // W5-W7: the King of Mohammadpur goes to Chandpur and comes back: crown, cells and history intact, nothing back-filled
+  {
+    const reignStart = now - 8 * day;
+    const db = baseDb();
+    db["users/u1"].territory = stored({ selectedAt: now - 10 * day, cells: runsOf(ELIGIBLE.slice(0, 3200)), applied: [ap("r0", 3200, now - 9 * day)], wins: [{ reign: 1, kind: "conquest", activityId: "r0", atMs: reignStart }], claim: { areaId: MOH, reign: 1, kind: "conquest", explored: 3200, credits: 0, campaignStartedAt: now - 10 * day, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", at: reignStart } });
+    db[`territories/${MOH}`] = kingDoc("u1", "Rafi", 1, reignStart);
+    // a walk along a new Mohammadpur street that will happen while Chandpur is active
+    db["users/u1"].runs = [];
+    const s = await fresh({ db });
+    await s.ctx.addInitScript(() => localStorage.setItem("move.territory.celebrated.u1.bd-upa-dhaka-mohammadpur.1", "1"));
+    await s.pg.goto(`${BASE}/territory`);
+    await ready(s.pg, "text=Share your Territory");
+    const before = await dbOf(s.pg);
+    const ownBefore = JSON.stringify(before[`territories/${MOH}`]);
+    const cellsBefore = JSON.stringify(before["users/u1"].territory.cells);
+    await chooseArea(s.pg, "Chandpur Sadar", { confirm: false });
+    const sheet = await s.pg.getByRole("alertdialog").innerText();
+    check("W5a. the confirm step promises Mohammadpur stays safe and that you stay King", /progress in Mohammadpur stays safe/i.test(sheet) && /stay King of Mohammadpur/i.test(sheet), sheet.replace(/\s+/g, " ").slice(0, 200));
+    await s.pg.getByRole("alertdialog").getByRole("button", { name: "Change Territory" }).click();
+    await ready(s.pg, "text=isn't open for Territory yet");
+    const mid = await dbOf(s.pg);
+    const parked = mid["users/u1"].territoryParked?.[MOH];
+    check("W5. switching away keeps you King of Mohammadpur: ownership untouched, no new reign or event", JSON.stringify(mid[`territories/${MOH}`]) === ownBefore && !mid[`territories/${MOH}/events/2`] && !Object.keys(mid).some((k) => k.startsWith(`territories/${CHP}`)));
+    check("W6. Mohammadpur's progress is kept intact while Chandpur is active: cells, wins, claim", parked && JSON.stringify(parked.cells) === cellsBefore && parked.wins?.[0]?.reign === 1 && parked.claim?.reign === 1 && parked.parkedAt > 0);
+
+    // while away: a walk on a new Mohammadpur street (it must never count for Mohammadpur)
+    const awayStart = Date.now() + 1000;
+    const after = await s.pg.evaluate(([track, run, chunk]) => { const d = JSON.parse(localStorage.getItem("__mock_db")); d[track] = chunk; d["users/u1"].runs = [run]; localStorage.setItem("__mock_db", JSON.stringify(d)); return true; }, [TRACK("away"), { id: "away", km: 2, duration: "05:00", date: new Date(awayStart + 300000).toISOString(), activity: "walking" }, streetChunk(3, awayStart)]);
+    await shift(s.pg, 600000);
+    await s.pg.reload();
+    await ready(s.pg, "text=isn't open for Territory yet");
+    check("W8a. a walk while Chandpur Sadar is active adds nothing anywhere (Chandpur is not open; Mohammadpur is parked)", after && JSON.stringify((await dbOf(s.pg))["users/u1"].territoryParked[MOH].cells) === cellsBefore);
+    await chooseArea(s.pg, "Mohammadpur");
+    await ready(s.pg, "text=Share your Territory");
+    const back = await dbOf(s.pg);
+    const t = await hubText(s.pg);
+    check("W7. returning to Mohammadpur: still King, the same explored ground, the time away recorded", /Your Territory/i.test(t) && /You are King/i.test(t) && JSON.stringify(back["users/u1"].territory.cells) === cellsBefore && back["users/u1"].territory.gaps?.length === 2 && !back["users/u1"].territoryParked?.[MOH], JSON.stringify(back["users/u1"].territory.gaps));
+    check("W8. no back-fill: the walk made while Chandpur was active was not counted for Mohammadpur", !back["users/u1"].territory.applied.some((a) => a.i === "away"));
+    check("W8b. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // W10: a move in progress: the Territory cannot be changed under it
+  {
+    const db = baseDb();
+    db["users/u1"].territory = stored();
+    const s = await fresh({ db });
+    await start(s.pg);
+    await walk(s.pg, 5);
+    await s.pg.goto(`${BASE}/territory`);
+    await ready(s.pg, "text=Start exploring");
+    await chooseArea(s.pg, "Chandpur Sadar", { confirm: false });
+    const sheet = await s.pg.getByRole("alertdialog").innerText();
+    check("W10. during a move, changing Territory is blocked: finish or discard it first", /Finish your move first/i.test(sheet) && (await s.pg.getByRole("alertdialog").getByRole("button", { name: "Change Territory" }).count()) === 0 && !(await dbOf(s.pg))["users/u1"].territoryActive, sheet.replace(/\s+/g, " ").slice(0, 160));
+    await s.ctx.close();
+  }
+
+  // W11-W12: search, and old links to the area map
+  {
+    const s = await fresh();
+    await s.pg.goto(`${BASE}/territory/areas`);
+    await ready(s.pg, "role=dialog[name='Choose Territory']");
+    check("W11. the old area map link opens the Territory picker", /\/territory\?choose=1$/.test(s.pg.url()));
+    await s.pg.getByLabel("Search areas").fill("hajig");
+    const res = await s.pg.getByRole("dialog", { name: "Choose Territory" }).innerText();
+    check("W12. search finds real places by name, with their district and division", /Hajiganj/.test(res) && /Chandpur District/.test(res) && /Chittagong Division/.test(res));
+    await s.ctx.close();
+  }
+}
+
 async function scenarioConquest() {
   // Territory is geographic coverage: only new eligible ground inside Mohammadpur counts, never distance.
   const a = await fresh();
   await a.pg.goto(`${BASE}/territory`);
-  await a.pg.waitForSelector("text=Choose Mohammadpur", { timeout: 30000 });
+  await a.pg.waitForSelector("text=Choose a place to explore", { timeout: 30000 });
   const t0 = await text(a.pg);
-  check("C1. start screen shows MOHAMMADPUR and 0% conquered, with no distance target", /Mohammadpur/i.test(t0) && /0% conquered/.test(t0) && !/to conquer/.test(t0));
-  await a.pg.getByRole("button", { name: "Choose Mohammadpur" }).click();
+  check("C1. a new user is asked to choose a Territory: no Mohammadpur, no percentage, no distance target", !/Mohammadpur/i.test(t0) && !/% conquered/i.test(t0) && !/to conquer/.test(t0) && !(await dbOf(a.pg))["users/u1"].territory, t0.slice(0, 160));
+  await chooseArea(a.pg, "Mohammadpur");
   await a.pg.waitForSelector("text=Start exploring", { timeout: 15000 });
   const saved = (await dbOf(a.pg))["users/u1"].territory;
-  check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cells.length === 0 && saved.applied.length === 0, JSON.stringify(saved).slice(0, 200));
+  check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cells.length === 0 && saved.applied.length === 0 && (await dbOf(a.pg))["users/u1"].territoryActive?.areaId === "bd-upa-dhaka-mohammadpur", JSON.stringify(saved).slice(0, 200));
   check("C3. START EXPLORING opens the Territory run", (await a.pg.getByRole("link", { name: /start exploring/i }).getAttribute("href")) === "/run?territory=1");
   check("C4. no uncaught page errors on the hub", a.pg.errors.length === 0, a.pg.errors.join(" | ").slice(0, 200));
   await a.ctx.close();
@@ -896,7 +977,7 @@ async function scenarioLiveTerritory() {
   await far.pg.waitForSelector("text=CONQUERED", { timeout: 20000 });
   for (const [la, ln] of route(23.2476, 90.8477, 23.2576, 90.8477)) await emitAt(far.pg, la, ln);
   const ft = await text(far.pg);
-  check("L8. moving far away leaves 0.0% and says it is outside Mohammadpur", /0\.0% CONQUERED/.test(ft) && /outside Mohammadpur/i.test(ft), ft.slice(0, 240));
+  check("L8. moving far away leaves 0.0% and says it is outside the active Territory", /0\.0% CONQUERED/.test(ft) && /outside your active Territory, Mohammadpur/i.test(ft), ft.slice(0, 240));
   await far.ctx.close();
 }
 
@@ -989,7 +1070,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

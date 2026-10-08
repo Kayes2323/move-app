@@ -17,7 +17,7 @@ import {
 import { loadHistory, type UserDoc } from "../lib/history";
 import { loadTrack } from "../lib/trackLoader";
 import type { TrackPoint } from "../lib/tracking/types";
-import { loadTerritory, type TerritorySnapshot } from "../lib/territoryState";
+import { loadTerritory, territoryForActivity, type TerritorySnapshot } from "../lib/territoryState";
 import { availableModes, decideShareMode, SHARE_MODES, SHARE_MODE_LABEL, territoryFactsAt, territoryNowFacts } from "../lib/share/context";
 import type { ShareMode } from "../lib/share/cardLayout";
 
@@ -77,10 +77,14 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
             if (cancelled) return;
             const all = h.runs;
             const serverRuns = h.user.runs ?? [];
-            const snap = await loadTerritory(fu.uid, h.user, all).catch((err) => {
+            let snap = await loadTerritory(fu.uid, h.user, all).catch((err) => {
               console.warn("Territory not available", err);
               return null;
             });
+            // an older move that counted for a Territory the user has since switched away from keeps its Territory card
+            const asked = activityId ?? new URLSearchParams(window.location.search).get("a");
+            const has = (t: TerritorySnapshot | null, id: string) => Boolean(t && (t.state.applied.some((a) => a.id === id) || t.state.wins?.some((w) => w.activityId === id)));
+            if (asked && !has(snap, asked)) snap = (await territoryForActivity(fu.uid, h.user, asked).catch(() => null)) ?? snap;
             setUid(fu.uid);
             setPendingIds(h.pendingIds);
             setUser({ ...h.user, runs: all });

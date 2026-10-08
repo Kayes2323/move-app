@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseIndexFile } from "./data";
-import { buildIndex, contextLine, TerritoryDataError, validateAreas } from "./hierarchy";
+import { buildIndex, contextLine, placeLine, TerritoryDataError, validateAreas } from "./hierarchy";
 import { area, readChunk, realFile, tiny } from "./fixtures";
 import type { AreaType } from "./types";
 
@@ -31,6 +31,7 @@ test("each level can be reached and walked back up (country, division, district,
   assert.equal(moh?.type, "LOCAL_AREA");
   assert.deepEqual(idx.pathTo(moh!.id).map((a) => a.name), ["Bangladesh", "Dhaka", "Dhaka", "Mohammadpur"]);
   assert.equal(contextLine(idx, moh!.id), "Dhaka · Dhaka");
+  assert.equal(placeLine(idx, moh!.id), "Dhaka District · Dhaka Division");
 });
 
 test("Dhaka's local areas are not upazilas, while same-named upazilas elsewhere stay upazilas", () => {

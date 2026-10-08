@@ -48,8 +48,22 @@ Firestore-safe (no arrays inside arrays) and bounded:
 | `app/lib/territoryState.ts` | the adapter: tracks in, coverage + ownership out, claim transaction |
 | `app/territory/` | hub, King card, celebration, live screen and map, emblem |
 
+## Active Territory (which area counts) — `app/lib/territory/active.ts`
+* **Chosen, never assumed.** The active Territory is the area the user picked, saved with their account in `users/{uid}.territoryActive = { areaId, at }`. There is no default area: a user who never chose sees "Choose Territory". Not GPS, not the Journey route (the "Chandpur" shown on Home is the Journey's virtual route, `currentRoute`), never Mohammadpur by default. Accounts from before this field existed keep the area of their saved coverage (they chose it then). A regression test fails if any screen references the Mohammadpur id.
+* **Which areas.** Upazilas and Dhaka city thanas (ADM3) from the real hierarchy (`public/geo/bd/index.json`). An area is **open** when its streets are mapped (an eligibility mask + registry entry): Mohammadpur only, for now. Any other area can be chosen; its screen says it isn't open yet and nothing counts there until it opens (then it starts empty from that moment).
+* **Switching** (`setActiveTerritory`, one Firestore transaction on the user's own document, `update()` so maps are replaced, not merged):
+  * the area that was active is parked whole in `territoryParked.{areaId}` (cells, applied activities, campaign, wins, claim) with `parkedAt`;
+  * an area played before resumes exactly as it was, and the time away is added to its `gaps` ([from, to, ...], flat, at most 40 periods): activities that started in a gap never count for it (no back-fill), while takeover credits earned before are kept;
+  * a new open area starts empty with `selectedAt = now`;
+  * blocked while a move is recording or unfinished on the phone ("Finish your move first"), so a move always counts where it started;
+  * **ownership is never touched**: `territories/*` is not read or written by a switch. A King who switches away stays King; nothing is reset, no event is created.
+* Only the active area is ever brought up to date (`loadTerritory` returns nothing for a parked area). Share cards for older moves read the parked area read-only.
+* Offline: the hub needs the account copy to know the active area and says so instead of guessing.
+
 ## Screens
-* `/territory`: states unclaimed / exploring / King / challenger ("Take over") / former King ("Reclaim territory"), King card, emblem with explored ground (no grid), progress, offline/pending notices.
+* `/territory` hub: hero map (real boundary, outside dimmed, own explored ground as light, "you" dot only if location permission was already granted), area name with District · Division, **Change** button, one progress ring (conquered / to take over / to reclaim / King), one primary action, the King card, two stats, and a short "How Territory works". States: first time (Choose Territory), not open yet, unconquered, King, challenger (Take over), former King (Reclaim territory). Compact chips for pending sync, Kings unavailable, and current location vs active Territory ("You're in X · outside your Territory").
+* Territory picker (opens from the hub; `/territory/areas` and `/territory?choose=1` open it): search, "Use my current location" (asks only when tapped, resolves the area from real boundaries, stores nothing), your Territories with % and crown, open areas, and Division → District → Upazila browsing. Every choice is confirmed: progress elsewhere stays safe, moves from now count toward the new area, and whether it is open.
+
 * `/run?territory=1`: live %, separate "Distance" and "New Territory" chips, explored ground on the map, notes for outside / weak GPS / cycling.
 * Celebration once per reign (conquest or takeover), then the Territory share card ("TERRITORY CONQUERED · KING" / "TERRITORY TAKEN · NEW KING").
 
@@ -57,4 +71,4 @@ Firestore-safe (no arrays inside arrays) and bounded:
 GPS quality in dense lanes, background GPS when the screen locks (browsers pause it; native build helps), the 80% threshold against real walks, and multi-user takeovers on production Firestore after the rules are published.
 
 ## Tests
-`npm test` (`coverage/coverage.test.ts`, `coverage/ownership.test.ts` use the real mask), `npm run e2e` (conquest, liveTerritory, share, and the King/takeover/reclaim/race scenarios).
+`npm test` (`coverage/coverage.test.ts`, `coverage/ownership.test.ts` use the real mask), `npm run e2e` (conquest, liveTerritory, share, switching, and the King/takeover/reclaim/race scenarios).
