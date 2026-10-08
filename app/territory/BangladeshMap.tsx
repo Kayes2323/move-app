@@ -180,11 +180,13 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
           const m = mapRef.current;
           if (!m) return;
           const placed: [number, number, number, number][] = [];
+          // a handful of names (the 8 divisions, a division's districts) is always shown in full: none may go missing
+          const few = labels.length <= 16;
           for (const it of [...labels].sort((x, y) => y.rank - x.rank)) {
             it.shape.unbindTooltip();
             it.anchor.unbindTooltip();
             let show = labelled && it.area.id !== focus.id && m.getZoom() >= DETAIL_MIN_ZOOM[it.area.type] - 2.5;
-            if (show) {
+            if (show && !few) {
               const p = m.latLngToContainerPoint([it.area.center.lat, it.area.center.lng]);
               const w = it.label.length * 7.4 + 18;
               const box: [number, number, number, number] = [p.x - w / 2 - 2, p.y - 13, p.x + w / 2 + 2, p.y + 13];

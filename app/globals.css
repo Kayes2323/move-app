@@ -424,7 +424,7 @@ a {
 .terr-top { position: absolute; z-index: 500; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 0; }
 .glass { background: color-mix(in srgb, var(--bg) 78%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
 .pill { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 18px; font: 800 11px "Archivo", sans-serif; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink); }
-button.pill { cursor: pointer; letter-spacing: .3px; text-transform: none; font-size: 13px; }
+.pill.pill-btn { cursor: pointer; letter-spacing: .3px; text-transform: none; font-size: 13px; }
 .terr-title { position: absolute; z-index: 500; left: 20px; right: 20px; bottom: 18px; }
 .terr-name { font-family: "Archivo Black", "Archivo", sans-serif; font-size: clamp(30px, 9.5vw, 44px); line-height: 1; letter-spacing: -0.01em; text-transform: uppercase; overflow-wrap: anywhere; }
 .stand { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 14px; font: 800 10.5px "Archivo", sans-serif; letter-spacing: 1.3px; text-transform: uppercase; }
