@@ -1,3 +1,4 @@
+import { modeOf } from "../activityMode";
 import type { ActivityStore } from "./store";
 import type { LocalActivity, TrackPoint } from "./types";
 
@@ -69,6 +70,8 @@ export function legacyRun(a: LocalActivity) {
     date: s.date,
     routeName: a.journey?.routeName ?? null,
     journeyKm: s.journeyKm,
+    mode: modeOf(a),
+    territoryAreaId: a.territory?.areaId ?? null,
   };
 }
 
@@ -86,8 +89,9 @@ export function applyActivityToUser(user: Record<string, unknown>, a: LocalActiv
     totalKm: round2(((user.totalKm as number) ?? 0) + s.km),
     streak: nextStreak((user.streak as number) ?? 0, user.lastRun as string | undefined, a.endedAt ?? Date.parse(s.date)),
   };
-  // Journey progress only counts for the journey the activity was tracked on, even if it syncs much later.
-  const sameJourney = !a.journey || (user.currentRoute === a.journey.routeName && ((user.startCheckpointIndex as number) ?? 0) === a.journey.startIdx);
+  // Journey progress is only advanced by a move that was started to follow that Journey, and only for the journey it was tracked on,
+  // even if it syncs much later. A Territory or free move never moves a Journey.
+  const sameJourney = modeOf(a) === "JOURNEY" && !!a.journey && user.currentRoute === a.journey.routeName && ((user.startCheckpointIndex as number) ?? 0) === a.journey.startIdx;
   if (sameJourney) updates.completedKm = round2(((user.completedKm as number) ?? 0) + s.km);
   const lastRun = user.lastRun ? Date.parse(user.lastRun as string) : NaN;
   if (!(lastRun >= Date.parse(s.date))) updates.lastRun = s.date;
@@ -207,6 +211,8 @@ export async function createFirestoreBackend(): Promise<SyncBackend> {
           journeyKm: s.journeyKm,
           routeName: a.journey?.routeName ?? null,
           journeyStartIdx: a.journey?.startIdx ?? null,
+          mode: modeOf(a),
+          territoryAreaId: a.territory?.areaId ?? null,
           pointCount: points.length,
           trackChunks: chunks.length,
           gaps: a.gaps,

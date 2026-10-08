@@ -225,7 +225,7 @@ export default function TerritoryHub() {
             <p className="body mute" style={{ marginTop: 8 }}>Territory is mapped street by street. {active.name}&apos;s streets aren&apos;t mapped yet, so moves here don&apos;t count toward it yet. Your other progress is safe.</p>
           </div>
           <Link href="/territory" className="btn btn-go" style={{ marginTop: 18 }}>Change Territory</Link>
-          <Link href="/run" className="btn btn-line" style={{ marginTop: 10 }}>Start a normal move</Link>
+          <Link href="/run?mode=normal" className="btn btn-line" style={{ marginTop: 10 }}>Start a free move</Link>
         </section>
         <BottomNav active="territory" />
       </main>
@@ -291,10 +291,10 @@ export default function TerritoryHub() {
         {king ? (
           <>
             <Link href={shareHref(myWin?.activityId)} className="btn btn-go" style={{ marginTop: 22 }}>Share your Territory</Link>
-            <Link href="/run?territory=1" className="btn btn-line" style={{ marginTop: 10 }}>Keep exploring</Link>
+            <Link href="/run?mode=territory" className="btn btn-line" style={{ marginTop: 10 }}>Keep exploring</Link>
           </>
         ) : (
-          <Link href="/run?territory=1" className="btn btn-go" style={{ marginTop: 22 }}>
+          <Link href="/run?mode=territory" className="btn btn-go" style={{ marginTop: 22 }}>
             <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
             {st === "former-king" ? "Reclaim territory" : st === "challenger" ? "Take over" : "Start exploring"}
           </Link>

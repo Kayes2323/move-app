@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LiveRouteCard, type GpsStatus } from "../components/LiveRouteCard";
 import { TerritoryLiveScreen } from "../territory/TerritoryLiveScreen";
+import { StartMovingSheet } from "../components/StartMovingSheet";
+import { modeOf, parseMode, runHref, MODE_LABEL, type ActivityMode } from "../lib/activityMode";
+import { journeyOf } from "../lib/journey";
+import { startDestination } from "../lib/startMoving";
+import { isOpenArea, openAreaName } from "../lib/territory/open";
+import { resolveActiveId } from "../lib/territory/activeId";
 import { loadHistory } from "../lib/history";
 import { loadTerritory, type TerritorySnapshot } from "../lib/territoryState";
 import { ShareScreen } from "../components/ShareScreen";
@@ -10,11 +17,7 @@ import { findRoute, formatClock, journeyOffsetKm, type ActivityKind } from "../l
 import { checkLocationAccess, isNativeApp, type LocationAccess } from "../lib/tracking/location";
 import { useTracking } from "../lib/tracking/useTracking";
 
-interface Journey {
-  routeName: string;
-  completedKm: number;
-  startIdx: number;
-}
+import type { Journey } from "../lib/journey";
 
 const EXPLAINED_KEY = "move.locationExplained";
 
@@ -33,6 +36,23 @@ const ACTIVITIES = [
   },
 ];
 
+const MoveHeader = ({ lab, title }: { lab: string; title: string }) => (
+  <div style={{ marginTop: 10 }}>
+    <p className="lab" style={{ color: "var(--acc-text)" }}>{lab}</p>
+    <p className="h2" style={{ marginTop: 4 }}>{title}</p>
+  </div>
+);
+
+const MoveVisual = ({ icon, title, text }: { icon: string; title: string; text: string }) => (
+  <div role="status" style={{ textAlign: "center", padding: 24 }}>
+    <span aria-hidden="true" style={{ fontSize: 44, lineHeight: 1 }}>{icon}</span>
+    <p className="h2" style={{ marginTop: 10 }}>{title}</p>
+    <p className="body mute" style={{ marginTop: 6, maxWidth: 260, marginInline: "auto" }}>{text}</p>
+  </div>
+);
+
+const subscribeNever = () => () => {};
+
 const noun = (k: ActivityKind) => (k === "cycling" ? "ride" : k === "walking" ? "walk" : "run");
 
 export default function RunPage() {
@@ -44,24 +64,40 @@ export default function RunPage() {
   const [uid, setUid] = useState<string | null>(null);
   const [weight, setWeight] = useState(70);
   const [journey, setJourney] = useState<Journey | null>(null);
+  // The Territory the user chose (their own saved choice; none until they pick one), and whether the profile has been read yet.
+  const [territoryId, setTerritoryId] = useState<string | null>(null);
+  const [profileReady, setProfileReady] = useState(false);
   const [access, setAccess] = useState<LocationAccess>("unknown");
   const [explainKind, setExplainKind] = useState<ActivityKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [finishedId, setFinishedId] = useState<string | null>(null);
+  const [finishedMode, setFinishedMode] = useState<ActivityMode | null>(null);
   const finishing = useRef(false);
-  // "Start moving" from the Territory screen asks for the live view of that Territory.
-  const [territoryMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("territory"));
+  // Why the user is moving: chosen on Start moving (or by a link that already says so), never inferred. The address is read hydration-safely:
+  // the server render knows nothing of it, so until the browser reports it we show a neutral screen.
+  const search = useSyncExternalStore(subscribeNever, () => window.location.search, () => null);
+  const [picked, setPicked] = useState<ActivityMode | null>(null);
+  const chosen: ActivityMode | null = picked ?? (search === null ? null : parseMode(search));
+  // A running move carries its own mode. The live screen follows that, not the address bar or what loaded first.
+  const liveMode = activity ? modeOf(activity) : null;
+  const territoryMode = liveMode === "TERRITORY";
   const [territoryCtx, setTerritoryCtx] = useState<TerritorySnapshot | null>(null);
+  const [territoryUnavailable, setTerritoryUnavailable] = useState(false);
   useEffect(() => {
     if (!territoryMode || !uid) return;
     let cancelled = false;
     loadHistory(uid)
       .then((h) => loadTerritory(uid, h.user, h.runs))
       .then((snap) => {
-        if (!cancelled && snap) setTerritoryCtx(snap);
+        if (cancelled) return;
+        if (snap) setTerritoryCtx(snap);
+        else setTerritoryUnavailable(true);
       })
-      .catch((err) => console.warn("Territory not available", err));
+      .catch((err) => {
+        console.warn("Territory not available", err);
+        if (!cancelled) setTerritoryUnavailable(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -102,15 +138,21 @@ export default function RunPage() {
           // Weight and journey come from the server when possible, and from the last known copy on this phone
           // otherwise, so an activity can start with no connection.
           const cacheKey = `move.profile.${user.uid}`;
-          const apply = (p: { weight?: number; routeName?: string; completedKm?: number; startIdx?: number }) => {
+          const apply = (p: { weight?: number; routeName?: string; completedKm?: number; startIdx?: number; territoryId?: string | null }) => {
             if (p.weight) setWeight(p.weight);
-            if (p.routeName) setJourney({ routeName: p.routeName, completedKm: p.completedKm ?? 0, startIdx: p.startIdx ?? 0 });
+            setJourney(p.routeName ? { routeName: p.routeName, completedKm: p.completedKm ?? 0, startIdx: p.startIdx ?? 0 } : null);
+            setTerritoryId(p.territoryId ?? null);
+            setProfileReady(true);
           };
           try {
             const snap = await getDoc(doc(db, "users", user.uid));
-            if (cancelled || !snap.exists()) return;
+            if (cancelled || !snap.exists()) {
+              if (!cancelled) setProfileReady(true);
+              return;
+            }
             const data = snap.data();
-            const profile = { weight: data.weight, routeName: data.currentRoute, completedKm: data.completedKm ?? 0, startIdx: data.startCheckpointIndex ?? 0 };
+            const j = journeyOf(data);
+            const profile = { weight: data.weight, routeName: j?.routeName, completedKm: j?.completedKm ?? 0, startIdx: j?.startIdx ?? 0, territoryId: resolveActiveId(data) };
             apply(profile);
             try {
               localStorage.setItem(cacheKey, JSON.stringify(profile));
@@ -122,7 +164,7 @@ export default function RunPage() {
             try {
               apply(JSON.parse(localStorage.getItem(cacheKey) ?? "{}"));
             } catch {
-              // no cached copy: defaults apply
+              apply({});
             }
           }
         });
@@ -144,8 +186,20 @@ export default function RunPage() {
     return () => document.removeEventListener("visibilitychange", check);
   }, []);
 
+  const ctx = { hasJourney: !!journey, territoryId };
+
+  // Opened on a mode that cannot start yet (no Journey chosen, no Territory chosen, or one that is not open): go and sort that out,
+  // never start against a default. Waits for the profile so an old copy never decides.
+  useEffect(() => {
+    if (!chosen || !profileReady || activity || needsDecision) return;
+    const dest = startDestination(chosen, ctx);
+    if (dest !== runHref(chosen)) router.replace(dest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chosen, profileReady, journey, territoryId, activity, needsDecision]);
+
   const begin = async (kind: ActivityKind) => {
-    if (!uid || busy) return;
+    if (!uid || busy || !chosen) return;
+    if (startDestination(chosen, ctx) !== runHref(chosen)) return;
     setBusy(true);
     setError("");
     try {
@@ -153,13 +207,24 @@ export default function RunPage() {
         userId: uid,
         kind,
         weightKg: weight,
-        journey: journey ? { routeName: journey.routeName, startIdx: journey.startIdx, completedKmBefore: journey.completedKm } : null,
+        mode: chosen,
+        journey: chosen === "JOURNEY" && journey ? { routeName: journey.routeName, startIdx: journey.startIdx, completedKmBefore: journey.completedKm } : null,
+        territory: chosen === "TERRITORY" && territoryId ? { areaId: territoryId } : null,
       });
     } catch (err) {
       console.error(err);
       setError("Couldn't start tracking. Please try again.");
     }
     setBusy(false);
+  };
+
+  // Start moving's answer: stay here for a free, Route or Territory move that can start, otherwise go where it can be set up.
+  const choose = (m: ActivityMode) => {
+    const dest = startDestination(m, ctx);
+    if (dest === runHref(m)) {
+      setPicked(m);
+      window.history.replaceState(null, "", dest);
+    } else router.push(dest);
   };
 
   const pick = async (kind: ActivityKind) => {
@@ -202,6 +267,7 @@ export default function RunPage() {
         return;
       }
       // Shown right here instead of navigating: opening another page needs the network, finishing must not.
+      setFinishedMode(modeOf(done));
       setFinishedId(done.id);
     } catch (err) {
       console.error(err);
@@ -217,7 +283,7 @@ export default function RunPage() {
     }
   };
 
-  if (finishedId) return <ShareScreen activityId={finishedId} hint={territoryMode ? "territory" : undefined} />;
+  if (finishedId) return <ShareScreen activityId={finishedId} hint={finishedMode === "TERRITORY" ? "territory" : undefined} />;
 
   /* ---------- an activity is running (or was just recovered) ---------- */
   if (activity && live && !needsDecision) {
@@ -244,19 +310,49 @@ export default function RunPage() {
       onFinish,
       onClose,
     };
-    if (territoryMode && territoryCtx) return <TerritoryLiveScreen {...cardProps} snapshot={territoryCtx} activity={{ id: activity.id, kind: activity.kind, startedAt: activity.startedAt, userId: uid ?? "" }} points={livePoints} here={activity.lastPoint ? { lat: activity.lastPoint.lat, lng: activity.lastPoint.lng } : undefined} />;
-    return <LiveRouteCard {...cardProps} />;
+    // Each context draws its own thing. A Territory move never falls back to a Journey route while it loads or if it can't: it shows
+    // Territory, or says Territory isn't available. A free move has no route at all.
+    if (liveMode === "TERRITORY") {
+      if (territoryCtx && territoryCtx.def.id === activity.territory?.areaId) return <TerritoryLiveScreen {...cardProps} snapshot={territoryCtx} activity={{ id: activity.id, kind: activity.kind, startedAt: activity.startedAt, userId: uid ?? "" }} points={livePoints} here={activity.lastPoint ? { lat: activity.lastPoint.lat, lng: activity.lastPoint.lng } : undefined} />;
+      const name = openAreaName(activity.territory?.areaId) ?? "your Territory";
+      return <LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Territory" title={name} />} visual={<MoveVisual icon="👑" title={name} text={territoryCtx || territoryUnavailable ? "Territory isn't available right now. Your move is still being tracked." : "Loading your Territory…"} />} />;
+    }
+    if (liveMode === "NORMAL") return <LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Free move" title="No route, no Territory" />} visual={<MoveVisual icon="🏃" title="Free move" text="Counts toward your totals and streak." />} />;
+    return <LiveRouteCard {...cardProps} header={<MoveHeader lab="Route" title={activity.journey ? `Dhaka → ${activity.journey.routeName}` : "Journey"} />} />;
   }
 
-  /* ---------- choose an activity ---------- */
+  /* ---------- Start moving: why are you moving? ---------- */
+  const startContext = {
+    journeyLine: journey ? `Dhaka → ${journey.routeName}${findRoute(journey.routeName) ? ` · ${journey.completedKm.toFixed(1)} of ${Math.max(findRoute(journey.routeName)!.totalKm - journeyOffsetKm(findRoute(journey.routeName), journey.startIdx), 1).toFixed(0)} km` : ""}` : null,
+    territory: territoryId ? { name: openAreaName(territoryId) ?? "", open: isOpenArea(territoryId) } : null,
+  };
+  if (search === null && !activity) return <main className="app nonav" aria-busy="true" />;
+  if (!chosen && !needsDecision) {
+    return (
+      <main className="app nonav" aria-busy={!profileReady}>
+        <StartMovingSheet context={startContext} onSelect={choose} onClose={() => router.push("/")} />
+      </main>
+    );
+  }
+
+  /* ---------- choose an activity (in the chosen context) ---------- */
+  const mode: ActivityMode = chosen ?? "NORMAL";
+  const contextLine =
+    mode === "JOURNEY"
+      ? { text: startContext.journeyLine ?? "Choose a route to follow", change: { label: "Change route", href: "/journey" } }
+      : mode === "TERRITORY"
+        ? { text: startContext.territory?.name ? `${startContext.territory.name} · your Territory` : "Your Territory", change: { label: "Change Territory", href: "/territory" } }
+        : { text: "No route, no Territory. It counts toward your totals.", change: null };
   return (
     <main className="app nonav">
       <header>
         <button className="icon-btn" aria-label="Back" onClick={() => router.push("/")}>
           <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h1 className="title-blk" style={{ marginTop: 20 }}>Start moving</h1>
-        <p className="body mute" style={{ marginTop: 6 }}>Choose your activity to begin tracking</p>
+        <p className="lab" style={{ marginTop: 20, color: "var(--acc-text)" }}>{MODE_LABEL[mode]}</p>
+        <h1 className="title-blk" style={{ marginTop: 6 }}>Start moving</h1>
+        <p className="body mute" style={{ marginTop: 6 }}>{contextLine.text}</p>
+        {contextLine.change && <Link className="mute" href={contextLine.change.href} style={{ display: "inline-block", marginTop: 6, fontSize: 13, fontWeight: 700, color: "var(--acc-text)" }}>{contextLine.change.label}</Link>}
       </header>
 
       <div className="stack" style={{ gap: 12, marginTop: 20 }}>

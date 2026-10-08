@@ -2,13 +2,19 @@ import { findRoute, journeyOffsetKm, type ActivityKind } from "../activity";
 import { activeMs, evaluateFix } from "./gps";
 import { calcCalories, calcSteps, formatDurationSec } from "./metrics";
 import type { ActivityStore } from "./store";
-import type { JourneyContext, LocalActivity, LocationSourceKind, RawFix, RejectReason, TrackPoint } from "./types";
+import type { ActivityMode } from "../activityMode";
+import type { JourneyContext, LocalActivity, TerritoryContext, LocationSourceKind, RawFix, RejectReason, TrackPoint } from "./types";
 
 export interface StartParams {
   userId: string;
   kind: ActivityKind;
   weightKg: number;
+  /** Why the user is moving: chosen by them, never inferred. */
+  mode: ActivityMode;
+  /** The route this move advances. Only used (and required) in JOURNEY mode. */
   journey: JourneyContext | null;
+  /** The active Territory. Only used (and required) in TERRITORY mode. */
+  territory?: TerritoryContext | null;
   source: LocationSourceKind;
 }
 
@@ -78,6 +84,8 @@ export class TrackingEngine {
   start(p: StartParams): Promise<LocalActivity> {
     return this.run(async () => {
       if (this.current && this.current.status !== "finished") throw new Error("An activity is already in progress");
+      if (p.mode === "JOURNEY" && !p.journey) throw new Error("A route move needs a Journey");
+      if (p.mode === "TERRITORY" && !p.territory) throw new Error("A Territory move needs a Territory");
       const t = this.now();
       this.current = {
         id: this.genId(),
@@ -93,7 +101,10 @@ export class TrackingEngine {
         gaps: 0,
         lastSeenAt: t,
         weightKg: p.weightKg,
-        journey: p.journey,
+        mode: p.mode,
+        // each context keeps only its own: a Territory or free move never carries a Journey, a route move never a Territory
+        journey: p.mode === "JOURNEY" ? p.journey : null,
+        territory: p.mode === "TERRITORY" ? p.territory : null,
         sync: "pending",
         syncAttempts: 0,
       };

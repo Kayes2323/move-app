@@ -19,7 +19,7 @@ const setup = () => {
   const store = new MemoryStore();
   const engine = new TrackingEngine(store, clock.now, () => `act-${++n}`);
   const fix = (metres: number, over: Partial<RawFix> = {}): RawFix => ({ lat: LAT0 + metres * M, lng: LNG, accuracy: 5, time: clock.now(), ...over });
-  const startWalk = () => engine.start({ userId: "u1", kind: "walking", weightKg: 70, journey: null, source: "web" });
+  const startWalk = () => engine.start({ userId: "u1", kind: "walking", weightKg: 70, mode: "NORMAL", journey: null, source: "web" });
   return { clock, store, engine, fix, startWalk };
 };
 
@@ -66,7 +66,7 @@ test("walking distance accumulates; jitter, poor accuracy, jumps and duplicates 
 test("a fast runner keeps legitimate distance", async () => {
   const clock = mkClock();
   const engine = new TrackingEngine(new MemoryStore(), clock.now, () => "run-1");
-  await engine.start({ userId: "u1", kind: "running", weightKg: 70, journey: null, source: "web" });
+  await engine.start({ userId: "u1", kind: "running", weightKg: 70, mode: "NORMAL", journey: null, source: "web" });
   await engine.ingest({ lat: LAT0, lng: LNG, accuracy: 6, time: clock.now() });
   for (let i = 1; i <= 20; i++) {
     clock.advance(1000);
@@ -155,7 +155,7 @@ test("finish needs no network and produces a complete local summary", async () =
   const clock = mkClock();
   const store = new MemoryStore();
   const engine = new TrackingEngine(store, clock.now, () => "fin-1");
-  await engine.start({ userId: "u1", kind: "walking", weightKg: 70, journey: { routeName: "Chandpur", startIdx: 0, completedKmBefore: 10 }, source: "web" });
+  await engine.start({ userId: "u1", kind: "walking", weightKg: 70, mode: "JOURNEY", journey: { routeName: "Chandpur", startIdx: 0, completedKmBefore: 10 }, source: "web" });
   let m = 0;
   await engine.ingest({ lat: LAT0, lng: LNG, accuracy: 5, time: clock.now() });
   for (let i = 0; i < 100; i++) {
@@ -206,7 +206,7 @@ test("a failed storage write never leaves memory and disk disagreeing", async ()
   const clock = mkClock();
   const store = new FlakyStore();
   const engine = new TrackingEngine(store, clock.now, () => "flaky-1");
-  await engine.start({ userId: "u1", kind: "walking", weightKg: 70, journey: null, source: "web" });
+  await engine.start({ userId: "u1", kind: "walking", weightKg: 70, mode: "NORMAL", journey: null, source: "web" });
   const at = (m: number) => ({ lat: LAT0 + m * M, lng: LNG, accuracy: 5, time: clock.now() });
   await engine.ingest(at(0));
   clock.advance(3000);
@@ -226,7 +226,7 @@ test("a failed finish leaves the activity running so it can be finished again", 
   const clock = mkClock();
   const store = new FlakyStore();
   const engine = new TrackingEngine(store, clock.now, () => "flaky-2");
-  await engine.start({ userId: "u1", kind: "walking", weightKg: 70, journey: null, source: "web" });
+  await engine.start({ userId: "u1", kind: "walking", weightKg: 70, mode: "NORMAL", journey: null, source: "web" });
   clock.advance(60_000);
   store.failWrites = true;
   await assert.rejects(engine.finish(), /Quota/);

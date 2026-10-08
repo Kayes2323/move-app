@@ -50,7 +50,8 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
         ? { label: "GETTING GPS…", dot: "var(--amber)", color: "var(--amber)", bg: "var(--amberbg)" }
         : { label: "LIVE", dot: meta.cssVar, color: "var(--ink)", bg: "var(--surf)" };
 
-  const nextTarget = route ? nextCheckpoint(route, progressKm) : null;
+  // the next checkpoint belongs to the Journey view only: a Territory or free move draws its own view and has no route to point at
+  const nextTarget = !visual && route ? nextCheckpoint(route, progressKm) : null;
 
   return (
     <main className="app nonav" style={{ display: "flex", flexDirection: "column", paddingTop: "calc(env(safe-area-inset-top, 0px) + 20px)" }}>
@@ -69,7 +70,7 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
       {header}
       {note && <p className="mute" style={{ fontSize: 12, textAlign: "center", lineHeight: 1.4, margin: "10px 0 0" }}>{note}</p>}
 
-      <section aria-label="Journey route" style={{ flex: 1, minHeight: 240, margin: "12px 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden" }}>
+      <section aria-label={visual ? "Move view" : "Journey route"} style={{ flex: 1, minHeight: 240, margin: "12px 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden" }}>
         {visual ? (
           visual
         ) : route ? (

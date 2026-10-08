@@ -1,3 +1,4 @@
+import type { ActivityMode } from "../activityMode";
 import type { ActivityKind } from "../activity";
 
 /** A raw fix as delivered by any location source (browser or native). Times are epoch milliseconds. */
@@ -38,6 +39,11 @@ export interface JourneyContext {
   startIdx: number;
   /** completedKm on the user's journey when the activity started. */
   completedKmBefore: number;
+}
+
+/** The Territory that was active when a TERRITORY move started: the move belongs to it even if the choice changes later. */
+export interface TerritoryContext {
+  areaId: string;
 }
 
 export interface ActivitySummary {
@@ -83,7 +89,12 @@ export interface LocalActivity {
   /** Last time this record was known to be alive; used to close the open segment after a crash. */
   lastSeenAt: number;
   weightKg: number;
+  /** Why the user is moving. Missing on moves saved before modes existed: see modeOf(). */
+  mode?: ActivityMode;
+  /** Set only for JOURNEY moves: the route this move advances. */
   journey: JourneyContext | null;
+  /** Set only for TERRITORY moves. */
+  territory?: TerritoryContext | null;
   pendingGap?: PendingGap;
   summary?: ActivitySummary;
   sync: SyncState;

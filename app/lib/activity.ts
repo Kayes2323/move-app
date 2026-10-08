@@ -14,6 +14,9 @@ export interface RunEntry {
   /** Journey the activity counted towards, and total journey km after it (set on save). */
   routeName?: string | null;
   journeyKm?: number;
+  /** Why the move was made (see activityMode.ts). Missing on older entries. */
+  mode?: "NORMAL" | "JOURNEY" | "TERRITORY";
+  territoryAreaId?: string | null;
 }
 
 export interface Achievement {

@@ -145,19 +145,20 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
   const facts = useMemo(() => {
     if (!run || selected === null) return null;
     const kind = toKind(run.activity);
-    // The route this activity was done on, as recorded with it; and where that journey began (only meaningful for the same route).
-    const route = findRoute(run.routeName ?? user?.currentRoute);
+    // The route this activity was done on, exactly as recorded with it. Moves that followed no route (Territory, free, or older ones)
+    // have none: they are never given the user's current Journey, and the card then draws the real GPS track instead.
+    const route = findRoute(run.routeName ?? undefined);
     const sameJourney = route && findRoute(user?.currentRoute)?.id === route.id;
     const routeStartKm = sameJourney ? journeyOffsetKm(route, user?.startCheckpointIndex) : 0;
     const def = territory?.def;
     const territoryFacts = territory ? (run.id ? territoryFactsAt(territory.state, territory.mask, run.id) : null) ?? territoryNowFacts(territory.state, territory.mask, territory.scope) : null;
     const territoryKm = territory ? Math.round(runs.filter((r) => r.id && territory.state.applied.some((a) => a.id === r.id && a.added > 0)).reduce((sum, r) => sum + r.km, 0) * 10) / 10 : 0;
     const url = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("ctx");
-    const shareFacts = { runId: run.id, hasTrack: Boolean(track), hasJourney: Boolean(route), territory: territory?.state ?? null, hint: hint ?? url };
+    const shareFacts = { runId: run.id, hasTrack: Boolean(track), hasJourney: Boolean(route), territory: territory?.state ?? null, hint: hint ?? url ?? (run.mode === "TERRITORY" ? "territory" : null) };
     const options = availableModes(shareFacts);
     const auto = decideShareMode(shareFacts);
     const mode = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
-    const journeyKm = run.journeyKm ?? routeStartKm + (user?.completedKm ?? 0);
+    const journeyKm = run.journeyKm ?? 0;
     return { run, kind, route, routeStartKm, journeyKm, def, territoryFacts, territoryKm, options, mode };
   }, [run, selected, user, territory, hint, chosenCtx, runs, track]);
 

@@ -53,7 +53,8 @@ test("Territory and tracking stay decoupled: Territory is a read-only consumer",
   for (const { file, text } of sources(join(app, "lib", "tracking"))) {
     for (const spec of imports(text)) assert.ok(!/territory/.test(spec), `${file} must not import Territory (${spec})`);
   }
-  assert.ok(!/territory/i.test(readFileSync(join(app, "lib", "activity.ts"), "utf8")), "activity.ts must not reference Territory");
+  // A move records WHY it was made (its mode, and the id of the active Territory for a Territory move) as plain data; it never imports Territory code.
+  assert.ok(!imports(readFileSync(join(app, "lib", "activity.ts"), "utf8")).some((spec) => /territory/.test(spec)), "activity.ts must not import Territory");
 });
 
 test("the superseded distance model is not part of gameplay", () => {

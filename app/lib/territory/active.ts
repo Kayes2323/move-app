@@ -1,5 +1,8 @@
 import { GAPS_KEEP, type StoredCoverage } from "./coverage/coverage";
+import { areaOf, isObj, resolveActiveId, type ActiveFields, type ActiveTerritory } from "./activeId";
 import type { AreaType, GeoArea } from "./types";
+
+export { parseActive, resolveActiveId, type ActiveFields, type ActiveTerritory } from "./activeId";
 
 /**
  * The user's ACTIVE Territory: the one area their next moves count towards. It is chosen by the user, saved with their
@@ -18,37 +21,8 @@ import type { AreaType, GeoArea } from "./types";
 export const TERRITORY_AREA_TYPES: readonly AreaType[] = ["UPAZILA", "LOCAL_AREA"];
 export const isTerritoryArea = (a: Pick<GeoArea, "type"> | undefined | null): boolean => Boolean(a && TERRITORY_AREA_TYPES.includes(a.type));
 
-export interface ActiveTerritory {
-  areaId: string;
-  /** When it was made active (ms). */
-  at: number;
-}
-
 /** A parked area's record: its coverage as it was, plus when it stopped being active. */
 export type ParkedCoverage = StoredCoverage & { parkedAt: number };
-
-/** The fields of `users/{uid}` this module reads and writes. */
-export interface ActiveFields {
-  territory?: unknown;
-  territoryActive?: unknown;
-  territoryParked?: unknown;
-}
-
-const isObj = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === "object" && !Array.isArray(v);
-const areaOf = (v: unknown): string | null => (isObj(v) && typeof v.areaId === "string" && v.areaId ? v.areaId : null);
-
-export function parseActive(raw: unknown): ActiveTerritory | null {
-  if (!isObj(raw) || typeof raw.areaId !== "string" || !raw.areaId) return null;
-  return { areaId: raw.areaId, at: typeof raw.at === "number" && Number.isFinite(raw.at) ? raw.at : 0 };
-}
-
-/**
- * Which area is the user's active Territory? Their saved choice; or, for accounts from before choices were saved
- * separately, the area of their saved coverage (they chose it then). Otherwise none: the user has not chosen yet.
- */
-export function resolveActiveId(user: ActiveFields): string | null {
-  return parseActive(user.territoryActive)?.areaId ?? areaOf(user.territory);
-}
 
 export function parkedOf(user: ActiveFields): Record<string, ParkedCoverage> {
   const out: Record<string, ParkedCoverage> = {};

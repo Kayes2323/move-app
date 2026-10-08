@@ -1,10 +1,17 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BottomNav } from "./components/BottomNav";
 import { Loading } from "./components/Loading";
 import { LoadError } from "./components/LoadError";
 import { PendingSyncBanner } from "./components/PendingSyncBanner";
+import { StartMovingSheet } from "./components/StartMovingSheet";
+import { journeyOf } from "./lib/journey";
+import { startDestination } from "./lib/startMoving";
+import { isOpenArea, openAreaName } from "./lib/territory/open";
+import { resolveActiveId } from "./lib/territory/activeId";
+import type { ActivityMode } from "./lib/activityMode";
 import { effectiveStreak, findRoute, formatDuration, formatKm, formatPerformance, journeyOffsetKm, nowMs, toKind, type RunEntry } from "./lib/activity";
 import { syncPublicProfile } from "./lib/publicProfile";
 
@@ -14,8 +21,12 @@ interface UserData {
   totalKm: number;
   completedKm: number;
   streak: number;
-  currentRoute: string;
+  /** The Journey the user chose to follow. Missing until they choose one: there is no default route. */
+  currentRoute?: string;
   startCheckpointIndex?: number;
+  territory?: unknown;
+  territoryActive?: unknown;
+  territoryParked?: unknown;
   lastRun?: string;
   runs: RunEntry[];
 }
@@ -35,6 +46,8 @@ const RING = 106;
 const CIRC = 2 * Math.PI * RING;
 
 export default function Home() {
+  const router = useRouter();
+  const [starting, setStarting] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -94,13 +107,14 @@ export default function Home() {
   const totalKm = user?.totalKm || 0;
   const completedKm = user?.completedKm || 0;
   const streak = effectiveStreak(user?.streak, user?.lastRun, now);
-  const currentRoute = user?.currentRoute || "Chandpur";
-  // A journey that began at a later checkpoint is shorter than the full route.
-  const route = findRoute(currentRoute);
-  const offset = journeyOffsetKm(route, user?.startCheckpointIndex);
+  // The Journey is the user's own explicit choice: no choice, no route, and nothing on this screen assumes one.
+  const journey = journeyOf(user);
+  const route = journey ? findRoute(journey.routeName) : undefined;
+  const offset = journeyOffsetKm(route, journey?.startIdx);
   const routeTotal = route ? Math.max(route.totalKm - offset, 1) : Math.max(completedKm, 1);
-  const percent = Math.min((completedKm / routeTotal) * 100, 100);
+  const percent = route ? Math.min((completedKm / routeTotal) * 100, 100) : 0;
   const next = route?.checkpoints.find((c) => c.distanceFromStart - offset > completedKm);
+  const territoryId = user ? resolveActiveId(user) : null;
   const rank = getRank(totalKm);
   const runs = user?.runs || [];
   const today = new Date(now).toDateString();
@@ -139,21 +153,31 @@ export default function Home() {
           <circle cx="118" cy="118" r={RING} fill="none" stroke="var(--surf2)" strokeWidth="14" />
           <circle cx="118" cy="118" r={RING} fill="none" stroke="var(--accent)" strokeWidth="14" strokeLinecap="round" strokeDasharray={`${(CIRC * percent) / 100} ${CIRC}`} transform="rotate(-90 118 118)" style={{ transition: "stroke-dasharray 0.6s ease" }} />
         </svg>
-        <div className="stack" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-          <span className="blk" style={{ fontSize: 56, lineHeight: "56px" }}>{formatKm(completedKm)}</span>
-          <span className="mute" style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>of {routeTotal} km</span>
-          <span style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--acc-text)" }}>Dhaka → {currentRoute}</span>
-        </div>
+        {route && journey ? (
+          <div className="stack" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+            <span className="blk" style={{ fontSize: 56, lineHeight: "56px" }}>{formatKm(completedKm)}</span>
+            <span className="mute" style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>of {routeTotal} km</span>
+            <span style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--acc-text)" }}>Dhaka → {journey.routeName}</span>
+          </div>
+        ) : (
+          <div className="stack" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+            <span className="blk" style={{ fontSize: 56, lineHeight: "56px" }}>{formatKm(totalKm)}</span>
+            <span className="mute" style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>km moved</span>
+            <Link href="/journey" style={{ fontSize: 13, fontWeight: 700, marginTop: 4, color: "var(--acc-text)" }}>Choose a route →</Link>
+          </div>
+        )}
       </section>
 
-      <Link href="/run" className="btn btn-go" style={{ marginTop: 28 }}>
+      <button className="btn btn-go" style={{ marginTop: 28 }} onClick={() => setStarting(true)} aria-haspopup="dialog">
         <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
         Start moving
-      </Link>
+      </button>
 
-      <p className="mute" style={{ fontSize: 13, textAlign: "center", marginTop: 14 }}>
-        {next ? <>Next: <b style={{ color: "var(--ink)" }}>{next.name}</b> in {(next.distanceFromStart - offset - completedKm).toFixed(1)} km</> : percent >= 100 ? "Journey complete. Pick a new route." : `${percent.toFixed(0)}% of the way there`}
-      </p>
+      {route && (
+        <p className="mute" style={{ fontSize: 13, textAlign: "center", marginTop: 14 }}>
+          {next ? <>Next: <b style={{ color: "var(--ink)" }}>{next.name}</b> in {(next.distanceFromStart - offset - completedKm).toFixed(1)} km</> : percent >= 100 ? "Journey complete. Pick a new route." : `${percent.toFixed(0)}% of the way there`}
+        </p>
+      )}
 
       <section aria-label="Totals" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", marginTop: 28, borderTop: "1px solid var(--hair)", borderBottom: "1px solid var(--hair)" }}>
         {[
@@ -185,11 +209,21 @@ export default function Home() {
         ) : (
           <div className="card" style={{ marginTop: 10, textAlign: "center", padding: 24 }}>
             <p className="h2">Your first move starts here</p>
-            <p className="body mute" style={{ marginTop: 6 }}>Tap Start moving. Every kilometre takes you further along {currentRoute}.</p>
+            <p className="body mute" style={{ marginTop: 6 }}>Tap Start moving. Follow a route, explore your Territory, or just move.</p>
           </div>
         )}
       </section>
 
+      {starting && (
+        <StartMovingSheet
+          context={{
+            journeyLine: route && journey ? `Dhaka → ${journey.routeName} · ${completedKm.toFixed(1)} of ${routeTotal.toFixed(0)} km` : null,
+            territory: territoryId ? { name: openAreaName(territoryId) ?? "", open: isOpenArea(territoryId) } : null,
+          }}
+          onSelect={(m: ActivityMode) => router.push(startDestination(m, { hasJourney: !!route, territoryId }))}
+          onClose={() => setStarting(false)}
+        />
+      )}
       <BottomNav active="home" />
     </main>
   );

@@ -156,6 +156,8 @@ test("regression: no screen or flow picks Mohammadpur by default", () => {
     }
   };
   walkDir(join(process.cwd(), "app"));
-  const offenders = files.filter((f) => !f.endsWith(join("conquest", "registry.ts")) && /MOHAMMADPUR_ID|bd-upa-dhaka-mohammadpur/.test(readFileSync(f, "utf8")));
+  // only the registries of open areas may name one; no screen or flow does
+  const registries = [join("conquest", "registry.ts"), join("territory", "open.ts")];
+  const offenders = files.filter((f) => !registries.some((r) => f.endsWith(r)) && /MOHAMMADPUR_ID|bd-upa-dhaka-mohammadpur/.test(readFileSync(f, "utf8")));
   assert.deepEqual(offenders, []);
 });

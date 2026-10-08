@@ -324,7 +324,7 @@ export default function JourneyDetail() {
         {/* CTA */}
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
           {activeJourney ? (
-            <button className="btn btn-go" onClick={() => router.push("/run")}>
+            <button className="btn btn-go" onClick={() => router.push("/run?mode=journey")}>
               <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
               Continue moving
             </button>

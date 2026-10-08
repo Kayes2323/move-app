@@ -42,6 +42,8 @@ const initScript = ({ db, user, permission }) => `(() => {
   };
   navigator.geolocation.watchPosition = (ok, err) => { subs.set(++id, { ok, err }); return id; };
   navigator.geolocation.clearWatch = (i) => subs.delete(i);
+  // One-shot position lookups (the Journey page, "use my location") answer "unavailable" at once instead of hanging on a permission prompt.
+  navigator.geolocation.getCurrentPosition = (ok, err) => { setTimeout(() => err && err({ code: 2, POSITION_UNAVAILABLE: 2, message: "" }), 0); };
   ${permission ? `navigator.permissions.query = async () => ({ state: ${JSON.stringify(permission)}, addEventListener() {} });` : ""}
 })();`;
 
@@ -105,8 +107,8 @@ const walk = async (pg, steps, { stepM = 2.8, gapMs = 2000 } = {}) => {
 };
 // The live screen shows "GETTING GPS" until the first fix arrives, so wait for the controls, not for "LIVE".
 const tracking = (pg) => pg.getByRole("button", { name: "Finish activity" }).waitFor({ timeout: 10000 });
-const start = async (pg, label = "Walking") => {
-  await pg.goto(`${BASE}/run`);
+const start = async (pg, label = "Walking", mode = "journey") => {
+  await pg.goto(`${BASE}/run?mode=${mode}`);
   await pg.getByText(label).click();
   await tracking(pg);
   await emit(pg, 0);
@@ -219,7 +221,7 @@ async function scenarioPause() {
 
 async function scenarioOfflineThenSync() {
   const { ctx, pg } = await fresh();
-  await pg.goto(`${BASE}/run`); // online once, so the profile is cached
+  await pg.goto(`${BASE}/run?mode=journey`); // online once, so the profile is cached
   await pg.getByText("Walking").waitFor();
   await pg.waitForTimeout(500);
   await ctx.setOffline(true);
@@ -346,7 +348,7 @@ async function scenarioCrashRecovery() {
 
 async function scenarioPermissions() {
   let s = await fresh({ permission: "denied" });
-  await s.pg.goto(`${BASE}/run`);
+  await s.pg.goto(`${BASE}/run?mode=normal`);
   await s.pg.waitForSelector("text=Location is turned off", { timeout: 8000 }).then(() => check("7. denied permission shows clear instructions", true)).catch(() => check("7. denied instructions", false));
   await s.pg.getByText("Walking").click();
   await s.pg.waitForTimeout(500);
@@ -354,7 +356,7 @@ async function scenarioPermissions() {
   await s.ctx.close();
 
   s = await fresh({ permission: "prompt" });
-  await s.pg.goto(`${BASE}/run`);
+  await s.pg.goto(`${BASE}/run?mode=normal`);
   await s.pg.getByText("Walking").click();
   await s.pg.waitForSelector("text=Move needs your location", { timeout: 8000 }).then(() => check("12. first use explains why location is needed", true)).catch(() => check("12. explainer", false));
   await s.pg.getByRole("button", { name: "Allow location and start" }).click();
@@ -372,7 +374,7 @@ async function scenarioPermissions() {
   await s.pg.getByRole("button", { name: "Finish activity" }).click();
   await s.pg.waitForTimeout(800);
   check("zero-distance activity is explained and discarded", s.pg.dialogs.some((m) => /No distance/.test(m)) && (await idb(s.pg)).activities.length === 0);
-  await s.pg.goto(`${BASE}/run`);
+  await s.pg.goto(`${BASE}/run?mode=normal`);
   await s.pg.getByText("Running").click();
   await tracking(s.pg);
   check("the explanation is not repeated", !(await text(s.pg)).includes("Move needs your location"));
@@ -591,6 +593,217 @@ async function scenarioSwitch() {
   }
 }
 
+/* ---------- Journey, Territory and free moves are three contexts: nothing leaks between them ---------- */
+async function scenarioSeparation() {
+  const MOH = "bd-upa-dhaka-mohammadpur";
+  const CHP = "bd-upa-chandpur-chandpur-sadar";
+  const journeyDb = () => baseDb(); // an explicit Journey: Dhaka to Chandpur
+  const noJourneyDb = () => { const d = baseDb(); delete d["users/u1"].currentRoute; delete d["users/u1"].completedKm; return d; };
+  const withTerritory = (d, id) => { d["users/u1"].territoryActive = { areaId: id, at: Date.now() - 86400000 }; if (id === MOH) d["users/u1"].territory = stored(); return d; };
+  const noJourneyText = (t) => !/Dhaka\s*→|DHAKA\s*→|Jatrabari|Kanchpur|Next\s*·|Journey route/i.test(t);
+  const noRouteSvg = (pg) => pg.locator("svg[aria-label^='Route from']").count();
+  const ready = (pg, sel) => pg.waitForSelector(sel, { timeout: 30000 });
+  const sheetOf = (pg) => pg.getByRole("dialog", { name: /How do you want to move today/i });
+
+  // 1. Home: no Journey chosen means no route anywhere; a chosen Journey shows its own progress
+  {
+    const s = await fresh({ db: noJourneyDb() });
+    await s.pg.goto(`${BASE}/`);
+    await ready(s.pg, "text=Start moving");
+    const t = await text(s.pg);
+    check("N1. Home with no Journey chosen shows no route and no Chandpur", !/Chandpur/i.test(t) && noJourneyText(t) && /Choose a route/i.test(t), t.slice(0, 200));
+    await s.ctx.close();
+    const j = await fresh({ db: journeyDb() });
+    await j.pg.goto(`${BASE}/`);
+    await ready(j.pg, "text=Dhaka → Chandpur");
+    check("N1b. Home with a Journey the user chose shows that Journey's progress", /Dhaka → Chandpur/.test(await text(j.pg)));
+    await j.ctx.close();
+  }
+
+  // 2-4. Territory never shows a Journey route, whatever the Journey is
+  {
+    // nothing chosen
+    let s = await fresh({ db: journeyDb() });
+    await s.pg.goto(`${BASE}/territory`);
+    await ready(s.pg, "text=Choose a place to explore");
+    let t = await text(s.pg);
+    check("N2. Territory with nothing chosen shows Choose Territory, no Journey route", noJourneyText(t) && !/Chandpur/i.test(t) && (await noRouteSvg(s.pg)) === 0, t.slice(0, 160));
+    await s.ctx.close();
+    // Mohammadpur chosen, while the user's Journey is Dhaka to Chandpur
+    s = await fresh({ db: withTerritory(journeyDb(), MOH) });
+    await s.pg.goto(`${BASE}/territory/current`);
+    await ready(s.pg, "text=Start exploring");
+    t = await text(s.pg);
+    check("N3. Territory with Mohammadpur shows Mohammadpur and no Journey route", /MOHAMMADPUR/i.test(t) && noJourneyText(t) && !/Chandpur/i.test(t) && (await noRouteSvg(s.pg)) === 0, t.slice(0, 160));
+    await s.pg.reload();
+    await ready(s.pg, "text=Start exploring");
+    check("N8. refreshing Territory keeps Mohammadpur and still shows no Journey", /MOHAMMADPUR/i.test(await text(s.pg)) && noJourneyText(await text(s.pg)));
+    await s.ctx.close();
+    // Chandpur Sadar chosen (not open) while the Journey is also Chandpur: still Territory, never the route
+    s = await fresh({ db: withTerritory(journeyDb(), CHP) });
+    await s.pg.goto(`${BASE}/territory/current`);
+    await ready(s.pg, "text=isn't open for Territory yet");
+    t = await text(s.pg);
+    check("N4. Territory with Chandpur Sadar shows its Not Open state, not the Chandpur Journey", /CHANDPUR SADAR/i.test(t) && /isn't open/i.test(t) && noJourneyText(t) && !/Dhaka\s*→/i.test(t) && (await noRouteSvg(s.pg)) === 0, t.slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // 5-7. Journey and Territory do not overwrite each other
+  {
+    const s = await fresh({ db: withTerritory(noJourneyDb(), MOH) });
+    await s.pg.goto(`${BASE}/journey/sylhet`);
+    await s.pg.getByRole("button", { name: "Start journey" }).click();
+    await s.pg.waitForURL((u) => u.pathname === "/", { timeout: 15000 });
+    let db = (await dbOf(s.pg))["users/u1"];
+    check("N5. choosing the Sylhet Journey sets the Journey and leaves the active Territory alone", db.currentRoute === "Sylhet" && db.territoryActive.areaId === MOH && db.territory.areaId === MOH, JSON.stringify([db.currentRoute, db.territoryActive]));
+    await s.pg.goto(`${BASE}/territory/current`);
+    await ready(s.pg, "text=Start exploring");
+    const t = await text(s.pg);
+    check("N6. Journey then Territory: Sylhet does not leak into Territory", /MOHAMMADPUR/i.test(t) && !/Sylhet|Dhaka\s*→/i.test(t) && (await noRouteSvg(s.pg)) === 0);
+    await chooseArea(s.pg, "Chandpur Sadar");
+    await ready(s.pg, "text=isn't open for Territory yet");
+    db = (await dbOf(s.pg))["users/u1"];
+    check("N7. changing the Territory leaves the Journey as it was", db.currentRoute === "Sylhet" && db.territoryActive.areaId === CHP, JSON.stringify([db.currentRoute, db.territoryActive]));
+    await s.pg.goto(`${BASE}/journey/sylhet`);
+    await ready(s.pg, "text=Continue moving");
+    check("N9. Territory then Journey: the Journey page shows the Sylhet route", /Sylhet/.test(await text(s.pg)) && !/MOHAMMADPUR|CHANDPUR SADAR/i.test(await text(s.pg)));
+    await s.pg.reload();
+    await ready(s.pg, "text=Continue moving");
+    check("N10. refreshing the Journey keeps Sylhet", /Sylhet/.test(await text(s.pg)));
+    check("N10b. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // 8-12. Start moving asks why, then goes only where that can really start
+  {
+    // the sheet, with a Journey and an open Territory
+    let s = await fresh({ db: withTerritory(journeyDb(), MOH) });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    const sheet = sheetOf(s.pg);
+    await sheet.waitFor({ timeout: 10000 });
+    const st = await sheet.innerText();
+    check("N11. Start moving opens a selector with ROUTE and TERRITORY, and starts nothing", /ROUTE/.test(st) && /TERRITORY/.test(st) && /Follow a Journey route/i.test(st) && /Explore new ground/i.test(st) && (await idb(s.pg)).activities.length === 0 && /\/$/.test(s.pg.url()), st.replace(/\s+/g, " ").slice(0, 200));
+    await sheet.getByRole("button", { name: /^ROUTE/ }).click();
+    await s.pg.waitForURL(/\/run\?mode=journey/, { timeout: 15000 });
+    await ready(s.pg, "text=Running");
+    await s.pg.waitForFunction(() => /Dhaka → Chandpur/.test(document.body.innerText), null, { timeout: 15000 });
+    let t = await text(s.pg);
+    check("N12. ROUTE continues the user's Journey: the route screen names Dhaka to Chandpur", /\/run\?mode=journey/.test(s.pg.url()) && /Dhaka → Chandpur/.test(t) && !/Mohammadpur/i.test(t), s.pg.url());
+    await s.ctx.close();
+
+    // ROUTE with no Journey: choose one, never Chandpur by default
+    s = await fresh({ db: withTerritory(noJourneyDb(), MOH) });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    await sheetOf(s.pg).getByRole("button", { name: /^ROUTE/ }).click();
+    await s.pg.waitForURL((u) => u.pathname === "/journey", { timeout: 15000 });
+    check("N13. ROUTE with no Journey goes to choose a route (nothing is chosen for the user)", /Choose your route/i.test(await text(s.pg)) && (await idb(s.pg)).activities.length === 0);
+    await s.ctx.close();
+
+    // TERRITORY: nothing chosen -> Choose Territory
+    s = await fresh({ db: journeyDb() });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    await sheetOf(s.pg).getByRole("button", { name: /^TERRITORY/ }).click();
+    await s.pg.waitForURL((u) => u.pathname === "/territory", { timeout: 15000 });
+    await ready(s.pg, "text=Choose a place to explore");
+    check("N14. TERRITORY with none chosen shows Territory selection and starts nothing", (await idb(s.pg)).activities.length === 0 && noJourneyText(await text(s.pg)));
+    await s.ctx.close();
+
+    // TERRITORY: chosen but not open -> the Not Open state, no activity
+    s = await fresh({ db: withTerritory(journeyDb(), CHP) });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    await sheetOf(s.pg).getByRole("button", { name: /^TERRITORY/ }).click();
+    await ready(s.pg, "text=isn't open for Territory yet");
+    check("N15. TERRITORY on a Territory that is not open shows Not Open and starts nothing", /\/territory\/current/.test(s.pg.url()) && (await idb(s.pg)).activities.length === 0);
+    // opening the Territory run by address does not start one either
+    await s.pg.goto(`${BASE}/run?mode=territory`);
+    await s.pg.waitForURL((u) => u.pathname.startsWith("/territory"), { timeout: 15000 });
+    check("N16. a Territory run for a Territory that is not open cannot be started, even by address", (await idb(s.pg)).activities.length === 0);
+    await s.ctx.close();
+
+    // TERRITORY: open -> a Territory move whose live view is Territory
+    s = await fresh({ db: withTerritory(journeyDb(), MOH) });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    await sheetOf(s.pg).getByRole("button", { name: /^TERRITORY/ }).click();
+    await s.pg.waitForURL(/\/run\?mode=territory/, { timeout: 15000 });
+    await ready(s.pg, "text=Running");
+    await s.pg.waitForFunction(() => /Mohammadpur/.test(document.body.innerText), null, { timeout: 15000 });
+    t = await text(s.pg);
+    check("N17. TERRITORY on an open Territory opens the Territory run, naming Mohammadpur, with no route", /\/run\?mode=territory/.test(s.pg.url()) && /Mohammadpur/i.test(t) && noJourneyText(t));
+    await s.pg.getByText("Walking").click();
+    await tracking(s.pg);
+    await emit(s.pg, 0);
+    await s.pg.waitForTimeout(400);
+    const live = await text(s.pg);
+    const act = (await idb(s.pg)).activities[0];
+    check("N18. the Territory move is saved as a TERRITORY move, with its Territory, and carries no Journey", act && act.mode === "TERRITORY" && act.territory?.areaId === MOH && act.journey === null, JSON.stringify([act?.mode, act?.territory, act?.journey]));
+    check("N19. the live view is Territory (or its loading state): never the Chandpur route", noJourneyText(live) && (await noRouteSvg(s.pg)) === 0 && /Mohammadpur|Territory|CONQUERED/i.test(live), live.slice(0, 200));
+    await walk(s.pg, 40);
+    await s.pg.getByRole("button", { name: "Finish activity" }).click();
+    await s.pg.waitForSelector("text=Story 9:16", { timeout: 15000 });
+    await s.pg.waitForTimeout(1500);
+    const u = (await dbOf(s.pg))["users/u1"];
+    const run = u.runs?.[u.runs.length - 1];
+    check("N20. a Territory move counts for totals but does not move the Journey, and saves why it was made", run && run.mode === "TERRITORY" && run.territoryAreaId === MOH && run.routeName === null && u.completedKm === 0 && u.totalKm > 0, JSON.stringify({ mode: run?.mode, area: run?.territoryAreaId, route: run?.routeName, completedKm: u.completedKm, totalKm: u.totalKm }));
+    check("N20b. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+
+    // the original leak: the Territory cannot load, and the live view must still not become the Journey route
+    s = await fresh({ db: withTerritory(journeyDb(), MOH) });
+    await s.pg.route("**/geo/bd/masks/*.json", (r) => r.abort());
+    await s.pg.goto(`${BASE}/run?mode=territory`);
+    await s.pg.getByText("Walking").click();
+    await tracking(s.pg);
+    await emit(s.pg, 0);
+    await s.pg.waitForSelector("text=isn't available right now", { timeout: 20000 });
+    const gone = await text(s.pg);
+    check("N21. when Territory can't load, the live view says so and still shows no Journey route", noJourneyText(gone) && (await noRouteSvg(s.pg)) === 0 && /Territory/.test(gone), gone.slice(0, 200));
+    await s.ctx.close();
+
+    // free move: no route, no Territory
+    s = await fresh({ db: withTerritory(journeyDb(), MOH) });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    await sheetOf(s.pg).getByRole("button", { name: /free move/i }).click();
+    await ready(s.pg, "text=Walking");
+    await s.pg.getByText("Walking").click();
+    await tracking(s.pg);
+    await emit(s.pg, 0);
+    await s.pg.waitForTimeout(300);
+    const free = await text(s.pg);
+    const fa = (await idb(s.pg)).activities[0];
+    check("N22. a free move is saved as NORMAL with no route and no Territory, and its live view shows none", fa && fa.mode === "NORMAL" && fa.journey === null && !fa.territory && noJourneyText(free) && (await noRouteSvg(s.pg)) === 0 && /Free move/i.test(free), JSON.stringify([fa?.mode, fa?.journey]));
+    await walk(s.pg, 30);
+    check("N23. normal tracking still works: distance counts", bigKm(await text(s.pg)) > 0.05);
+    await s.ctx.close();
+
+    // a Journey move advances the Journey
+    s = await fresh({ db: withTerritory(journeyDb(), MOH) });
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.getByRole("button", { name: "Start moving" }).click();
+    await sheetOf(s.pg).getByRole("button", { name: /^ROUTE/ }).click();
+    await ready(s.pg, "text=Walking");
+    await s.pg.getByText("Walking").click();
+    await tracking(s.pg);
+    await emit(s.pg, 0);
+    await s.pg.waitForSelector("text=LIVE", { timeout: 10000 });
+    s.pg.metres = 0;
+    const jl = await text(s.pg);
+    check("N24. a route move shows the Journey route (Dhaka to Chandpur) and nothing of Territory", /Jatrabari|Next/i.test(jl) && !/CONQUERED|Mohammadpur/i.test(jl));
+    await walk(s.pg, 60);
+    await s.pg.getByRole("button", { name: "Finish activity" }).click();
+    await s.pg.waitForSelector("text=Story 9:16", { timeout: 15000 });
+    await s.pg.waitForTimeout(1500);
+    const ju = (await dbOf(s.pg))["users/u1"];
+    check("N25. a route move advances the Journey and is saved as JOURNEY", ju.completedKm > 0.1 && ju.runs[ju.runs.length - 1].mode === "JOURNEY" && ju.runs[ju.runs.length - 1].routeName === "Chandpur", JSON.stringify({ completedKm: ju.completedKm, run: ju.runs[ju.runs.length - 1] }).slice(0, 220));
+    await s.ctx.close();
+  }
+}
+
 async function scenarioConquest() {
   // Territory is geographic coverage: only new eligible ground inside Mohammadpur counts, never distance.
   const a = await fresh();
@@ -603,7 +816,7 @@ async function scenarioConquest() {
   check("C2a. choosing Mohammadpur opens its Territory screen", /\/territory\/current\/?$/.test(a.pg.url()), a.pg.url());
   const saved = (await dbOf(a.pg))["users/u1"].territory;
   check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cells.length === 0 && saved.applied.length === 0 && (await dbOf(a.pg))["users/u1"].territoryActive?.areaId === "bd-upa-dhaka-mohammadpur", JSON.stringify(saved).slice(0, 200));
-  check("C3. START EXPLORING opens the Territory run", (await a.pg.getByRole("link", { name: /start exploring/i }).getAttribute("href")) === "/run?territory=1");
+  check("C3. START EXPLORING opens the Territory run", (await a.pg.getByRole("link", { name: /start exploring/i }).getAttribute("href")) === "/run?mode=territory");
   check("C4. no uncaught page errors on the hub", a.pg.errors.length === 0, a.pg.errors.join(" | ").slice(0, 200));
   await a.ctx.close();
 
@@ -704,7 +917,7 @@ async function scenarioConquest() {
     const s = await hub(db, "text=Take over");
     const t = await text(s.pg);
     check("K8. the current King is shown: Tania, crowned, since a date", /Held by another King/i.test(t) && /Tania/.test(t) && /since/.test(t));
-    check("K9. TAKE OVER opens a Territory run", (await s.pg.getByRole("link", { name: /take over/i }).getAttribute("href")) === "/run?territory=1");
+    check("K9. TAKE OVER opens a Territory run", (await s.pg.getByRole("link", { name: /take over/i }).getAttribute("href")) === "/run?mode=territory");
     const credits = await dbOf(s.pg);
     const camp = credits["users/u1"].territory.campaign;
     const m = t.match(/([\d.]+)% to take over/i);
@@ -813,9 +1026,9 @@ async function scenarioShare() {
     check("S8c. the map shows the whole route including Hajiganj and Chandpur", /Hajiganj/.test(t) && /Chandpur/.test(t));
     await s.ctx.close();
   }
-  // an older activity saved without a route name still gets the Routes card, from the journey the user is on
+  // a move that followed no route (Territory, free, or older) is never given the user's current Journey: without a track it offers no Routes card at all
   s = await open(mk({ runs: [{ ...run1, routeName: null }], withTrack: false }));
-  check("S8e. an activity saved without a route name still offers Routes (the user's active journey)", !(await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Routes$/ }).isDisabled()) && (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label^='Route from']").count()) === 1);
+  check("S8e. an activity saved without a route name is NOT given the user's current Journey: Routes is unavailable", (await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Routes$/ }).isDisabled()) && (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label^='Route from']").count()) === 0 && !/Dhaka to Chandpur|DHAKA → CHANDPUR/i.test(await text(s.pg)));
   await s.ctx.close();
   // no journey, but a recorded GPS track: Routes draws the real track
   s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "" }));
@@ -971,7 +1184,7 @@ async function scenarioLiveTerritory() {
   const a = cellCentre(start0), b = cellCentre(start0 + 15);
 
   const s = await fresh({ db: db() });
-  await s.pg.goto(`${BASE}/run?territory=1`);
+  await s.pg.goto(`${BASE}/run?mode=territory`);
   await s.pg.getByText("Walking").click();
   await tracking(s.pg);
   await emitAt(s.pg, a.lat, a.lng);
@@ -1000,7 +1213,7 @@ async function scenarioLiveTerritory() {
   await s.ctx.close();
 
   const far = await fresh({ db: db() });
-  await far.pg.goto(`${BASE}/run?territory=1`);
+  await far.pg.goto(`${BASE}/run?mode=territory`);
   await far.pg.getByText("Walking").click();
   await tracking(far.pg);
   await emitAt(far.pg, 23.2476, 90.8477);
@@ -1100,7 +1313,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

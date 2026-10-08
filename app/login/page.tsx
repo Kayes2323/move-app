@@ -50,7 +50,6 @@ export default function Login() {
     createdAt: serverTimestamp(),
     totalKm: 0,
     streak: 0,
-    currentRoute: "Chandpur",
     completedKm: 0,
     runs: [],
     weight: 0,
