@@ -20,7 +20,7 @@ progress = explored eligible cells / total eligible cells
 | `app/lib/territory/mask/` | Phase 2b runtime: `parseMask`, `scopeFromMask`, `loadMask` |
 | `app/lib/territory/coverage/` | `applyActivity` (idempotent, no back-fill, single area), `coverageProgress`, `progressAfter`, storage format |
 | `app/lib/territoryState.ts` | the one read-only adapter: finished activities + recorded tracks (tracking) in, coverage out |
-| `app/territory/`, `app/components/ShareCards.tsx` | screens and cards |
+| `app/territory/`, `app/components/ShareCards.tsx`, `app/lib/share/cardLayout.ts` | screens and cards |
 | `app/lib/territory/conquest/` | geodesy, outline drawing, registry (boundary + perimeter). `credit/config/progress/store` are **superseded**, see SUPERSEDED.md |
 
 Tracking is the source of truth for GPS and activities. The Territory domain imports nothing from tracking, history, activity or the run screen (tests enforce it); only `territoryState.ts` reads tracking data, and nothing writes back.
@@ -32,7 +32,7 @@ Tracking is the source of truth for GPS and activities. The Territory domain imp
 * `/territory`: choose Mohammadpur, percentage, remaining, new ground from recent moves, START MOVING
 * `/run?territory=1`: live percentage (counting what this move has found), boundary progress visual, map with "You are here", a note when outside the area
 * conquered: "TERRITORY CONQUERED", 100%, share
-* Share Cards: activity (real GPS route, calories), Journey, Territory progress (percent, +new ground, remaining), Territory conquered (100%, moves, real km); chosen automatically (`app/lib/share/context.ts`)
+* Share Cards: exactly three modes, **Territory / Routes / Normal** (`app/lib/share/context.ts`). With a photo, the card is split into a photo zone that holds only the photo, and a panel below (or beside) it holding the logo, the route/boundary and the numbers, each clipped to its own rectangle (`app/lib/share/cardLayout.ts`, enforced by tests and by pixel checks on the exported PNG). Routes draws the real GPS route (and the Journey as one line); Normal has no map; Territory shows coverage.
 
 ## Not in this phase
 King, 2x takeover, reclaim, battles, rankings, cycling rules. Morning/streak/activity multipliers are not part of the game: they would distort physical coverage and are deferred.

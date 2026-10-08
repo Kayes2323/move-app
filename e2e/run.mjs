@@ -554,11 +554,10 @@ async function scenarioConquest() {
 }
 
 async function scenarioShare() {
-  // Share Cards: the card follows what the activity really counted towards, and shows only real data.
+  // Share Cards: three modes (Territory, Routes, Normal), real data only, and a photo's subject is never covered.
   const now = Date.now();
   const iso = (ms) => new Date(ms).toISOString();
-  const half = ELIGIBLE.slice(0, 1940);
-  const HALF = stored({ cellRuns: runsOf(half), applied: [["r1", 1940, now]] });
+  const HALF = stored({ cellRuns: runsOf(ELIGIBLE.slice(0, 1940)), applied: [["r1", 1940, now]] });
   const DONE = stored({ cellRuns: runsOf(ELIGIBLE), applied: [["r0", 3000, now - 86400000], ["r1", 880, now]], completion: { activityId: "r1", atMs: now } });
   const track = streetChunk(0, now - 3600000);
   const mk = ({ runs, territory, route = "Chandpur", withTrack = true }) => {
@@ -570,57 +569,146 @@ async function scenarioShare() {
     return db;
   };
   const card = (pg) => pg.locator("main").innerText();
-  const open = async (db, url, wait) => {
+  const open = async (db, url = "/share?a=r1", vp) => {
     const s = await fresh({ db });
+    if (vp) await s.pg.setViewportSize(vp);
     await s.pg.goto(`${BASE}${url}`);
-    await s.pg.waitForSelector(wait, { timeout: 20000 });
+    await s.pg.waitForSelector("text=Save image", { timeout: 20000 });
     await s.pg.waitForTimeout(600);
     return s;
   };
+  const mode = async (pg, name) => { await pg.locator("[aria-label='Card type'] button", { hasText: new RegExp(`^${name}$`) }).click(); await pg.waitForTimeout(350); };
   const run1 = { id: "r1", km: 5.2, duration: "30:00", date: iso(now), activity: "running", calories: 412, pace: 5.77, journeyKm: 5.2, routeName: "Chandpur" };
 
-  let s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "" }), "/share?a=r1", "text=Save image");
+  // --- the selector: exactly Territory / Routes / Normal ---
+  let s = await open(mk({ runs: [run1], territory: HALF }));
+  const labels = await s.pg.locator("[aria-label='Card type'] button").allInnerTexts();
+  check("S1. the selector has exactly three modes: Territory, Routes, Normal", JSON.stringify(labels) === JSON.stringify(["Territory", "Routes", "Normal"]), JSON.stringify(labels));
+  check("S2. no Journey or Activity mode anywhere on the screen", !/Journey|Activity/.test(await s.pg.locator("[aria-label='Card type']").innerText()));
+  check("S3. with a real track the default is Routes, drawing the real GPS route", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label='Route']").count()) === 1);
   let t = await card(s.pg);
-  check("S1. plain activity card: distance, duration, pace, calories", /5\.2/.test(t) && /30:00/.test(t) && /412 kcal/.test(t), t.slice(0, 200));
-  check("S2. the card draws the real GPS route", (await s.pg.locator("svg[aria-label='Route']").count()) === 1);
-  check("S3. no Journey or Territory text on the plain card, and no card switcher", !/DHAKA →|CONQUERED|REMAINING/.test(t) && (await s.pg.locator("[aria-label='Card type']").count()) === 0);
-  check("S4. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
-  await s.ctx.close();
-
-  s = await open(mk({ runs: [{ ...run1, routeName: null, journeyKm: undefined }], route: "", withTrack: false }), "/share?a=r1", "text=Save image");
-  check("S5. no recorded track means no route drawn", (await s.pg.locator("svg[aria-label='Route']").count()) === 0 && /5\.2/.test(await card(s.pg)));
-  await s.ctx.close();
-
-  s = await open(mk({ runs: [run1] }), "/share?a=r1", "text=Save image");
+  check("S4. Routes card: distance, duration, pace, and the Journey as one line, no Territory text", /5\.2/.test(t) && /30:00/.test(t) && /DHAKA → CHANDPUR/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 220));
+  await mode(s.pg, "Normal");
   t = await card(s.pg);
-  check("S6. Journey card: DHAKA → CHANDPUR and km completed, no Territory", /DHAKA → CHANDPUR/.test(t) && /completed/.test(t) && /km today/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 200));
+  check("S5. Normal card: stats and calories, and no map or route layer", /5\.2/.test(t) && /412 kcal/.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg").count()) === 0 && !/CONQUERED/.test(t));
+  await mode(s.pg, "Territory");
+  t = await card(s.pg);
+  check("S6. Territory card: MOHAMMADPUR, 50.0% CONQUERED, +50.0% new ground, 50.0% REMAINING", /MOHAMMADPUR/.test(t) && /50\.0%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /50\.0% REMAINING/.test(t), t.slice(0, 260));
+  check("S7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
   await s.ctx.close();
 
-  s = await open(mk({ runs: [{ ...run1, activity: "walking" }], territory: HALF }), "/share?a=r1&ctx=territory", "text=Save image");
-  t = await card(s.pg);
-  check("S7. Territory card: MOHAMMADPUR, 50.0% CONQUERED, +50.0% new ground, 50.0% REMAINING", /MOHAMMADPUR/.test(t) && /50\.0%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /50\.0% REMAINING/.test(t) && !/ KM /.test(t.split("Territory")[0]), t.slice(0, 260));
-  check("S8. Territory card has no Journey map and offers Journey and Activity cards", !/DHAKA →/.test(t) && (await s.pg.locator("[aria-label='Card type'] button").count()) === 3);
-  await s.pg.locator("[aria-label='Card type'] button", { hasText: "Journey" }).click();
-  await s.pg.waitForTimeout(300);
-  check("S9. switching to Journey shows the Journey card", /DHAKA → CHANDPUR/.test(await card(s.pg)));
+  s = await open(mk({ runs: [run1], withTrack: false }));
+  check("S8. without a recorded track Routes is disabled and the default is Normal", (await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Routes$/ }).isDisabled()) && (await s.pg.locator("[data-card-mode='NORMAL']").count()) === 1);
+  check("S9. without a chosen Territory the Territory mode is disabled", await s.pg.locator("[aria-label='Card type'] button", { hasText: /^Territory$/ }).isDisabled());
   await s.ctx.close();
 
-  s = await open(mk({ runs: [{ ...run1, id: "r0", km: 15, activity: "walking", date: iso(now - 86400000) }, { ...run1, activity: "walking" }], territory: DONE }), "/share?a=r1", "text=Save image");
+  s = await open(mk({ runs: [{ ...run1, id: "r0", km: 15, activity: "walking", date: iso(now - 86400000) }, { ...run1, activity: "walking" }], territory: DONE }));
   t = await card(s.pg);
-  check("S10. conquered card is chosen automatically: TERRITORY CONQUERED, MOHAMMADPUR, 100%", /TERRITORY CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /100%/.test(t) && /2 moves/.test(t) && !/REMAINING/.test(t), t.slice(0, 260));
-  const dl = s.pg.waitForEvent("download", { timeout: 20000 });
+  check("S10. the conquering activity opens the conquest card: TERRITORY CONQUERED, MOHAMMADPUR, 100%, 2 moves", /TERRITORY CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /100%/.test(t) && /2 moves/.test(t) && !/REMAINING/.test(t), t.slice(0, 260));
+  await s.ctx.close();
+
+  // --- the photo: the subject is never covered, in the real exported PNG ---
+  const makePhoto = (pg, kind) => pg.evaluate(async (k) => {
+    const portrait = k === "portrait";
+    const W = portrait ? 900 : 1600, H = portrait ? 1200 : 1000;
+    const face = portrait ? { x: 450, y: 324, r: 108 } : { x: 512, y: 500, r: 130 };
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d");
+    g.fillStyle = "#7a7f88"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#555a63"; g.fillRect(0, H * 0.7, W, H * 0.3);
+    g.fillStyle = "#e02020"; g.beginPath(); g.arc(face.x, face.y, face.r, 0, Math.PI * 2); g.fill();
+    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    let bin = ""; for (const b of buf) bin += String.fromCharCode(b);
+    return { b64: btoa(bin), W, H, face };
+  }, kind);
+  const analyse = (pg, b64, zone, accent, scale) => pg.evaluate(async ([data, z, acc, sc]) => {
+    const bytes = Uint8Array.from(atob(data), (ch) => ch.charCodeAt(0));
+    const bmp = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+    const c = document.createElement("canvas"); c.width = bmp.width; c.height = bmp.height;
+    const g = c.getContext("2d"); g.drawImage(bmp, 0, 0);
+    const count = (x, y, w, h, test) => { const d = g.getImageData(x, y, w, h).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (test(d[i], d[i + 1], d[i + 2])) n++; return n; };
+    const isRed = (r, gg, b) => r > 170 && gg < 90 && b < 90;
+    const isAccent = (r, gg, b) => Math.abs(r - acc[0]) < 45 && Math.abs(gg - acc[1]) < 45 && Math.abs(b - acc[2]) < 45;
+    const Z = z.map((v) => Math.round(v * sc));
+    return {
+      width: bmp.width, height: bmp.height,
+      redInPhoto: count(Z[0], Z[1], Z[2], Z[3], isRed),
+      accentInPhoto: count(Z[0], Z[1], Z[2], Z[3], isAccent),
+      redBelow: count(0, Z[3], bmp.width, bmp.height - Z[3], isRed),
+      accentBelow: count(0, Z[3], bmp.width, bmp.height - Z[3], isAccent),
+    };
+  }, [b64, zone, accent, scale]);
+  const exportPng = async (pg) => {
+    const dl = pg.waitForEvent("download", { timeout: 40000 });
+    await pg.getByRole("button", { name: "Save image" }).click();
+    const d = await dl;
+    return readFileSync(await d.path()).toString("base64");
+  };
+  const BLUE = [111, 138, 255];
+  const { cardLayout } = await import("../app/lib/share/cardLayout.ts");
+
+  for (const photoKind of ["portrait", "landscape"]) {
+    for (const [m, label, layoutMode] of [["Routes", "ROUTES", "ROUTES"], ["Territory", "TERRITORY", "TERRITORY"], ["Normal", "NORMAL", "NORMAL"]]) {
+      const sp = await open(mk({ runs: [run1], territory: HALF }));
+      const photo = await makePhoto(sp.pg, photoKind);
+      await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
+      await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
+      await mode(sp.pg, m);
+      await sp.pg.waitForTimeout(400);
+      const L = cardLayout(layoutMode, "story", true);
+      const scale = Math.max(L.photo.w / photo.W, L.photo.h / photo.H);
+      const expected = Math.PI * (photo.face.r * scale * 3) ** 2;
+      const png = await exportPng(sp.pg);
+      const r = await analyse(sp.pg, png, [L.photo.x, L.photo.y, L.photo.w, L.photo.h], BLUE, 3);
+      check(`P1. ${photoKind} photo, ${label}: exported PNG is 1080 x 1920`, r.width === 1080 && r.height === 1920, `${r.width}x${r.height}`);
+      check(`P2. ${photoKind} photo, ${label}: the face is fully visible in the export (${Math.round((100 * r.redInPhoto) / expected)}% of its area)`, r.redInPhoto >= expected * 0.85 && r.redInPhoto <= expected * 1.15, `${r.redInPhoto} vs ${Math.round(expected)}`);
+      check(`P3. ${photoKind} photo, ${label}: no route, map, text or logo colour inside the photo zone`, r.accentInPhoto === 0, String(r.accentInPhoto));
+      check(`P4. ${photoKind} photo, ${label}: the overlay lives below the photo (${r.accentBelow} px)`, m === "Normal" ? r.accentBelow > 20 : r.accentBelow > 300, String(r.accentBelow));
+      check(`P5. ${photoKind} photo, ${label}: no face colour leaks outside the photo zone`, r.redBelow === 0, String(r.redBelow));
+      await sp.ctx.close();
+    }
+  }
+
+  // post (4:5) and a 320 px phone
+  {
+    const sp = await open(mk({ runs: [run1], territory: HALF }));
+    const photo = await makePhoto(sp.pg, "portrait");
+    await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
+    await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
+    await sp.pg.getByRole("button", { name: "Post 4:5" }).click();
+    for (const [m, layoutMode] of [["Routes", "ROUTES"], ["Territory", "TERRITORY"], ["Normal", "NORMAL"]]) {
+      await mode(sp.pg, m);
+      await sp.pg.waitForTimeout(300);
+      const L = cardLayout(layoutMode, "post", true);
+      const expected = Math.PI * (photo.face.r * Math.max(L.photo.w / photo.W, L.photo.h / photo.H) * 3) ** 2;
+      const r = await analyse(sp.pg, await exportPng(sp.pg), [L.photo.x, L.photo.y, L.photo.w, L.photo.h], BLUE, 3);
+      check(`P6. post 4:5, ${m}: 1080 x 1350, face visible, nothing over the photo`, r.width === 1080 && r.height === 1350 && r.redInPhoto >= expected * 0.85 && r.accentInPhoto === 0 && r.redBelow === 0, `${r.width}x${r.height} red ${r.redInPhoto}/${Math.round(expected)} accent ${r.accentInPhoto}`);
+    }
+    await sp.ctx.close();
+  }
+  {
+    const sp = await open(mk({ runs: [run1], territory: HALF }), "/share?a=r1&ctx=territory", { width: 320, height: 640 });
+    const photo = await makePhoto(sp.pg, "landscape");
+    await sp.pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
+    await sp.pg.waitForSelector("text=Change photo", { timeout: 10000 });
+    await sp.pg.waitForTimeout(400);
+    check("P7. 320 px phone: no sideways scrolling with a photo card", await sp.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    const L = cardLayout("TERRITORY", "story", true);
+    const expected = Math.PI * (photo.face.r * Math.max(L.photo.w / photo.W, L.photo.h / photo.H) * 3) ** 2;
+    const r = await analyse(sp.pg, await exportPng(sp.pg), [L.photo.x, L.photo.y, L.photo.w, L.photo.h], BLUE, 3);
+    check("P8. 320 px phone: the export is still 1080 x 1920 with the face visible and nothing over it", r.width === 1080 && r.height === 1920 && r.redInPhoto >= expected * 0.85 && r.accentInPhoto === 0, `${r.width}x${r.height} red ${r.redInPhoto}/${Math.round(expected)}`);
+    check("P9. no uncaught page errors with photos", sp.pg.errors.length === 0, sp.pg.errors.join(" | ").slice(0, 200));
+    await sp.ctx.close();
+  }
+
+  // no photo: still a complete card, exportable
+  s = await open(mk({ runs: [run1], territory: HALF }));
+  await mode(s.pg, "Normal");
+  const dl = s.pg.waitForEvent("download", { timeout: 30000 });
   await s.pg.getByRole("button", { name: "Save image" }).click();
-  const file = await dl.then((d) => d.suggestedFilename()).catch(() => "");
-  check("S11. the card exports to a PNG", /\.png$/.test(file), file);
-  check("S12. no uncaught page errors on the Territory cards", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+  check("P10. a card without a photo exports to a PNG", /\.png$/.test((await dl).suggestedFilename()));
   await s.ctx.close();
-
-  const small = await fresh({ db: mk({ runs: [{ ...run1, activity: "walking" }], territory: HALF }) });
-  await small.pg.setViewportSize({ width: 320, height: 640 });
-  await small.pg.goto(`${BASE}/share?a=r1&ctx=territory`);
-  await small.pg.waitForSelector("text=Save image", { timeout: 20000 });
-  check("S13. no sideways scrolling on a 320 px phone", await small.pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-  await small.ctx.close();
 }
 
 async function scenarioLiveTerritory() {

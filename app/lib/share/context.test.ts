@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { availableContexts, decideShareContext, territoryFactsAt } from "./context";
+import { availableModes, decideShareMode, SHARE_MODE_LABEL, SHARE_MODES, territoryFactsAt } from "./context";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseMask } from "../territory/mask/scope";
@@ -15,36 +15,29 @@ const state = (applied: [string, number][], completed?: string): CoverageState =
   ...(completed ? { completion: { activityId: completed, atMs: 9 } } : {}),
 });
 
-test("no Territory and no Journey: plain activity card", () => {
-  const f = { runId: "a", hasJourney: false, territory: null };
-  assert.deepEqual(availableContexts(f), ["NORMAL_ACTIVITY"]);
-  assert.equal(decideShareContext(f), "NORMAL_ACTIVITY");
+test("exactly three user-facing modes: Territory, Routes, Normal", () => {
+  assert.deepEqual([...SHARE_MODES], ["TERRITORY", "ROUTES", "NORMAL"]);
+  assert.deepEqual(Object.values(SHARE_MODE_LABEL), ["Territory", "Routes", "Normal"]);
+  assert.equal(Object.keys(SHARE_MODE_LABEL).length, 3);
+  assert.ok(!Object.values(SHARE_MODE_LABEL).some((l) => /journey|activity/i.test(l)), "no fourth, legacy mode");
 });
 
-test("a Journey activity shows the Journey card, plain activity stays available", () => {
-  const f = { runId: "a", hasJourney: true, territory: null };
-  assert.equal(decideShareContext(f), "JOURNEY_PROGRESS");
-  assert.deepEqual(availableContexts(f), ["JOURNEY_PROGRESS", "NORMAL_ACTIVITY"]);
+test("Normal is always available; Routes needs a real track; Territory needs a chosen Territory", () => {
+  assert.deepEqual(availableModes({ hasTrack: false, territory: null }), ["NORMAL"]);
+  assert.deepEqual(availableModes({ hasTrack: true, territory: null }), ["ROUTES", "NORMAL"]);
+  assert.deepEqual(availableModes({ hasTrack: false, territory: state([]) }), ["TERRITORY", "NORMAL"]);
+  assert.deepEqual(availableModes({ hasTrack: true, territory: state([]) }), ["TERRITORY", "ROUTES", "NORMAL"]);
 });
 
-test("Territory progress card, and the Territory hint wins over Journey", () => {
+test("automatic default: conquest, then the Territory screen hint, then Routes, then Normal", () => {
+  const done = state([["a", 3000], ["b", 880]], "b");
+  assert.equal(decideShareMode({ runId: "b", hasTrack: true, territory: done }), "TERRITORY");
+  assert.equal(decideShareMode({ runId: "a", hasTrack: true, territory: done }), "ROUTES");
   const t = state([["a", 200]]);
-  const f = { runId: "a", hasJourney: true, territory: t };
-  assert.equal(decideShareContext(f), "JOURNEY_PROGRESS");
-  assert.equal(decideShareContext({ ...f, hint: "territory" }), "TERRITORY_PROGRESS");
-  assert.equal(decideShareContext({ ...f, hasJourney: false }), "TERRITORY_PROGRESS");
-});
-
-test("an activity that explored nothing new has no Territory card", () => {
-  const t = state([["repeat", 0]]);
-  assert.deepEqual(availableContexts({ runId: "repeat", hasJourney: false, territory: t }), ["NORMAL_ACTIVITY"]);
-  assert.deepEqual(availableContexts({ runId: "unknown", hasJourney: false, territory: t }), ["NORMAL_ACTIVITY"]);
-});
-
-test("the finishing activity is the conquered card, an earlier one is not", () => {
-  const t = state([["a", 3000], ["b", 880]], "b");
-  assert.equal(decideShareContext({ runId: "b", hasJourney: true, territory: t }), "TERRITORY_CONQUERED");
-  assert.equal(decideShareContext({ runId: "a", hasJourney: false, territory: t }), "TERRITORY_PROGRESS");
+  assert.equal(decideShareMode({ runId: "a", hasTrack: true, territory: t, hint: "territory" }), "TERRITORY");
+  assert.equal(decideShareMode({ runId: "a", hasTrack: true, territory: t }), "ROUTES");
+  assert.equal(decideShareMode({ runId: "a", hasTrack: false, territory: t }), "NORMAL");
+  assert.equal(decideShareMode({ runId: "a", hasTrack: false, territory: null, hint: "territory" }), "NORMAL");
 });
 
 test("facts are the real coverage at that activity", () => {
@@ -57,7 +50,7 @@ test("facts are the real coverage at that activity", () => {
   assert.equal(b.percent, 60);
   assert.equal(b.addedPercent, 10);
   assert.equal(territoryFactsAt(t, mask, "missing"), null);
-  assert.equal(territoryFactsAt(state([["z", 0]]), mask, "z"), null);
+  assert.equal(territoryFactsAt(state([["z", 0]]), mask, "z")!.addedPercent, 0, "a repeat adds nothing but still has its moment");
 });
 
 test("conquered facts are 100% with the real number of moves", () => {

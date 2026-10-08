@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CARD_HEIGHT, CARD_WIDTH, type CardRatio, type CardTone } from "./ShareCard";
-import { JourneyProgressCard, NormalActivityCard, TerritoryCard } from "./ShareCards";
+import { ShareCardView, type CardPhoto } from "./ShareCards";
 import {
   ACTIVITY_META,
   findRoute,
@@ -17,11 +17,20 @@ import { loadHistory, type UserDoc } from "../lib/history";
 import { loadTrack } from "../lib/trackLoader";
 import type { TrackPoint } from "../lib/tracking/types";
 import { loadTerritory, type TerritorySnapshot } from "../lib/territoryState";
-import { availableContexts, decideShareContext, SHARE_CONTEXT_LABEL, territoryFactsAt, type ShareContext } from "../lib/share/context";
+import { availableModes, decideShareMode, SHARE_MODES, SHARE_MODE_LABEL, territoryFactsAt, territoryNowFacts } from "../lib/share/context";
+import type { ShareMode } from "../lib/share/cardLayout";
 
 type UserData = UserDoc;
 
 type Status = "loading" | "ready" | "empty" | "error";
+
+const imageSize = (src: string) =>
+  new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => reject(new Error("Photo unreadable"));
+    img.src = src;
+  });
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
@@ -37,12 +46,12 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
   const [uid, setUid] = useState<string | null>(null);
   const [territory, setTerritory] = useState<TerritorySnapshot | null>(null);
   const [loadedTrack, setLoadedTrack] = useState<{ id: string; points: TrackPoint[] | null } | null>(null);
-  const [chosenCtx, setChosenCtx] = useState<ShareContext | null>(null);
+  const [chosenCtx, setChosenCtx] = useState<ShareMode | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [ratio, setRatio] = useState<CardRatio>("story");
   const [tone, setTone] = useState<CardTone>("dark");
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<CardPhoto | null>(null);
   const [exporting, setExporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
@@ -132,27 +141,29 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     const route = findRoute(run.routeName ?? user?.currentRoute);
     const routeStartKm = journeyOffsetKm(route, user?.startCheckpointIndex);
     const def = territory?.def;
-    const territoryFacts = territory && run.id ? territoryFactsAt(territory.state, territory.mask, run.id) : null;
+    const territoryFacts = territory ? (run.id ? territoryFactsAt(territory.state, territory.mask, run.id) : null) ?? territoryNowFacts(territory.state, territory.mask, territory.scope) : null;
     const territoryKm = territory ? Math.round(runs.filter((r) => r.id && territory.state.applied.some((a) => a.id === r.id && a.added > 0)).reduce((sum, r) => sum + r.km, 0) * 10) / 10 : 0;
     const url = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("ctx");
-    const shareFacts = { runId: run.id, hasJourney: Boolean(route), territory: territory?.state ?? null, hint: hint ?? url };
-    const options = availableContexts(shareFacts);
-    const auto = decideShareContext(shareFacts);
-    const context = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
-    return { run, kind, route, routeStartKm, def, territoryFacts, territoryKm, options, context };
-  }, [run, selected, user, territory, hint, chosenCtx, runs]);
+    const shareFacts = { runId: run.id, hasTrack: Boolean(track), territory: territory?.state ?? null, hint: hint ?? url };
+    const options = availableModes(shareFacts);
+    const auto = decideShareMode(shareFacts);
+    const mode = chosenCtx && options.includes(chosenCtx) ? chosenCtx : auto;
+    const journeyKm = run.journeyKm ?? routeStartKm + (user?.completedKm ?? 0);
+    return { run, kind, route, routeStartKm, journeyKm, def, territoryFacts, territoryKm, options, mode };
+  }, [run, selected, user, territory, hint, chosenCtx, runs, track]);
 
-  const common = { photo, ratio, tone } as const;
-  const card = (() => {
-    if (!facts) return null;
-    const { run: r, kind, route, routeStartKm, def, territoryFacts, territoryKm, context } = facts;
-    if ((context === "TERRITORY_PROGRESS" || context === "TERRITORY_CONQUERED") && def && territoryFacts) return <TerritoryCard def={def} facts={territoryFacts} actualKm={territoryKm} {...common} />;
-    if (context === "JOURNEY_PROGRESS" && route) {
-      // journeyKm is absolute; older activities fall back to the current progress.
-      return <JourneyProgressCard route={route} routeStartKm={routeStartKm} today={{ kind, km: r.km, duration: r.duration, pace: r.pace }} journeyKm={r.journeyKm ?? routeStartKm + (user?.completedKm ?? 0)} {...common} />;
-    }
-    return <NormalActivityCard kind={kind} km={r.km} duration={r.duration} pace={r.pace} calories={r.calories} dateLabel={formatCardDate(r.date)} track={track} {...common} />;
-  })();
+  const card = facts ? (
+    <ShareCardView
+      mode={facts.mode}
+      ratio={ratio}
+      tone={tone}
+      photo={photo}
+      activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, dateLabel: formatCardDate(facts.run.date) }}
+      track={track}
+      journey={facts.route && facts.run.routeName ? { name: facts.route.name, completedKm: Math.max(facts.journeyKm - facts.routeStartKm, 0) } : null}
+      territory={facts.def && facts.territoryFacts ? { def: facts.def, facts: facts.territoryFacts, actualKm: facts.territoryKm } : null}
+    />
+  ) : null;
   const cardProps = facts ? { kind: facts.kind, km: facts.run.km } : null;
 
   const step = (dir: -1 | 1) => {
@@ -170,7 +181,8 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     e.target.value = "";
     if (!file) return;
     try {
-      setPhoto(await loadPhoto(file));
+      const src = await loadPhoto(file);
+      setPhoto({ src, ...(await imageSize(src)) });
       setNotice(null);
     } catch (err) {
       console.error(err);
@@ -279,13 +291,16 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
       </div>
 
       <div style={{ width: "100%", maxWidth: 440, marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-        {facts && facts.options.length > 1 && (
+        {facts && (
           <div role="group" aria-label="Card type" style={{ display: "flex", gap: 8 }}>
-            {facts.options.map((o) => (
-              <button key={o} onClick={() => setChosenCtx(o)} aria-pressed={facts.context === o} className={facts.context === o ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 44, borderRadius: 22, fontSize: 13, textTransform: "none", letterSpacing: 0 }}>
-                {SHARE_CONTEXT_LABEL[o]}
-              </button>
-            ))}
+            {SHARE_MODES.map((m) => {
+              const ok = facts.options.includes(m);
+              return (
+                <button key={m} onClick={() => setChosenCtx(m)} disabled={!ok} aria-pressed={facts.mode === m} className={facts.mode === m ? "btn btn-solid" : "btn btn-line"} style={{ flex: 1, minHeight: 44, borderRadius: 22, fontSize: 13, textTransform: "none", letterSpacing: 0, opacity: ok ? 1 : 0.4 }}>
+                  {SHARE_MODE_LABEL[m]}
+                </button>
+              );
+            })}
           </div>
         )}
         <div role="group" aria-label="Card format" style={{ display: "flex", gap: 8 }}>
