@@ -89,7 +89,7 @@ export function TerritoryHeroMap({ geometry, bbox, explored = [], dark, you, pad
     if (!ready || !lib || !m) return;
     layers.current.you?.remove();
     layers.current.you = undefined;
-    if (you) layers.current.you = lib.marker([you.lat, you.lng], { icon: lib.divIcon({ className: "", html: '<div class="you-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false, keyboard: false }).addTo(m);
+    if (you) layers.current.you = lib.marker([you.lat, you.lng], { icon: lib.divIcon({ className: "", html: '<div class="you-dot"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }), interactive: false, keyboard: false }).addTo(m);
   }, [ready, you]);
 
   return <div ref={host} aria-hidden="true" style={{ position: "absolute", inset: 0, background: "var(--land)" }} />;

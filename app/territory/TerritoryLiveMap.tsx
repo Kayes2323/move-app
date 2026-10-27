@@ -12,13 +12,22 @@ const cssVar = (name: string, fallback: string) => getComputedStyle(document.doc
  * Where the user really is, with the Territory they are conquering drawn on the same map. The user does not have to be inside
  * it: "You are here" is their true position, and the boundary is only the picture of the goal.
  */
-export function TerritoryLiveMap({ def, fraction, point, track, dark, explored = [] }: { def: TerritoryDefinition; fraction: number; point?: LngLat; track: LngLat[]; dark: boolean; explored?: readonly LngLat[] }) {
+/** Google-Maps-like blue for "you" and the path you have walked. */
+const BLUE = "#1A73E8";
+
+export function TerritoryLiveMap({ def, fraction, point, track, dark, explored = [], accuracy }: { def: TerritoryDefinition; fraction: number; point?: LngLat; track: LngLat[]; dark: boolean; explored?: readonly LngLat[]; accuracy?: number | null }) {
   const host = useRef<HTMLDivElement>(null);
   const L = useRef<typeof Leaflet | null>(null);
   const map = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ track?: Leaflet.Polyline; marker?: Leaflet.Marker; lit?: Leaflet.Polyline; tiles?: Leaflet.TileLayer; explored?: Leaflet.LayerGroup }>({});
+  const layers = useRef<{ track?: Leaflet.Polyline; casing?: Leaflet.Polyline; halo?: Leaflet.Circle; marker?: Leaflet.Marker; lit?: Leaflet.Polyline; tiles?: Leaflet.TileLayer; explored?: Leaflet.LayerGroup }>({});
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<"me" | "territory">("me");
+  // following = the map keeps you in the middle; dragging the map lets go until "Recenter"
+  const [following, setFollowing] = useState(true);
+  const followRef = useRef(true);
+  useEffect(() => {
+    followRef.current = following;
+  }, [following]);
   const ring = useMemo(() => conquestRing(toLngLat(def.boundary.coordinates[0])), [def]);
 
   useEffect(() => {
@@ -33,6 +42,7 @@ export function TerritoryLiveMap({ def, fraction, point, track, dark, explored =
       lib.polygon(ll, { color: cssVar("--ink", "#fff"), weight: 1.5, opacity: 0.5, dashArray: "4 6", fillColor: cssVar("--accent", "#4f6ef7"), fillOpacity: 0.1, interactive: false }).addTo(m);
       const [w, s, e, n] = def.bbox;
       m.fitBounds([[s, w], [n, e]]);
+      m.on("dragstart", () => setFollowing(false));
       setReady(true);
     })();
     return () => {
@@ -48,7 +58,7 @@ export function TerritoryLiveMap({ def, fraction, point, track, dark, explored =
     const m = map.current;
     if (!ready || !lib || !m) return;
     layers.current.tiles?.remove();
-    layers.current.tiles = lib.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_nolabels" : "light_nolabels"}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 19 }).addTo(m);
+    layers.current.tiles = lib.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "rastertiles/voyager"}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 19 }).addTo(m);
     layers.current.tiles.bringToBack();
   }, [ready, dark]);
 
@@ -66,19 +76,27 @@ export function TerritoryLiveMap({ def, fraction, point, track, dark, explored =
     const lib = L.current;
     const m = map.current;
     if (!ready || !lib || !m) return;
-    const accent = cssVar("--accent", "#4f6ef7");
     const latlngs = track.map((p) => [p.lat, p.lng] as [number, number]);
-    if (!layers.current.track) layers.current.track = lib.polyline(latlngs, { color: accent, weight: 5, opacity: 0.9, lineCap: "round", lineJoin: "round", interactive: false }).addTo(m);
+    // the path walked: a white casing under a blue line, like a navigation trail
+    if (!layers.current.casing) layers.current.casing = lib.polyline(latlngs, { color: "#FFFFFF", weight: 9, opacity: 0.95, lineCap: "round", lineJoin: "round", interactive: false }).addTo(m);
+    else layers.current.casing.setLatLngs(latlngs);
+    if (!layers.current.track) layers.current.track = lib.polyline(latlngs, { color: BLUE, weight: 5, opacity: 1, lineCap: "round", lineJoin: "round", interactive: false }).addTo(m);
     else layers.current.track.setLatLngs(latlngs);
+    layers.current.track.bringToFront();
     if (point) {
       const at: [number, number] = [point.lat, point.lng];
       if (!layers.current.marker) {
-        layers.current.marker = lib.marker(at, { icon: lib.divIcon({ className: "", html: '<div class="you-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false, keyboard: false }).addTo(m);
-        layers.current.marker.bindTooltip("YOU ARE HERE", { permanent: true, direction: "top", offset: [0, -10], className: "here-tip", opacity: 1 });
+        layers.current.marker = lib.marker(at, { icon: lib.divIcon({ className: "you-marker", html: '<div class="you-dot"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(m);
       } else layers.current.marker.setLatLng(at);
-      if (view === "me") m.setView(at, Math.max(m.getZoom(), 16), { animate: false });
+      // GPS accuracy as a soft circle around the dot
+      const radius = accuracy && accuracy > 0 ? Math.min(accuracy, 80) : 0;
+      if (radius > 0) {
+        if (!layers.current.halo) layers.current.halo = lib.circle(at, { radius, stroke: false, fillColor: BLUE, fillOpacity: 0.14, interactive: false }).addTo(m);
+        else layers.current.halo.setLatLng(at).setRadius(radius);
+      }
+      if (view === "me" && followRef.current) m.setView(at, Math.max(m.getZoom(), 17), { animate: false });
     }
-  }, [ready, track, point, view]);
+  }, [ready, track, point, view, accuracy]);
 
   // Your own explored ground, as soft overlapping circles (never the hidden grid). Only ever drawn on your own screen.
   useEffect(() => {
@@ -109,10 +127,20 @@ export function TerritoryLiveMap({ def, fraction, point, track, dark, explored =
       <div style={{ position: "absolute", top: 10, left: 10, right: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, zIndex: 500, pointerEvents: "none" }}>
         <span role="status" style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(10px)", borderRadius: 14, padding: "6px 10px", fontSize: 12, fontWeight: 700, maxWidth: "60%" }}>{status}</span>
         <span className="seg" style={{ pointerEvents: "auto" }} role="group" aria-label="Map view">
-          <button aria-pressed={view === "me"} onClick={() => setView("me")}>Me</button>
+          <button aria-pressed={view === "me"} onClick={() => { setView("me"); setFollowing(true); }}>Me</button>
           <button aria-pressed={view === "territory"} onClick={() => setView("territory")}>{def.name}</button>
         </span>
       </div>
+      {view === "me" && !following && here && (
+        <button
+          type="button"
+          aria-label="Recenter on me"
+          onClick={() => { setFollowing(true); if (point) map.current?.setView([point.lat, point.lng], Math.max(map.current.getZoom(), 17), { animate: true }); }}
+          style={{ position: "absolute", right: 12, bottom: 12, zIndex: 500, width: 44, height: 44, borderRadius: 22, border: 0, background: "var(--bg)", color: BLUE, boxShadow: "0 2px 10px rgba(0,0,0,.35)", display: "grid", placeItems: "center" }}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor" /><circle cx="12" cy="12" r="7.5" /><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" /></svg>
+        </button>
+      )}
     </div>
   );
 }

@@ -33,7 +33,7 @@ type Props = LiveRouteCardProps & {
  */
 export function TerritoryLiveScreen({ snapshot, activity, points, here, ...card }: Props) {
   const { def, choice, state, scope, mask } = snapshot;
-  const [tab, setTab] = useState<"territory" | "map">("territory");
+  const [tab, setTab] = useState<"territory" | "map">("map");
   const prefs = useThemePrefs();
   const dark = resolveMode(prefs.mode) === "dark";
 
@@ -107,7 +107,7 @@ export function TerritoryLiveScreen({ snapshot, activity, points, here, ...card 
 
   const visual =
     tab === "map" ? (
-      <TerritoryLiveMap def={def} fraction={fraction} point={here} track={track} dark={dark} explored={explored} />
+      <TerritoryLiveMap def={def} fraction={fraction} point={here} track={track} dark={dark} explored={explored} accuracy={lastAcc} />
     ) : (
       <div style={{ width: "100%", padding: "8px 14px", display: "flex", justifyContent: "center" }}>
         <TerritoryEmblem def={def} fraction={fraction} conquered={king} width={320} height={250} explored={explored} />
