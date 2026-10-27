@@ -141,7 +141,7 @@ function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMod
   // The compact card: no box behind it, just the real boundary with its progress and the figure under it. A soft dark casing
   // under the line and a shadow under the text keep it readable on any photo.
   const pct = t.facts.conquered ? "100" : t.facts.percent.toFixed(1);
-  const eh = r.h - 8 - 7 - 22 - 12 - 2;
+  const eh = r.h - 8 - 7 - 16 - 10 - 2;
   const ew = r.w - 12;
   const casing: EmblemColors = { fill: "rgba(0,0,0,0)", base: "rgba(0,0,0,0.38)", progressFrom: "rgba(0,0,0,0.38)", progressTo: "rgba(0,0,0,0.38)", head: "rgba(0,0,0,0)" };
   const glass: EmblemColors = { fill: "rgba(0,0,0,0)", base: "rgba(255,255,255,0.85)", progressFrom: "#8EA2FF", progressTo: "#FFFFFF", head: "#FFFFFF" };
@@ -152,8 +152,8 @@ function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMod
         <div style={{ position: "absolute", inset: 0 }}><TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={ew} height={eh} pad={6} colors={casing} stroke={6.4} glow={false} label="" /></div>
         <div style={{ position: "absolute", inset: 0 }}><TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={ew} height={eh} pad={6} colors={glass} stroke={3.2} glow={false} label={`${t.def.name} boundary`} /></div>
       </div>
-      <div style={{ fontFamily: DISPLAY, fontSize: 20, lineHeight: 1, color: "#FFFFFF", whiteSpace: "nowrap", textShadow: shadow }}>{pct}%</div>
-      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.1, color: "#FFFFFF", whiteSpace: "nowrap", textShadow: shadow }}>{t.facts.conquered ? "EXPLORED" : "CONQUERED"}</div>
+      <div style={{ fontFamily: DISPLAY, fontSize: 14, lineHeight: 1, color: "#FFFFFF", whiteSpace: "nowrap", textShadow: shadow }}>{pct}%</div>
+      <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: 1.1, color: "#FFFFFF", whiteSpace: "nowrap", textShadow: shadow }}>{t.facts.conquered ? "EXPLORED" : "CONQUERED"}</div>
     </div>
   );
 }
@@ -175,7 +175,7 @@ function Stat({ value, unit, name, L, size }: { value: string | null; unit?: str
 }
 
 /** Normal: distance first and biggest, then duration, pace, calories and steps as one even row (two rows without a photo). */
-function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
+function NormalStats({ props, layout, L, heading }: { props: ShareCardProps; layout: CardLayout; L: Look; heading?: string }) {
   const { kind, km, duration, pace, calories, steps, dateLabel } = props.activity;
   const distance = formatKm(km);
   const roomy = layout.stats.h >= 200;
@@ -192,7 +192,7 @@ function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: Card
   const statSize = roomy ? 26 : 17;
   return (
     <>
-      <div style={label(L, 13)}>{ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
+      <div style={label(L, 13)}>{heading ?? `${ACTIVITY_META[kind].label}${dateLabel ? ` · ${dateLabel}` : ""}`}</div>
       <div style={big(size, roomy ? 14 : 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.24), marginLeft: 6, color: L.soft }}>km</span></div>
       <div style={{ display: "grid", gridTemplateColumns: roomy ? "1fr 1fr" : "repeat(4, auto)", justifyContent: "space-between", rowGap: roomy ? 26 : 0, columnGap: 8, marginTop: roomy ? 40 : 14 }}>
         {cells.map((c) => <Stat key={c.name} value={c.value} unit={c.unit} name={c.name} L={L} size={statSize} />)}
@@ -227,11 +227,13 @@ function RoutesStats({ props, L }: { props: ShareCardProps; L: Look }) {
   );
 }
 
-function TerritoryStats({ props, L }: { props: ShareCardProps; L: Look }) {
+function TerritoryStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
   const t = props.territory;
   if (!t) return null;
   const { def, facts } = t;
   const c = false;
+  // With a photo the card reads like the others; the mini-card on the right carries the Territory progress.
+  if (L.onPhoto) return <NormalStats props={props} layout={layout} L={L} heading={facts.conquered ? `${facts.winKind === "takeover" ? "TAKEN" : "CONQUERED"} · ${def.name.toUpperCase()}` : `TERRITORY · ${def.name.toUpperCase()}`} />;
   if (facts.conquered) {
     const stats = [facts.moves ? `${facts.moves} ${facts.moves === 1 ? "move" : "moves"}` : "", t.actualKm ? `${t.actualKm.toFixed(1)} km real` : ""].filter(Boolean).join(" · ");
     const nameSize = Math.min(c ? 22 : 34, Math.floor((c ? 146 : 308) / (def.name.length * 0.82)));
@@ -243,20 +245,6 @@ function TerritoryStats({ props, L }: { props: ShareCardProps; L: Look }) {
           <span style={{ fontFamily: DISPLAY, fontSize: c ? 24 : 30, color: L.accent }}>100%</span>explored
         </div>
         {stats && <div style={{ fontSize: c ? 11 : 13, marginTop: 4, color: L.soft }}>{stats}</div>}
-      </>
-    );
-  }
-  if (L.onPhoto) {
-    // The mini-card carries the progress figure; the numbers below say which Territory and what this move did.
-    const nameSize = Math.min(40, Math.floor(308 / (def.name.length * 0.82)));
-    return (
-      <>
-        <div style={label(L, 13)}>TERRITORY</div>
-        <div style={big(nameSize, 6)}>{def.name.toUpperCase()}</div>
-        <div style={{ fontSize: 15, fontWeight: 600, marginTop: 8 }}>
-          {facts.addedPercent > 0 ? <>+{facts.addedPercent.toFixed(1)}%<span style={{ marginLeft: 5, fontSize: 12, color: L.soft }}>NEW GROUND</span></> : <span style={{ color: L.soft }}>No new ground this move</span>}
-        </div>
-        <div style={{ fontSize: 13, marginTop: 3, color: L.soft, letterSpacing: 1 }}>{facts.remainingPercent.toFixed(1)}% REMAINING</div>
       </>
     );
   }
@@ -302,7 +290,7 @@ export function ShareCardView(props: ShareCardProps) {
       <div data-zone="stats" style={rectStyle(layout.stats)}>
         {mode === "NORMAL" && <NormalStats props={props} layout={layout} L={L} />}
         {mode === "ROUTES" && <RoutesStats props={props} L={L} />}
-        {mode === "TERRITORY" && <TerritoryStats props={props} L={L} />}
+        {mode === "TERRITORY" && <TerritoryStats props={props} layout={layout} L={L} />}
       </div>
     </div>
   );

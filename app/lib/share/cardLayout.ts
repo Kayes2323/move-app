@@ -49,7 +49,7 @@ export function cardLayout(mode: ShareMode, ratio: CardRatio, hasPhoto: boolean)
   if (hasPhoto) {
     const story = ratio === "story";
     // The numbers: the bottom of the card, full width. The logo is at the top left.
-    const statsH = mode === "NORMAL" ? (story ? 142 : 120) : story ? 126 : 116;
+    const statsH = mode === "NORMAL" || mode === "TERRITORY" ? (story ? 142 : 120) : story ? 126 : 116;
     const statsY = H - 12 - statsH;
     const stats = { x: 24, y: statsY, w: 312, h: statsH };
     const logo = { x: story ? 24 : 16, y: story ? 36 : 14, w: LOGO_W, h: LOGO_H };
