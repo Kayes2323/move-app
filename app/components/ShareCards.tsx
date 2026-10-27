@@ -138,14 +138,22 @@ function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMod
       </div>
     );
   }
-  // The compact card: the real boundary with its progress, and the progress figure under it. Nothing else.
+  // The compact card: no box behind it, just the real boundary with its progress and the figure under it. A soft dark casing
+  // under the line and a shadow under the text keep it readable on any photo.
   const pct = t.facts.conquered ? "100" : t.facts.percent.toFixed(1);
-  const figure = 16 + 6;
+  const eh = r.h - 8 - 7 - 22 - 12 - 2;
+  const ew = r.w - 12;
+  const casing: EmblemColors = { fill: "rgba(0,0,0,0)", base: "rgba(0,0,0,0.38)", progressFrom: "rgba(0,0,0,0.38)", progressTo: "rgba(0,0,0,0.38)", head: "rgba(0,0,0,0)" };
+  const glass: EmblemColors = { fill: "rgba(0,0,0,0)", base: "rgba(255,255,255,0.85)", progressFrom: "#8EA2FF", progressTo: "#FFFFFF", head: "#FFFFFF" };
+  const shadow = "0 1px 3px rgba(0,0,0,0.65), 0 0 10px rgba(0,0,0,0.35)";
   return (
-    <div style={{ ...panelStyle(L, r), flexDirection: "column", gap: 2, padding: "8px 6px 7px" }} data-zone="visual" data-territory-mini="">
-      <TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={r.w - 12} height={r.h - 8 - 7 - figure - 14 - 2} pad={6} colors={colors} stroke={3.2} glow={false} label={`${t.def.name} boundary`} />
-      <div style={{ fontFamily: DISPLAY, fontSize: 18, lineHeight: 1, color: "#FFFFFF", whiteSpace: "nowrap" }}>{pct}%</div>
-      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.6, color: "rgba(255,255,255,0.62)", whiteSpace: "nowrap" }}>{t.facts.conquered ? "EXPLORED" : "CONQUERED"}</div>
+    <div style={{ ...rectStyle(r), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, padding: "8px 6px 7px" }} data-zone="visual" data-territory-mini="">
+      <div style={{ position: "relative", width: ew, height: eh }}>
+        <div style={{ position: "absolute", inset: 0 }}><TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={ew} height={eh} pad={6} colors={casing} stroke={6.4} glow={false} label="" /></div>
+        <div style={{ position: "absolute", inset: 0 }}><TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={ew} height={eh} pad={6} colors={glass} stroke={3.2} glow={false} label={`${t.def.name} boundary`} /></div>
+      </div>
+      <div style={{ fontFamily: DISPLAY, fontSize: 20, lineHeight: 1, color: "#FFFFFF", whiteSpace: "nowrap", textShadow: shadow }}>{pct}%</div>
+      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.1, color: "#FFFFFF", whiteSpace: "nowrap", textShadow: shadow }}>{t.facts.conquered ? "EXPLORED" : "CONQUERED"}</div>
     </div>
   );
 }
