@@ -1,8 +1,8 @@
 /**
  * Share Card layout: where everything sits, as pure data.
  *
- * With a photo, the real photo fills the whole card (no panel, no blur). The logo sits at the top left; the route and the
- * numbers sit at the bottom, directly on the photo, over a soft dark fade. The user can move and zoom the photo
+ * With a photo, the real photo fills the whole card (no panel, no blur). The logo sits at the top left; the map (a route panel, or
+ * a compact Territory card on the right) and the numbers sit at the bottom, directly on the photo, over a soft dark fade. The user can move and zoom the photo
  * (`PhotoAdjust`) so the face sits where they want it, clear of the route.
  */
 export type CardRatio = "story" | "post";
@@ -25,38 +25,49 @@ export interface CardLayout {
   height: number;
   /** The photo covers the whole card. Null when the card has no photo. */
   photo: Rect | null;
-  /** The route (Normal: today's GPS track, Routes: the active journey) or the Territory boundary. */
-  visual: Rect;
-  /** Mode label, numbers and lines. Always at the bottom. */
+  /**
+   * Where the map goes, in its own rectangle:
+   *  - Routes: with a photo, the recorded route (or the journey) in a compact panel on the right; without one, a big one;
+   *  - Territory: with a photo, a compact mini-card on the right; without one, the whole boundary;
+   *  - Normal: none. The numbers are the card.
+   */
+  visual: Rect | null;
+  /** Mode label, numbers and lines. Always at the bottom with a photo. */
   stats: Rect;
   logo: Rect;
-  /** Soft dark fades on photo cards: [0] behind the logo, [1] behind the route and the numbers. */
+  /** Soft dark fades on photo cards: [0] behind the logo, [1] behind the map and the numbers. */
   scrims: Rect[];
 }
 
 const LOGO_W = 42;
 const LOGO_H = 29;
 
-export function cardLayout(_mode: ShareMode, ratio: CardRatio, hasPhoto: boolean): CardLayout {
+export function cardLayout(mode: ShareMode, ratio: CardRatio, hasPhoto: boolean): CardLayout {
   const H = CARD_HEIGHT[ratio];
   const base = { width: CARD_WIDTH, height: H };
 
   if (hasPhoto) {
     const story = ratio === "story";
-    // The numbers: the bottom 126 px of a story, 116 px of a post, full width. The logo is at the top left.
-    const statsH = story ? 126 : 116;
+    // The numbers: the bottom of the card, full width. The logo is at the top left.
+    const statsH = mode === "NORMAL" ? (story ? 142 : 120) : story ? 126 : 116;
     const statsY = H - 12 - statsH;
     const stats = { x: 24, y: statsY, w: 312, h: statsH };
     const logo = { x: story ? 24 : 16, y: story ? 36 : 14, w: LOGO_W, h: LOGO_H };
-    // The route sits right above the numbers.
-    const visual = story ? { x: 24, y: statsY - 10 - 152, w: 312, h: 152 } : { x: 24, y: statsY - 10 - 104, w: 312, h: 104 };
-    // Fades: a light one behind the logo, and one behind the route and the numbers.
-    const lowY = visual.y - 36;
+    let visual: Rect | null = null;
+    // Routes and Territory: a compact map card on the right, just above the numbers. The left of the photo, the face and the upper body stay clear.
+    if (mode === "ROUTES") visual = story ? { x: 360 - 24 - 148, y: statsY - 12 - 148, w: 148, h: 148 } : { x: 360 - 16 - 132, y: statsY - 10 - 104, w: 132, h: 104 };
+    if (mode === "TERRITORY") visual = story ? { x: 360 - 24 - 124, y: statsY - 12 - 150, w: 124, h: 150 } : { x: 360 - 16 - 96, y: statsY - 10 - 104, w: 96, h: 104 };
+    // Fades: a light one behind the logo, and one behind the map and the numbers.
+    const lowY = (visual?.y ?? statsY) - 36;
     const scrims: Rect[] = [{ x: 0, y: 0, w: CARD_WIDTH, h: logo.y + logo.h + 40 }, { x: 0, y: lowY, w: CARD_WIDTH, h: H - lowY }];
     return { ...base, photo: { x: 0, y: 0, w: CARD_WIDTH, h: H }, visual, stats, logo, scrims };
   }
 
-  // No photo: the visual takes the room, the numbers sit below it.
+  // No photo: the map takes the room, the numbers sit below it. Normal has no map: its numbers fill the card.
+  if (mode === "NORMAL") {
+    if (ratio === "story") return { ...base, photo: null, visual: null, logo: { x: 28, y: 84, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 190, w: 304, h: 380 }, scrims: [] };
+    return { ...base, photo: null, visual: null, logo: { x: 28, y: 24, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 84, w: 304, h: 320 }, scrims: [] };
+  }
   if (ratio === "story") return { ...base, photo: null, visual: { x: 20, y: 132, w: 320, h: 310 }, logo: { x: 28, y: 84, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 462, w: 304, h: 150 }, scrims: [] };
   return { ...base, photo: null, visual: { x: 20, y: 64, w: 320, h: 214 }, logo: { x: 28, y: 24, w: LOGO_W, h: LOGO_H }, stats: { x: 28, y: 292, w: 304, h: 138 }, scrims: [] };
 }

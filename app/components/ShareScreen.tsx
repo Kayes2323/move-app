@@ -169,7 +169,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
       tone={tone}
       photo={photo}
       adjust={adjust ?? undefined}
-      activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, dateLabel: formatCardDate(facts.run.date) }}
+      activity={{ kind: facts.kind, km: facts.run.km, duration: facts.run.duration, pace: facts.run.pace, calories: facts.run.calories, steps: facts.run.steps, dateLabel: formatCardDate(facts.run.date) }}
       track={track}
       journey={facts.route ? { route: facts.route, startKm: facts.routeStartKm, progressKm: facts.journeyKm } : null}
       territory={facts.def && facts.territoryFacts ? { def: facts.def, facts: facts.territoryFacts, actualKm: facts.territoryKm } : null}

@@ -29,7 +29,7 @@ export interface ShareCardProps {
   photo?: CardPhoto | null;
   /** How the user moved and zoomed the photo. A sensible default for the photo's shape when omitted. */
   adjust?: PhotoAdjust;
-  activity: { kind: ActivityKind; km: number; duration: string; pace?: number; calories?: number; dateLabel: string };
+  activity: { kind: ActivityKind; km: number; duration: string; pace?: number; calories?: number; steps?: number; dateLabel: string };
   /** The recorded GPS track, or null when none exists. Never invented. */
   track: readonly TrackPoint[] | null;
   /** The Journey this activity counted towards: the Routes card draws this whole route and how far along it is. */
@@ -43,14 +43,19 @@ interface Look {
   bg: string;
   accent: string;
   light: boolean;
+  /** A photo fills the card: the card is always dark and everything sits on glass or a fade. */
+  onPhoto: boolean;
 }
+
+/** Room kept clear around a route inside its panel: the casing, the line and the end dots never touch the edge. */
+const ROUTE_PAD = 18;
 
 const rectStyle = (r: Rect): CSSProperties => ({ position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h, overflow: "hidden" });
 
 /** Photo cards are always dark (a calm panel under the photo); the light tone only applies to cards without one. */
 function look(tone: CardTone, hasPhoto: boolean, accentDark: string, accentLight: string): Look {
   const light = tone === "light" && !hasPhoto;
-  return { ink: light ? "#0F0F0F" : "#FFFFFF", soft: light ? "#5F6675" : "#8A8A94", bg: light ? "#F4F5F9" : "#0A0A0C", accent: light ? accentLight : accentDark, light };
+  return { ink: light ? "#0F0F0F" : "#FFFFFF", soft: light ? "#5F6675" : "#8A8A94", bg: light ? "#F4F5F9" : "#0A0A0C", accent: light ? accentLight : accentDark, light, onPhoto: hasPhoto };
 }
 
 /** The fades as one gradient: dark behind a visual at the top (if it is there), clear in the middle, dark behind the numbers. */
@@ -67,77 +72,123 @@ const label = (L: Look, size: number): CSSProperties => ({ fontSize: size, fontW
 const big = (size: number, marginTop: number): CSSProperties => ({ fontFamily: DISPLAY, fontSize: size, lineHeight: 1, marginTop, whiteSpace: "nowrap" });
 const bigSize = (text: string, a: number, b: number, c: number) => (text.length <= 4 ? a : text.length <= 5 ? b : c);
 
-/** A recorded GPS track, thinned only. On a photo it gets a dark casing so it reads against any picture. */
-function TrackDrawing({ track, r, L, onPhoto }: { track: readonly TrackPoint[] | null; r: Rect; L: Look; onPhoto: boolean }) {
-  const route = drawRoute(track, r.w, r.h, 16);
-  if (!route) {
-    // No GPS route was recorded (older activities): a quiet watermark, never a made-up line.
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={L.light ? "/move-mark-dark.png" : "/move-mark.png"} alt="" aria-hidden="true" style={{ width: Math.min(150, r.w * 0.5), height: "auto", opacity: onPhoto ? 0.18 : 0.08 }} />;
-  }
+/** The recorded GPS track, thinned only, with round caps and joins. Fully inside `r`: the padding covers the casing and the end dots. */
+function TrackDrawing({ track, r, L }: { track: readonly TrackPoint[] | null; r: Rect; L: Look }) {
+  const route = drawRoute(track, r.w, r.h, ROUTE_PAD);
+  if (!route) return null;
+  const hasPhoto = L.onPhoto;
   return (
-    <svg width={r.w} height={r.h} viewBox={`0 0 ${r.w} ${r.h}`} role="img" aria-label="Route" style={{ display: "block" }}>
-      <path d={route.d} fill="none" stroke={onPhoto ? "rgba(0,0,0,0.5)" : L.light ? "rgba(15,15,15,0.16)" : "rgba(255,255,255,0.14)"} strokeWidth={onPhoto ? 8.5 : 9} strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={r.w} height={r.h} viewBox={`0 0 ${r.w} ${r.h}`} role="img" aria-label="Route" shapeRendering="geometricPrecision" style={{ display: "block" }}>
+      <path d={route.d} fill="none" stroke={hasPhoto ? "rgba(0,0,0,0.55)" : L.light ? "rgba(15,15,15,0.16)" : "rgba(255,255,255,0.14)"} strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />
       <path d={route.d} fill="none" stroke={L.accent} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={route.start.x} cy={route.start.y} r={5} fill={L.bg} stroke={L.accent} strokeWidth={2.5} />
-      <circle cx={route.end.x} cy={route.end.y} r={6} fill={L.accent} stroke={onPhoto ? "#FFFFFF" : L.bg} strokeWidth={2.5} />
+      <circle cx={route.end.x} cy={route.end.y} r={6} fill={L.accent} stroke={hasPhoto ? "#FFFFFF" : L.bg} strokeWidth={2.5} />
     </svg>
   );
 }
 
+/** A calm, contained panel the map sits in: a dark glass card on a photo, a soft card otherwise. */
+const panelStyle = (L: Look, r: Rect): CSSProperties => ({
+  ...rectStyle(r),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 18,
+  background: L.onPhoto ? "rgba(10,10,12,0.56)" : L.light ? "#FFFFFF" : "#121218",
+  border: `1px solid ${L.onPhoto ? "rgba(255,255,255,0.14)" : L.light ? "rgba(15,15,15,0.08)" : "rgba(255,255,255,0.08)"}`,
+});
+
 /**
- * The visual, drawn inside its own rectangle and clipped to it:
- *  - Normal: the route walked today (the real GPS track);
- *  - Routes: the active journey, e.g. Dhaka to Chandpur, with how far along it you are (the real GPS track if there is no journey);
- *  - Territory: the boundary as a progress meter.
+ * The map, drawn inside its own rectangle and clipped to it:
+ *  - Routes: the real GPS track in a contained panel (the active journey's route if the move left no track);
+ *  - Territory: with a photo a compact mini-card on the right, without one the whole boundary as a progress meter;
+ *  - Normal: nothing. The numbers are the card.
  */
 function Visual({ layout, mode, props, L }: { layout: CardLayout; mode: ShareMode; props: ShareCardProps; L: Look }): ReactNode {
   const r = layout.visual;
+  if (!r || mode === "NORMAL") return null;
   const onPhoto = Boolean(props.photo);
-  const box: CSSProperties = { ...rectStyle(r), display: "flex", alignItems: "center", justifyContent: "center" };
-  if (mode === "ROUTES" && props.journey) {
+  if (mode === "ROUTES") {
     const j = props.journey;
-    const roomy = r.h >= 200;
+    const hasTrack = drawRoute(props.track, r.w, r.h, ROUTE_PAD) !== null;
+    if (!hasTrack && j) {
+      return (
+        <div style={panelStyle(L, r)} data-zone="visual">
+          <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={r.w > 200 ? 92 : 62} padR={r.w > 200 ? 92 : 22} padY={14} labels={r.w > 200 ? "auto" : "mini"} accent={L.accent} line={r.h >= 200 ? 3.4 : 2.8} fontSize={r.h >= 200 ? 12 : 10.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : onPhoto ? "rgba(255,255,255,0.7)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted={!onPhoto} />
+        </div>
+      );
+    }
     return (
-      <div style={box} data-zone="visual">
-        <JourneyRoute route={j.route} startKm={j.startKm} progressKm={j.progressKm} width={r.w} height={r.h} padL={r.w > 200 ? 92 : 62} padR={r.w > 200 ? 92 : 22} padY={14} labels={r.w > 200 ? "auto" : "mini"} accent={L.accent} line={roomy ? 3.4 : 2.8} fontSize={roomy ? 12 : 10.5} ink={L.ink} trail={L.light ? "rgba(15,15,15,0.28)" : onPhoto ? "rgba(255,255,255,0.7)" : undefined} halo={L.light ? "#F4F5F9" : "rgba(10,10,12,0.85)"} here={L.bg} dotted={!onPhoto} />
+      <div style={panelStyle(L, r)} data-zone="visual">
+        <TrackDrawing track={props.track} r={r} L={L} />
       </div>
     );
   }
-  if (mode === "TERRITORY") {
-    const t = props.territory;
-    if (!t) return null;
-    const colors: EmblemColors = L.light
-      ? { fill: "#E4E7F1", base: "#C5CAD8", progressFrom: "#4F6EF7", progressTo: "#7C8DF9", head: "#0F0F0F" }
-      : onPhoto
-        ? { fill: "rgba(10,10,12,0.45)", base: "rgba(255,255,255,0.55)", progressFrom: "#8EA2FF", progressTo: "#FFFFFF", head: "#FFFFFF" }
-        : { fill: "#15151B", base: "#2C2C36", progressFrom: "#6F8AFF", progressTo: "#B6C2FF", head: "#FFFFFF" };
+  const t = props.territory;
+  if (!t) return null;
+  const colors: EmblemColors = L.light
+    ? { fill: "#E4E7F1", base: "#C5CAD8", progressFrom: "#4F6EF7", progressTo: "#7C8DF9", head: "#0F0F0F" }
+    : onPhoto
+      ? { fill: "rgba(255,255,255,0.06)", base: "rgba(255,255,255,0.4)", progressFrom: "#8EA2FF", progressTo: "#FFFFFF", head: "#FFFFFF" }
+      : { fill: "#15151B", base: "#2C2C36", progressFrom: "#6F8AFF", progressTo: "#B6C2FF", head: "#FFFFFF" };
+  if (!onPhoto) {
     return (
-      <div style={box} data-zone="visual">
+      <div style={{ ...rectStyle(r), display: "flex", alignItems: "center", justifyContent: "center" }} data-zone="visual">
         <TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={r.w} height={r.h} pad={10} colors={colors} stroke={4} glow={false} label={`${t.def.name} boundary`} />
       </div>
     );
   }
+  // The compact card: the real boundary with its progress, and the progress figure under it. Nothing else.
+  const pct = t.facts.conquered ? "100" : t.facts.percent.toFixed(1);
+  const figure = 16 + 6;
   return (
-    <div style={box} data-zone="visual">
-      <TrackDrawing track={props.track} r={r} L={L} onPhoto={onPhoto} />
+    <div style={{ ...panelStyle(L, r), flexDirection: "column", gap: 2, padding: "8px 6px 7px" }} data-zone="visual" data-territory-mini="">
+      <TerritoryEmblem def={t.def} fraction={t.facts.percent / 100} conquered={t.facts.conquered} width={r.w - 12} height={r.h - 8 - 7 - figure - 14 - 2} pad={6} colors={colors} stroke={3.2} glow={false} label={`${t.def.name} boundary`} />
+      <div style={{ fontFamily: DISPLAY, fontSize: 18, lineHeight: 1, color: "#FFFFFF", whiteSpace: "nowrap" }}>{pct}%</div>
+      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.6, color: "rgba(255,255,255,0.62)", whiteSpace: "nowrap" }}>{t.facts.conquered ? "EXPLORED" : "CONQUERED"}</div>
     </div>
   );
 }
 
+const fmtSteps = (steps?: number): string | null => (steps && steps > 0 ? Math.round(steps).toLocaleString("en-US") : null);
+const fmtKcal = (calories?: number): string | null => (calories && calories > 0 ? String(Math.round(calories)) : null);
+
+/** One number with its label: the building block of the Normal card. A missing value is a quiet dash, never a made-up number. */
+function Stat({ value, unit, name, L, size }: { value: string | null; unit?: string; name: string; L: Look; size: number }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontFamily: DISPLAY, fontSize: size, lineHeight: 1, whiteSpace: "nowrap", color: value ? L.ink : L.soft }}>
+        {value ?? "—"}
+        {value && unit && <span style={{ fontFamily: TEXT, fontWeight: 700, fontSize: Math.round(size * 0.5), marginLeft: 3, color: L.soft }}>{unit}</span>}
+      </div>
+      <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.6, marginTop: 5, color: L.soft, whiteSpace: "nowrap" }}>{name}</div>
+    </div>
+  );
+}
+
+/** Normal: distance first and biggest, then duration, pace, calories and steps as one even row (two rows without a photo). */
 function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: CardLayout; L: Look }) {
-  const { kind, km, duration, pace, calories, dateLabel } = props.activity;
+  const { kind, km, duration, pace, calories, steps, dateLabel } = props.activity;
   const distance = formatKm(km);
-  const roomy = layout.stats.h >= 140;
-  const size = false ? bigSize(distance, 36, 32, 27) : roomy ? bigSize(distance, 92, 78, 64) : bigSize(distance, 46, 40, 34);
-  const kcal = calories && calories > 0 ? Math.round(calories) : null;
-  const sub = false ? 12 : roomy ? 20 : 15;
+  const roomy = layout.stats.h >= 200;
+  const size = roomy ? bigSize(distance, 108, 92, 76) : layout.stats.h >= 140 ? bigSize(distance, 62, 54, 46) : bigSize(distance, 54, 48, 40);
+  // "12:48 /km" or "18.2 km/h": the figure is the figure, the unit is quiet
+  const perf = formatPerformance(kind, pace);
+  const cut = perf.indexOf(" ");
+  const cells = [
+    { name: "TIME", value: formatDuration(duration) },
+    { name: kind === "cycling" ? "SPEED" : "PACE", value: cut > 0 ? perf.slice(0, cut) : perf, unit: cut > 0 ? perf.slice(cut + 1) : undefined },
+    { name: "CALORIES", value: fmtKcal(calories), unit: "kcal" },
+    { name: "STEPS", value: fmtSteps(steps) },
+  ];
+  const statSize = roomy ? 26 : 17;
   return (
     <>
-      <div style={label(L, false ? 11 : 13)}>{ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
-      <div style={big(size, 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.24), marginLeft: 6, color: L.soft }}>km</span></div>
-      <div style={{ fontSize: sub, fontWeight: 600, marginTop: 8 }}>{formatDuration(duration)}<span style={{ opacity: 0.5, margin: "0 8px" }}>·</span>{formatPerformance(kind, pace)}</div>
-      {kcal && <div style={{ fontSize: sub - 2, fontWeight: 600, marginTop: 4, color: L.soft }}>{kcal} kcal</div>}
+      <div style={label(L, 13)}>{ACTIVITY_META[kind].label}{dateLabel ? ` · ${dateLabel}` : ""}</div>
+      <div style={big(size, roomy ? 14 : 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.24), marginLeft: 6, color: L.soft }}>km</span></div>
+      <div style={{ display: "grid", gridTemplateColumns: roomy ? "1fr 1fr" : "repeat(4, auto)", justifyContent: "space-between", rowGap: roomy ? 26 : 0, columnGap: 8, marginTop: roomy ? 40 : 14 }}>
+        {cells.map((c) => <Stat key={c.name} value={c.value} unit={c.unit} name={c.name} L={L} size={statSize} />)}
+      </div>
     </>
   );
 }
@@ -145,28 +196,25 @@ function NormalStats({ props, layout, L }: { props: ShareCardProps; layout: Card
 function RoutesStats({ props, L }: { props: ShareCardProps; L: Look }) {
   const { kind, km, duration, pace, calories, dateLabel } = props.activity;
   const distance = formatKm(km);
-  const c = false;
-  const size = c ? bigSize(distance, 36, 32, 27) : bigSize(distance, 46, 40, 34);
+  const size = bigSize(distance, 46, 40, 34);
   const j = props.journey;
-  const kcal = calories && calories > 0 ? Math.round(calories) : null;
+  const kcal = fmtKcal(calories);
   const done = j ? Math.max(j.progressKm - j.startKm, 0) : 0;
   const left = j ? Math.max(j.route.totalKm - j.progressKm, 0) : 0;
-  const sub = c ? 12 : 15;
   return (
     <>
-      <div style={label(L, c ? 10 : 13)}>{j ? `DHAKA → ${j.route.destination.toUpperCase()}` : `ROUTE · ${ACTIVITY_META[kind].label}${dateLabel ? ` · ${dateLabel}` : ""}`}</div>
+      <div style={label(L, 13)}>{j ? `DHAKA → ${j.route.destination.toUpperCase()}` : `ROUTE · ${ACTIVITY_META[kind].label}${dateLabel ? ` · ${dateLabel}` : ""}`}</div>
       <div style={big(size, 6)}>{distance}<span style={{ fontSize: Math.round(size * 0.34), marginLeft: 5, color: L.soft }}>km today</span></div>
       {j && (
-        <div style={{ fontSize: sub, fontWeight: 700, marginTop: 6 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>
           {formatKm(done)} km completed
-          {!c && <span style={{ color: L.soft, fontWeight: 600 }}>{` · ${formatKm(left)} km to go`}</span>}
+          <span style={{ color: L.soft, fontWeight: 600 }}>{` · ${formatKm(left)} km to go`}</span>
         </div>
       )}
-      <div style={{ fontSize: sub - 1, fontWeight: 600, marginTop: 4, color: L.soft }}>
+      <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: L.soft }}>
         {formatDuration(duration)}<span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{formatPerformance(kind, pace)}
-        {kcal && !c && <><span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{kcal} kcal</>}
+        {kcal && <><span style={{ opacity: 0.6, margin: "0 6px" }}>·</span>{kcal} kcal</>}
       </div>
-      {kcal && c && <div style={{ fontSize: sub - 1, fontWeight: 600, marginTop: 2, color: L.soft }}>{kcal} kcal</div>}
     </>
   );
 }
@@ -187,6 +235,20 @@ function TerritoryStats({ props, L }: { props: ShareCardProps; L: Look }) {
           <span style={{ fontFamily: DISPLAY, fontSize: c ? 24 : 30, color: L.accent }}>100%</span>explored
         </div>
         {stats && <div style={{ fontSize: c ? 11 : 13, marginTop: 4, color: L.soft }}>{stats}</div>}
+      </>
+    );
+  }
+  if (L.onPhoto) {
+    // The mini-card carries the progress figure; the numbers below say which Territory and what this move did.
+    const nameSize = Math.min(40, Math.floor(308 / (def.name.length * 0.82)));
+    return (
+      <>
+        <div style={label(L, 13)}>TERRITORY</div>
+        <div style={big(nameSize, 6)}>{def.name.toUpperCase()}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, marginTop: 8 }}>
+          {facts.addedPercent > 0 ? <>+{facts.addedPercent.toFixed(1)}%<span style={{ marginLeft: 5, fontSize: 12, color: L.soft }}>NEW GROUND</span></> : <span style={{ color: L.soft }}>No new ground this move</span>}
+        </div>
+        <div style={{ fontSize: 13, marginTop: 3, color: L.soft, letterSpacing: 1 }}>{facts.remainingPercent.toFixed(1)}% REMAINING</div>
       </>
     );
   }

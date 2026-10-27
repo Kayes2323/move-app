@@ -21,36 +21,56 @@ test("with a photo the real photo fills the whole card: no panel, no backdrop", 
   }
 });
 
-test("photo cards: logo at the top left; the route and the numbers together at the bottom", () => {
+test("photo cards: logo at the top left; the numbers at the bottom; the map right above them", () => {
   for (const ratio of RATIOS) for (const mode of MODES) {
     const l = cardLayout(mode, ratio, true);
     const card = { x: 0, y: 0, w: l.width, h: l.height };
-    for (const [n, r] of [["logo", l.logo], ["stats", l.stats], ["visual", l.visual]] as const) assert.ok(inside(r, card), `${mode}/${ratio}: ${n} leaves the card`);
+    for (const [n, r] of [["logo", l.logo], ["stats", l.stats]] as const) assert.ok(inside(r, card), `${mode}/${ratio}: ${n} leaves the card`);
     assert.ok(l.logo.x <= 32 && l.logo.y <= 40, "logo at the top left");
     assert.ok(l.stats.y > l.height * 0.7, "numbers at the bottom");
-    assert.ok(l.visual.y + l.visual.h <= l.stats.y && l.visual.y > l.height * 0.4, "route right above the numbers, in the lower part");
-    assert.ok(!intersects(l.visual, l.stats) && !intersects(l.visual, l.logo) && !intersects(l.stats, l.logo));
+    assert.ok(!intersects(l.stats, l.logo));
+    if (mode === "NORMAL") {
+      assert.equal(l.visual, null, "Normal has no map: the numbers are the card");
+      continue;
+    }
+    const v = l.visual!;
+    assert.ok(inside(v, card), `${mode}/${ratio}: the map leaves the card`);
+    assert.ok(v.y + v.h <= l.stats.y && v.y > l.height * 0.4, "map right above the numbers, in the lower part");
+    assert.ok(!intersects(v, l.stats) && !intersects(v, l.logo));
   }
 });
 
-test("the fades are only behind the logo and behind the route and numbers; the middle of the photo is untouched", () => {
+test("Routes and Territory with a photo: a compact map card on the right, the left of the photo stays clear", () => {
+  for (const ratio of RATIOS) for (const mode of ["ROUTES", "TERRITORY"] as const) {
+    const t = cardLayout(mode, ratio, true).visual!;
+    assert.ok(t.x + t.w / 2 >= 360 * 0.7, `${mode}/${ratio}: the card is on the right`);
+    assert.ok(t.x + t.w <= 360 - 16, `${mode}/${ratio}: and inside the right margin`);
+    assert.ok(t.x >= 360 * 0.46, `${mode}/${ratio}: the left half of the photo is never touched`);
+    assert.ok(t.w <= 360 * 0.44, `${mode}/${ratio}: compact`);
+    assert.ok(t.h / t.w >= 0.75 && t.h / t.w <= 1.5, `${mode}/${ratio}: a card, not a banner`);
+    assert.ok(t.y > CARD_HEIGHT[ratio] * 0.42, `${mode}/${ratio}: low on the card, clear of the face and upper body`);
+  }
+});
+
+test("the fades are only behind the logo and behind the map and numbers; the middle of the photo is untouched", () => {
   for (const ratio of RATIOS) for (const mode of MODES) {
     const l = cardLayout(mode, ratio, true);
     assert.equal(l.scrims.length, 2);
     const [upper, lower] = l.scrims;
     assert.equal(upper.y, 0);
     assert.ok(upper.h <= l.logo.y + l.logo.h + 40);
-    assert.ok(lower.y <= l.visual.y && lower.y + lower.h === l.height);
+    assert.ok(lower.y <= (l.visual ?? l.stats).y && lower.y + lower.h === l.height);
     assert.ok(lower.y - (upper.y + upper.h) >= l.height * 0.15, `${mode}/${ratio}: a clear band of photo between the fades`);
   }
 });
 
-test("no photo: no photo and no fades, and the visual has room to breathe", () => {
+test("no photo: no photo and no fades, and the map or the numbers have room to breathe", () => {
   for (const ratio of RATIOS) for (const mode of MODES) {
     const l = cardLayout(mode, ratio, false);
     assert.equal(l.photo, null);
     assert.deepEqual(l.scrims, []);
-    assert.ok(l.stats.h >= 130 && l.visual.h >= 200, `${mode}/${ratio}`);
+    if (mode === "NORMAL") assert.ok(l.visual === null && l.stats.h >= 300, `${mode}/${ratio}`);
+    else assert.ok(l.stats.h >= 130 && l.visual!.h >= 200, `${mode}/${ratio}`);
   }
 });
 

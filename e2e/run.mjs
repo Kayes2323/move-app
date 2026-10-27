@@ -992,19 +992,19 @@ async function scenarioShare() {
     return s;
   };
   const mode = async (pg, name) => { await pg.locator("[aria-label='Card type'] button", { hasText: new RegExp(`^${name}$`) }).click(); await pg.waitForTimeout(350); };
-  const run1 = { id: "r1", km: 5.2, duration: "30:00", date: iso(now), activity: "running", calories: 412, pace: 5.77, journeyKm: 5.2, routeName: "Chandpur" };
+  const run1 = { id: "r1", km: 5.2, duration: "30:00", date: iso(now), activity: "running", calories: 412, steps: 6840, pace: 5.77, journeyKm: 5.2, routeName: "Chandpur" };
 
   // --- the selector: exactly Territory / Routes / Normal ---
   let s = await open(mk({ runs: [run1], territory: HALF }));
   const labels = await s.pg.locator("[aria-label='Card type'] button").allInnerTexts();
   check("S1. the selector has exactly three modes: Territory, Routes, Normal", JSON.stringify(labels) === JSON.stringify(["Territory", "Routes", "Normal"]), JSON.stringify(labels));
   check("S2. no Journey or Activity mode anywhere on the screen", !/Journey|Activity/.test(await s.pg.locator("[aria-label='Card type']").innerText()));
-  check("S3. the default is Routes, drawing the active journey route (Dhaka to Chandpur)", (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label^='Route from']").count()) === 1);
+  check("S3. the default is Routes, drawing the real recorded GPS route in its own panel", (await s.pg.locator("[data-card-mode='ROUTES'] [data-zone='visual'] svg[aria-label='Route']").count()) === 1 && (await s.pg.locator("[data-card-mode='ROUTES'] svg[aria-label^='Route from']").count()) === 0);
   let t = await card(s.pg);
   check("S4. Routes card: today's km, km completed, duration, pace, calories, route name; no Territory text", /5\.2 ?km today/.test(t) && /5\.2 km completed/.test(t) && /30:00/.test(t) && /412 kcal/.test(t) && /DHAKA → CHANDPUR/.test(t) && !/CONQUERED|REMAINING/.test(t), t.slice(0, 260));
   await mode(s.pg, "Normal");
   t = await card(s.pg);
-  check("S5. Normal card: stats, calories and today's real GPS route (not the journey map)", /5\.2/.test(t) && /412 kcal/.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg[aria-label='Route']").count()) === 1 && (await s.pg.locator("[data-card-mode='NORMAL'] svg[aria-label^='Route from']").count()) === 0 && !/CONQUERED/.test(t));
+  check("S5. Normal card: distance, time, pace, real calories (412) and real steps (6,840); no map, no Territory", /5\.2/.test(t) && /30:00/.test(t) && /412/.test(t) && /6,840/.test(t) && /CALORIES/i.test(t) && /STEPS/i.test(t) && (await s.pg.locator("[data-card-mode='NORMAL'] svg").count()) === 0 && !/CONQUERED/.test(t), t.slice(0, 200));
   await mode(s.pg, "Territory");
   t = await card(s.pg);
   check("S6. Territory card: MOHAMMADPUR, 62.5% CONQUERED (of the 80% requirement), +62.5% new ground, 37.5% REMAINING", /MOHAMMADPUR/.test(t) && /62\.5%/.test(t) && /CONQUERED/.test(t) && /NEW GROUND/.test(t) && /37\.5% REMAINING/.test(t), t.slice(0, 260));
@@ -1020,6 +1020,7 @@ async function scenarioShare() {
   {
     const db = mk({ runs: [{ ...run1, km: 5.02, journeyKm: 117.02 }] });
     db["users/u1"].startCheckpointIndex = 5;
+    delete db["users/u1/activities/r1/tracks/0"];
     s = await open(db);
     t = await card(s.pg);
     check("S8b. the active route reads DHAKA → CHANDPUR with 5.02 km completed and 14.98 km to go", /DHAKA → CHANDPUR/.test(t) && /5\.02 km completed/.test(t) && /14\.98 km to go/.test(t), t.slice(0, 260));
@@ -1082,7 +1083,7 @@ async function scenarioShare() {
     const cx = left + photo.face.x * k, cy = top + photo.face.y * k, r = photo.face.r * k;
     return { box: [(cx - r) * 3, (cy - r) * 3, 2 * r * 3, 2 * r * 3], area: Math.PI * (r * 3) ** 2, cy, r };
   };
-  const zonePx = (ratio) => { const l = cardLayout("ROUTES", ratio, true); const f = (r) => [r.x * 3, r.y * 3, r.w * 3, r.h * 3]; return { top: f({ x: 0, y: 0, w: 360, h: l.visual.y - 40 }), bottom: f(l.visual) }; };
+  const zonePx = (ratio, m = "Routes") => { const l = cardLayout(m.toUpperCase(), ratio, true); const f = (r) => [r.x * 3, r.y * 3, r.w * 3, r.h * 3]; const v = l.visual ?? { x: 0, y: l.stats.y, w: 0, h: 0 }; return { top: f({ x: 0, y: 0, w: 360, h: v.y - 40 }), bottom: f(v) }; };
   const load = async (pg, kind, faceY) => {
     const photo = await makePhoto(pg, kind, faceY);
     await pg.locator("input[type=file]").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(photo.b64, "base64") });
@@ -1098,12 +1099,12 @@ async function scenarioShare() {
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(300);
       const fb = await faceBox(sp.pg, photo);
-      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("story"));
+      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("story", m));
       check(`P1. ${c.name}, ${m}: the export is 1080 x 1920`, r.width === 1080 && r.height === 1920, `${r.width}x${r.height}`);
       check(`P2. ${c.name}, ${m}: the real photo fills the card (no panel, no blur)`, (await sp.pg.locator("[data-zone='backdrop']").count()) === 0 && (await sp.pg.locator("[data-zone='photo']").evaluate((el) => el.offsetHeight)) === 640);
       check(`P3. ${c.name}, ${m}: the face is fully visible in the export (${Math.round((100 * r.skin) / fb.area)}% of its area)`, r.skin >= fb.area * 0.92, `${r.skin}/${Math.round(fb.area)}`);
       check(`P4. ${c.name}, ${m}: no route, map or boundary on the face`, r.accentOnFace === 0, String(r.accentOnFace));
-      check(`P5. ${c.name}, ${m}: the route is at the bottom, above the numbers`, r.accentBottom > 200 && r.accentTop === 0, `top ${r.accentTop} bottom ${r.accentBottom}`);
+      check(`P5. ${c.name}, ${m}: the map card is low on the card (none on Normal) and nothing is drawn high up`, (m === "Normal" ? r.accentBottom === 0 : r.accentBottom > 150) && r.accentTop === 0, `top ${r.accentTop} bottom ${r.accentBottom}`);
       await sp.ctx.close();
     }
   }
@@ -1146,7 +1147,7 @@ async function scenarioShare() {
       await mode(sp.pg, m);
       await sp.pg.waitForTimeout(300);
       const fb = await faceBox(sp.pg, photo);
-      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("post"));
+      const r = await analyse(sp.pg, await exportPng(sp.pg), fb.box, zonePx("post", m));
       check(`P10. post 4:5, ${m}: 1080 x 1350, face fully visible, no route on it`, r.width === 1080 && r.height === 1350 && r.skin >= fb.area * 0.92 && r.accentOnFace === 0, `${r.width}x${r.height} skin ${r.skin}/${Math.round(fb.area)} accent ${r.accentOnFace}`);
     }
     await sp.ctx.close();
