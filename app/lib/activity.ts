@@ -218,6 +218,12 @@ export function journeyOffsetKm(route: Route | undefined, startCheckpointIndex?:
   return route.checkpoints[startCheckpointIndex]?.distanceFromStart ?? 0;
 }
 
+/** Where the journey began: "Dhaka" for the whole route, otherwise the checkpoint the user chose to start from. */
+export function journeyOriginName(route: Route | undefined, startCheckpointIndex?: number): string {
+  if (!route || !startCheckpointIndex) return "Dhaka";
+  return route.checkpoints[startCheckpointIndex]?.name ?? "Dhaka";
+}
+
 /* ---------- user stats ---------- */
 
 /** A stored streak is only still alive if the last activity was today or yesterday. */

@@ -50,8 +50,8 @@ test("a Journey exists only if the user chose one: no default route", () => {
   assert.equal(journeyOf({}), null);
   assert.equal(journeyOf({ currentRoute: "" }), null);
   assert.equal(journeyOf({ currentRoute: "   " }), null);
-  assert.deepEqual(journeyOf({ currentRoute: "Sylhet", completedKm: 12.5, startCheckpointIndex: 2 }), { routeName: "Sylhet", completedKm: 12.5, startIdx: 2 });
-  assert.deepEqual(journeyOf({ currentRoute: "Sylhet" }), { routeName: "Sylhet", completedKm: 0, startIdx: 0 });
+  assert.deepEqual(journeyOf({ currentRoute: "Sylhet", completedKm: 12.5, startCheckpointIndex: 2, journeyId: "s1", journeyMilestones: ["s1:km:5"] }), { routeName: "Sylhet", completedKm: 12.5, startIdx: 2, journeyId: "s1", milestones: ["s1:km:5"] });
+  assert.deepEqual(journeyOf({ currentRoute: "Sylhet" }), { routeName: "Sylhet", completedKm: 0, startIdx: 0, journeyId: "Sylhet:0", milestones: [] });
 });
 
 test("Start moving goes where each choice can really start, and never assumes a route or a Territory", () => {
@@ -85,13 +85,15 @@ test("the saved run says why it was made, and which Territory it was for", () =>
   assert.equal(legacyRun(finished({ mode: "JOURNEY", journey: { routeName: "Chandpur", startIdx: 0, completedKmBefore: 0 } })).routeName, "Chandpur");
 });
 
-test("the engine keeps only the context of the chosen mode, and refuses a mode without its context", async () => {
+test("the engine keeps the contexts a mode may carry, and refuses a mode without its context", async () => {
   const mk = () => new TrackingEngine(new MemoryStore(), () => T0, () => "act");
   const route = { routeName: "Chandpur", startIdx: 0, completedKmBefore: 0 };
   const ter = { areaId: "bd-upa-dhaka-mohammadpur" };
   const base = { userId: "u1", kind: "walking" as const, weightKg: 70, source: "web" as const };
   const t = await mk().start({ ...base, mode: "TERRITORY", journey: route, territory: ter });
-  assert.equal(t.journey, null, "a Territory move never carries a Journey, even if one is passed in");
+  assert.deepEqual(t.journey, route, "a Territory move carries the user's journey, so its distance counts toward it once (product decision, Routes brief item 6)");
+  const tFree = await mk().start({ ...base, mode: "TERRITORY", journey: null, territory: ter });
+  assert.equal(tFree.journey, null, "and none if the user has no journey");
   assert.deepEqual(t.territory, ter);
   const j = await mk().start({ ...base, mode: "JOURNEY", journey: route, territory: ter });
   assert.deepEqual(j.journey, route);
@@ -135,7 +137,7 @@ function sources(): { file: string; text: string }[] {
 
 test("no global Chandpur: no default route, no fallback, anywhere in the app", () => {
   // Chandpur may only be named by the route data and the profile's milestone badge (a list of distances, not a route in use).
-  const allowed = [join("app", "data", "routes.ts"), join("app", "profile", "page.tsx")];
+  const allowed = [join("app", "data", "routes.ts"), join("app", "data", "milestones.ts"), join("app", "profile", "page.tsx")];
   const offenders = sources().filter((s) => !allowed.includes(s.file) && /Chandpur/.test(s.text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")));
   assert.deepEqual(offenders.map((o) => o.file), []);
   for (const s of sources()) assert.ok(!/\|\|\s*"Chandpur"|currentRoute\s*:\s*"/.test(s.text), `${s.file}: a default route`);
@@ -143,7 +145,7 @@ test("no global Chandpur: no default route, no fallback, anywhere in the app", (
 
 test("the Journey's saved fields are read only by Journey code and by a Journey move", () => {
   // currentRoute is the Journey's. Screens that are not about a Journey must not read it.
-  const journeyScreens = [join("app", "lib", "journey.ts"), join("app", "journey", "[id]", "JourneyDetail.tsx"), join("app", "components", "ShareScreen.tsx"), join("app", "lib", "tracking", "sync.ts"), join("app", "lib", "history.ts"), join("app", "profile", "page.tsx"), join("app", "page.tsx")];
+  const journeyScreens = [join("app", "lib", "journey.ts"), join("app", "lib", "journeySwitch.ts"), join("app", "journey", "[id]", "JourneyDetail.tsx"), join("app", "components", "ShareScreen.tsx"), join("app", "lib", "tracking", "sync.ts"), join("app", "lib", "history.ts"), join("app", "profile", "page.tsx"), join("app", "page.tsx")];
   const readers = sources().filter((s) => /\bcurrentRoute\b/.test(s.text)).map((s) => s.file);
   assert.deepEqual(readers.filter((f) => !journeyScreens.includes(f)), []);
   // Territory code never touches the Journey, nor the other way round.

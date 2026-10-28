@@ -102,8 +102,9 @@ export class TrackingEngine {
         lastSeenAt: t,
         weightKg: p.weightKg,
         mode: p.mode,
-        // each context keeps only its own: a Territory or free move never carries a Journey, a route move never a Territory
-        journey: p.mode === "JOURNEY" ? p.journey : null,
+        // a Route or Territory move carries the user's journey (its distance counts toward it); a free move carries none.
+        // A route move never carries a Territory.
+        journey: p.mode === "JOURNEY" || p.mode === "TERRITORY" ? p.journey : null,
         territory: p.mode === "TERRITORY" ? p.territory : null,
         sync: "pending",
         syncAttempts: 0,

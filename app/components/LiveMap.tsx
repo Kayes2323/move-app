@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 import type { LngLat } from "../lib/territory/conquest/geodesy";
 import { conquestRing, distanceToRingM, pointInRing, ringProgress, toLngLat } from "../lib/territory/conquest/outline";
+import { TILE_ATTRIBUTION, TILE_URL, tileClass } from "../lib/mapTiles";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
 
 /** Google-Maps-like blue for the path walked and for "you". */
@@ -38,14 +39,6 @@ export interface LiveMapProps {
 }
 
 const cssVar = (name: string, fallback: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-/**
- * Street tiles. Default: OpenStreetMap's own standard tiles, which need no key (their usage policy: light use, attribution, no bulk
- * downloading; fine for a small app, not for heavy traffic). For production scale set NEXT_PUBLIC_MAP_TILE_URL (and
- * NEXT_PUBLIC_MAP_ATTRIBUTION) to a keyed provider such as MapTiler: https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=...
- * The dark theme darkens these light tiles with a CSS filter (see .map-tiles-dark).
- */
-const TILE_URL = process.env.NEXT_PUBLIC_MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const ATTRIBUTION = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION || '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>';
 
 /**
  * The real street map of wherever the user actually is, with the route recorded so far drawn over it. It only DRAWS what it is given:
@@ -81,7 +74,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
       if (dead || !host.current) return;
       L.current = lib;
       const m = lib.map(host.current, { zoomControl: false, attributionControl: false, minZoom: 3, maxZoom: 19, preferCanvas: true, zoomSnap: 0.5, center: [0, 0], zoom: 2 });
-      lib.control.attribution({ position: "bottomleft", prefix: false }).addAttribution(ATTRIBUTION).addTo(m);
+      lib.control.attribution({ position: "bottomleft", prefix: false }).addAttribution(TILE_ATTRIBUTION).addTo(m);
       m.on("dragstart", () => setFollowing(false));
       map.current = m;
       const ro = new ResizeObserver(() => m.invalidateSize());
@@ -112,7 +105,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
     layers.current.tiles?.remove();
     let ok = 0;
     let bad = 0;
-    const layer = lib.tileLayer(TILE_URL, { maxZoom: 19, keepBuffer: 3, updateWhenIdle: false, className: dark ? "map-tiles-dark" : "" });
+    const layer = lib.tileLayer(TILE_URL, { maxZoom: 19, keepBuffer: 3, updateWhenIdle: false, className: tileClass(dark) });
     layer.on("tileload", () => {
       ok += 1;
       setLoadedTiles(ok);

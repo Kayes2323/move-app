@@ -1,8 +1,9 @@
 /**
  * WHY the user is moving. Three different product contexts, never inferred from a page, a default or the last screen:
  *
- *   JOURNEY    following a Journey route: the move advances that Journey (the only mode that does)
- *   TERRITORY  exploring the user's active Territory: the move can explore it (and nothing about a Journey applies)
+ *   JOURNEY    following a Journey route: the move advances that Journey
+ *   TERRITORY  exploring the user's active Territory: the move can explore it. If the user has an active Journey, the same recorded
+ *              distance also counts toward it (each feature by its own rules, once); the live screen still shows only Territory
  *   NORMAL     a free move: counts for the user's totals and streak, belongs to no route and no Territory
  *
  * The mode is chosen by the user when the move starts, saved with the move, and read from it everywhere afterwards
@@ -13,6 +14,9 @@ export const ACTIVITY_MODES = ["NORMAL", "JOURNEY", "TERRITORY"] as const;
 export type ActivityMode = (typeof ACTIVITY_MODES)[number];
 
 export const MODE_LABEL: Record<ActivityMode, string> = { NORMAL: "Free move", JOURNEY: "Route", TERRITORY: "Territory" };
+
+/** Whether a move of this mode adds its recorded distance to the user's active Journey. */
+export const advancesJourney = (mode: ActivityMode) => mode === "JOURNEY" || mode === "TERRITORY";
 
 /** The mode of a saved or running move, including those from before modes existed. */
 export function modeOf(a: { mode?: ActivityMode | null; journey?: unknown | null; routeName?: string | null }): ActivityMode {

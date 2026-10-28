@@ -1,4 +1,5 @@
 "use client";
+import { TILE_ATTRIBUTION, TILE_URL, tileClass } from "../lib/mapTiles";
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as Leaflet from "leaflet";
@@ -43,6 +44,7 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
   const [tick, setTick] = useState(0);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const tiles = useRef<Leaflet.TileLayer | null>(null);
+  const attributed = useRef(false);
   const layer = useRef<Leaflet.LayerGroup | null>(null);
   const libRef = useRef<typeof Leaflet | null>(null);
   // re-lays out the labels for the current zoom (set after each redraw)
@@ -104,7 +106,7 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
     if (!L || !map) return;
     tiles.current?.remove();
     let errors = 0;
-    const t = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_nolabels" : "light_nolabels"}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 19, crossOrigin: true });
+    const t = L.tileLayer(TILE_URL, { maxZoom: 19, crossOrigin: true, className: tileClass(dark) });
     t.on("tileerror", () => {
       errors += 1;
       if (errors === 6) onProblemRef.current("Map tiles couldn't load, but borders and selection still work.");
@@ -115,6 +117,10 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
     });
     t.addTo(map).bringToBack();
     tiles.current = t;
+    if (!attributed.current) {
+      attributed.current = true;
+      L.control.attribution({ position: "bottomright", prefix: false }).addAttribution(TILE_ATTRIBUTION).addTo(map);
+    }
   }, [dark, tick]);
 
   /* What is drawn: the focused area's outline and its children. */

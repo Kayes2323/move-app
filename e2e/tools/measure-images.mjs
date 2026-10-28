@@ -1,0 +1,20 @@
+import { chromium } from "playwright-core";
+const BASE = process.env.BASE || "http://localhost:3333";
+const path = process.argv[2] || "/journey";
+const slow = process.argv[3] === "slow";
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const ctx = await b.newContext({ viewport: { width: 390, height: 800 } });
+await ctx.addInitScript(`localStorage.setItem("__seeded","1");localStorage.setItem("__mock_db",${JSON.stringify(JSON.stringify({"users/u1":{uid:"u1",name:"R",email:"r@x.com",totalKm:0,streak:0,currentRoute:"Chandpur",completedKm:3,runs:[],weight:70,onboarded:true}}))});localStorage.setItem("__mock_user",${JSON.stringify(JSON.stringify({uid:"u1",displayName:"R",email:"r@x.com",photoURL:""}))});`);
+const pg = await ctx.newPage();
+const reqs = [];
+pg.on("response", async (r) => { const u = r.url(); if (/\/images\//.test(u)) { const len = Number(r.headers()["content-length"] || 0) || (await r.body().then((x) => x.length).catch(() => 0)); reqs.push({ u: u.replace(BASE, ""), len, cc: r.headers()["cache-control"] }); } });
+if (slow) { const c = await ctx.newCDPSession(pg); await c.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: (1.5 * 1024 * 1024) / 8, uploadThroughput: 50000 }); }
+const t0 = Date.now();
+await pg.goto(BASE + path);
+await pg.waitForSelector("h1,h2", { timeout: 60000 });
+const tFirst = Date.now() - t0;
+await pg.waitForLoadState("networkidle", { timeout: 120000 }).catch(() => {});
+const total = Date.now() - t0;
+await pg.reload(); await pg.waitForLoadState("networkidle", { timeout: 120000 }).catch(() => {});
+console.log(JSON.stringify({ path, slow, firstHeadingMs: tFirst, networkIdleMs: total, imageRequests: reqs.length, imageBytesMB: +(reqs.reduce((a, r) => a + r.len, 0) / 1048576).toFixed(2), sample: reqs.slice(0, 3) }, null, 1));
+await b.close();

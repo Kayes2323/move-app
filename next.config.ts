@@ -7,6 +7,11 @@ const e2e: Record<string, string> = process.env.E2E
 
 const nextConfig: NextConfig = {
   turbopack: { resolveAlias: e2e },
+  // The route photos in public/images/routes carry a content hash in their name, so they can be cached for good. (Ignored by the
+  // static Capacitor export, where the files ship inside the app.)
+  async headers() {
+    return [{ source: "/images/routes/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] }];
+  },
   // CAPACITOR=1 builds the static bundle (out/) that the native shell ships inside the app, so it opens offline.
   ...(process.env.CAPACITOR ? { output: "export" as const, trailingSlash: true } : {}),
 };

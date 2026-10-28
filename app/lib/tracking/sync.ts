@@ -1,4 +1,5 @@
-import { modeOf } from "../activityMode";
+import { advancesJourney, modeOf } from "../activityMode";
+import { creditJourney } from "../journeySwitch";
 import type { ActivityStore } from "./store";
 import type { LocalActivity, TrackPoint } from "./types";
 
@@ -89,10 +90,10 @@ export function applyActivityToUser(user: Record<string, unknown>, a: LocalActiv
     totalKm: round2(((user.totalKm as number) ?? 0) + s.km),
     streak: nextStreak((user.streak as number) ?? 0, user.lastRun as string | undefined, a.endedAt ?? Date.parse(s.date)),
   };
-  // Journey progress is only advanced by a move that was started to follow that Journey, and only for the journey it was tracked on,
-  // even if it syncs much later. A Territory or free move never moves a Journey.
-  const sameJourney = modeOf(a) === "JOURNEY" && !!a.journey && user.currentRoute === a.journey.routeName && ((user.startCheckpointIndex as number) ?? 0) === a.journey.startIdx;
-  if (sameJourney) updates.completedKm = round2(((user.completedKm as number) ?? 0) + s.km);
+  // Journey progress is advanced by a Route or Territory move that carries the journey it was tracked on (never a free move), and only
+  // that journey, even if it syncs much later or the user has switched journeys since. The activity document is created in the same
+  // transaction, so one activity can never be added twice.
+  if (a.journey && advancesJourney(modeOf(a))) Object.assign(updates, creditJourney(user, a.journey, s.km));
   const lastRun = user.lastRun ? Date.parse(user.lastRun as string) : NaN;
   if (!(lastRun >= Date.parse(s.date))) updates.lastRun = s.date;
   return updates;

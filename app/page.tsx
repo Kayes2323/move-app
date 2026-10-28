@@ -12,7 +12,7 @@ import { startDestination } from "./lib/startMoving";
 import { isOpenArea, openAreaName } from "./lib/territory/open";
 import { resolveActiveId } from "./lib/territory/activeId";
 import type { ActivityMode } from "./lib/activityMode";
-import { effectiveStreak, findRoute, formatDuration, formatKm, formatPerformance, journeyOffsetKm, nowMs, toKind, type RunEntry } from "./lib/activity";
+import { effectiveStreak, findRoute, formatDuration, formatKm, formatPerformance, journeyOffsetKm, journeyOriginName, nowMs, toKind, type RunEntry } from "./lib/activity";
 import { syncPublicProfile } from "./lib/publicProfile";
 
 interface UserData {
@@ -157,7 +157,7 @@ export default function Home() {
           <div className="stack" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
             <span className="blk" style={{ fontSize: 56, lineHeight: "56px" }}>{formatKm(completedKm)}</span>
             <span className="mute" style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>of {routeTotal} km</span>
-            <span style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--acc-text)" }}>Dhaka → {journey.routeName}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--acc-text)" }}>{journeyOriginName(route, journey.startIdx)} → {journey.routeName}</span>
           </div>
         ) : (
           <div className="stack" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
@@ -217,7 +217,7 @@ export default function Home() {
       {starting && (
         <StartMovingSheet
           context={{
-            journeyLine: route && journey ? `Dhaka → ${journey.routeName} · ${completedKm.toFixed(1)} of ${routeTotal.toFixed(0)} km` : null,
+            journeyLine: route && journey ? `${journeyOriginName(route, journey.startIdx)} → ${journey.routeName} · ${completedKm.toFixed(1)} of ${routeTotal.toFixed(0)} km` : null,
             territory: territoryId ? { name: openAreaName(territoryId) ?? "", open: isOpenArea(territoryId) } : null,
           }}
           onSelect={(m: ActivityMode) => router.push(startDestination(m, { hasJourney: !!route, territoryId }))}

@@ -1,4 +1,5 @@
 "use client";
+import { TILE_ATTRIBUTION, TILE_URL, tileClass } from "../lib/mapTiles";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
@@ -17,6 +18,7 @@ export function TerritoryHeroMap({ geometry, bbox, explored = [], dark, you, pad
   const host = useRef<HTMLDivElement>(null);
   const L = useRef<typeof Leaflet | null>(null);
   const map = useRef<Leaflet.Map | null>(null);
+  const attributed = useRef(false);
   const layers = useRef<{ tiles?: Leaflet.TileLayer; shape?: Leaflet.LayerGroup; explored?: Leaflet.LayerGroup; you?: Leaflet.Marker }>({});
   const [ready, setReady] = useState(false);
 
@@ -42,7 +44,11 @@ export function TerritoryHeroMap({ geometry, bbox, explored = [], dark, you, pad
     const m = map.current;
     if (!ready || !lib || !m) return;
     layers.current.tiles?.remove();
-    layers.current.tiles = lib.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_nolabels" : "light_nolabels"}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 19 }).addTo(m);
+    layers.current.tiles = lib.tileLayer(TILE_URL, { maxZoom: 19, className: tileClass(dark) }).addTo(m);
+    if (!attributed.current) {
+      attributed.current = true;
+      lib.control.attribution({ position: "bottomright", prefix: false }).addAttribution(TILE_ATTRIBUTION).addTo(m);
+    }
     layers.current.tiles.bringToBack();
   }, [ready, dark]);
 

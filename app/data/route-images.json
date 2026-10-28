@@ -1,0 +1,138 @@
+{
+  "barisal": {
+    "original": "/images/barisal.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/barisal-720.abcf6458.webp",
+        "width": 720,
+        "height": 1280,
+        "bytes": 30728
+      },
+      {
+        "src": "/images/routes/barisal-1280.182609d3.webp",
+        "width": 1280,
+        "height": 2276,
+        "bytes": 77604
+      }
+    ]
+  },
+  "chandpur": {
+    "original": "/images/chandpur.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/chandpur-720.043a77b0.webp",
+        "width": 720,
+        "height": 480,
+        "bytes": 29162
+      },
+      {
+        "src": "/images/routes/chandpur-1280.b832516d.webp",
+        "width": 1280,
+        "height": 853,
+        "bytes": 96844
+      }
+    ]
+  },
+  "chittagong": {
+    "original": "/images/chittagong.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/chittagong-720.8cdf9e60.webp",
+        "width": 720,
+        "height": 477,
+        "bytes": 55004
+      },
+      {
+        "src": "/images/routes/chittagong-736.9d875c91.webp",
+        "width": 736,
+        "height": 488,
+        "bytes": 58094
+      }
+    ]
+  },
+  "coxsbazar": {
+    "original": "/images/coxsbazar.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/coxsbazar-720.8f76782f.webp",
+        "width": 720,
+        "height": 405,
+        "bytes": 30740
+      },
+      {
+        "src": "/images/routes/coxsbazar-1280.aa5aebea.webp",
+        "width": 1280,
+        "height": 720,
+        "bytes": 98706
+      }
+    ]
+  },
+  "khulna": {
+    "original": "/images/khulna.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/khulna-720.6612cd3f.webp",
+        "width": 720,
+        "height": 480,
+        "bytes": 20098
+      },
+      {
+        "src": "/images/routes/khulna-1280.927e6494.webp",
+        "width": 1280,
+        "height": 853,
+        "bytes": 54726
+      }
+    ]
+  },
+  "rajshahi": {
+    "original": "/images/rajshahi.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/rajshahi-720.68242324.webp",
+        "width": 720,
+        "height": 442,
+        "bytes": 36786
+      },
+      {
+        "src": "/images/routes/rajshahi-1280.424d0453.webp",
+        "width": 1280,
+        "height": 785,
+        "bytes": 80802
+      }
+    ]
+  },
+  "rangpur": {
+    "original": "/images/rangpur.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/rangpur-720.9b1c76e8.webp",
+        "width": 720,
+        "height": 480,
+        "bytes": 7486
+      },
+      {
+        "src": "/images/routes/rangpur-1280.b9f23eb7.webp",
+        "width": 1280,
+        "height": 853,
+        "bytes": 17328
+      }
+    ]
+  },
+  "sylhet": {
+    "original": "/images/sylhet.jpg",
+    "variants": [
+      {
+        "src": "/images/routes/sylhet-720.8d96b369.webp",
+        "width": 720,
+        "height": 480,
+        "bytes": 76478
+      },
+      {
+        "src": "/images/routes/sylhet-1280.b80fd2da.webp",
+        "width": 1280,
+        "height": 853,
+        "bytes": 218946
+      }
+    ]
+  }
+}

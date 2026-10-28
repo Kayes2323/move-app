@@ -851,7 +851,7 @@ async function scenarioSeparation() {
     await s.pg.getByRole("button", { name: "Start moving" }).click();
     await sheetOf(s.pg).getByRole("button", { name: /^ROUTE/ }).click();
     await s.pg.waitForURL((u) => u.pathname === "/journey", { timeout: 15000 });
-    check("N13. ROUTE with no Journey goes to choose a route (nothing is chosen for the user)", /Choose your route/i.test(await text(s.pg)) && (await idb(s.pg)).activities.length === 0);
+    check("N13. ROUTE with no Journey goes to choose a route (nothing is chosen for the user)", /Pick a destination/i.test(await text(s.pg)) && (await idb(s.pg)).activities.length === 0);
     await s.ctx.close();
 
     // TERRITORY: nothing chosen -> Choose Territory
@@ -893,7 +893,7 @@ async function scenarioSeparation() {
     await s.pg.waitForTimeout(400);
     const live = await text(s.pg);
     const act = (await idb(s.pg)).activities[0];
-    check("N18. the Territory move is saved as a TERRITORY move, with its Territory, and carries no Journey", act && act.mode === "TERRITORY" && act.territory?.areaId === MOH && act.journey === null, JSON.stringify([act?.mode, act?.territory, act?.journey]));
+    check("N18. the Territory move is saved as a TERRITORY move, with its Territory, and carries the active Journey so its distance counts there too", act && act.mode === "TERRITORY" && act.territory?.areaId === MOH && act.journey?.routeName === "Chandpur", JSON.stringify([act?.mode, act?.territory, act?.journey]));
     check("N19. the live view is Territory (or its loading state): never the Chandpur route", noJourneyText(live) && (await noRouteSvg(s.pg)) === 0 && /Mohammadpur|Territory|CONQUERED/i.test(live), live.slice(0, 200));
     await walk(s.pg, 40);
     await s.pg.getByRole("button", { name: "Finish activity" }).click();
@@ -901,7 +901,7 @@ async function scenarioSeparation() {
     await s.pg.waitForTimeout(1500);
     const u = (await dbOf(s.pg))["users/u1"];
     const run = u.runs?.[u.runs.length - 1];
-    check("N20. a Territory move counts for totals but does not move the Journey, and saves why it was made", run && run.mode === "TERRITORY" && run.territoryAreaId === MOH && run.routeName === null && u.completedKm === 0 && u.totalKm > 0, JSON.stringify({ mode: run?.mode, area: run?.territoryAreaId, route: run?.routeName, completedKm: u.completedKm, totalKm: u.totalKm }));
+    check("N20. a Territory move counts for totals and, once, for the active Journey, and saves why it was made", run && run.mode === "TERRITORY" && run.territoryAreaId === MOH && run.routeName === "Chandpur" && u.completedKm > 0 && Math.abs(u.completedKm - u.totalKm) < 0.001, JSON.stringify({ mode: run?.mode, area: run?.territoryAreaId, route: run?.routeName, completedKm: u.completedKm, totalKm: u.totalKm }));
     check("N20b. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
     await s.ctx.close();
 
@@ -1556,6 +1556,250 @@ async function scenarioLiveMap() {
   await helperCtx.close();
 }
 
+async function scenarioRoutes() {
+  // Routes: journey origin and progress, milestones, switching, the Routes page order, map failure, and image weight.
+  const SHOTS = process.env.SHOTS_DIR;
+  if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+  const shot = async (pg, name) => { if (SHOTS) await pg.screenshot({ path: `${SHOTS}/${name}.png` }); };
+  const helperCtx = await browser.newContext();
+  const helper = await helperCtx.newPage();
+  const dhaka = waysIn("bd-dis-dhaka", [23.70, 90.42, 23.72, 90.45]);
+  const geoAt = (lat, lng) => `navigator.geolocation.getCurrentPosition = (ok) => setTimeout(() => ok({ coords: { latitude: ${lat}, longitude: ${lng}, accuracy: 20 }, timestamp: Date.now() }), 0);`;
+  const emitAt = async (pg, lat, lng, acc = 6) => { await shift(pg, 2000); await pg.evaluate(([la, ln, a]) => window.__gps.emit({ lat: la, lng: ln, acc: a }), [lat, lng, acc]); await pg.waitForTimeout(12); };
+  const userDoc = async (pg) => (await dbOf(pg))["users/u1"];
+  const noJourney = () => { const d = baseDb(); d["users/u1"].currentRoute = ""; return d; };
+  const withJourney = (over = {}) => { const d = baseDb(); Object.assign(d["users/u1"], { currentRoute: "Chandpur", completedKm: 0, startCheckpointIndex: 0, journeyId: "c1", ...over }); return d; };
+
+  const PART = process.env.ROUTES_PART || "";
+  if (PART !== "b") {
+  /* --- Routes page: journeys first, the map after and independent of it --- */
+  const r = await fresh({ db: withJourney({ completedKm: 12.4 }) });
+  const tiles = await installTiles(r.ctx, helper, dhaka);
+  tiles.fail = true; // the map's tile server is down for this whole check
+  await r.pg.goto(`${BASE}/journey`);
+  await r.pg.getByRole("list", { name: "Journeys" }).waitFor({ timeout: 20000 });
+  const order = await r.pg.evaluate(() => { const l = document.querySelector('ul[aria-label="Journeys"]').getBoundingClientRect(); const m = document.querySelector('section[aria-label="Map"]').getBoundingClientRect(); return { listTop: l.top, mapTop: m.top, cards: document.querySelectorAll('ul[aria-label="Journeys"] > li').length }; });
+  check("R1. the journey list is above the map and there is one card per route", order.listTop < order.mapTop && order.cards === 8, JSON.stringify(order));
+  const active = await r.pg.getByTestId("active-journey").innerText();
+  check("R2. the active journey is on top with its origin, progress and what is left", /Dhaka → Chandpur/.test(active) && /12\.4 of 132 km/.test(active) && /119\.6 km to go/.test(active), active.replace(/\n/g, " | "));
+  check("R3. the active route's card is marked Active", (await r.pg.locator('li a[data-active="yes"]').count()) === 1);
+  await shot(r.pg, "r1-routes-list-390x800");
+  await r.pg.locator('section[aria-label="Map"]').scrollIntoViewIfNeeded();
+  await r.pg.getByRole("alert").filter({ hasText: "The map couldn't load" }).waitFor({ timeout: 25000 });
+  check("R4. when the map's tiles fail the page says so and the routes stay usable", (await r.pg.locator('ul[aria-label="Journeys"] > li').count()) === 8 && await r.pg.getByRole("button", { name: "Try again" }).isVisible());
+  await shot(r.pg, "r2-routes-map-error-390x800");
+  tiles.fail = false;
+  await r.pg.getByRole("button", { name: "Try again" }).click();
+  check("R5. Try again loads the map and the attribution is shown", await until(async () => (await r.pg.locator("[data-map-state]").first().getAttribute("data-map-state")) === "ok", 20000) && /OpenStreetMap/.test(await r.pg.locator(".leaflet-control-attribution").first().innerText()));
+  await shot(r.pg, "r3-routes-map-ok-390x800");
+  await r.ctx.close();
+
+  /* --- starting a journey: no origin is assumed; Hajiganj is offered only when the user really is there --- */
+  const d1 = await fresh({ db: noJourney() });
+  await d1.ctx.addInitScript(geoAt(23.7105, 90.4355));
+  await d1.pg.goto(`${BASE}/journey/chandpur`);
+  await d1.pg.getByRole("button", { name: "Start journey" }).waitFor({ timeout: 20000 });
+  check("R6. in Dhaka no 'start from' choice appears", (await d1.pg.getByRole("dialog").count()) === 0);
+  await d1.pg.getByRole("button", { name: "Start journey" }).click();
+  await d1.pg.waitForURL((u) => u.pathname === "/", { timeout: 15000 });
+  const u1 = await userDoc(d1.pg);
+  check("R7. the journey starts at Dhaka (index 0) with 0 km and its own id", u1.currentRoute === "Chandpur" && u1.completedKm === 0 && u1.startCheckpointIndex === 0 && !!u1.journeyId, JSON.stringify(u1).slice(0, 200));
+  check("R8. Home names the real origin", await until(async () => /Dhaka → Chandpur/i.test(await text(d1.pg)), 10000));
+  await d1.ctx.close();
+
+  const d2 = await fresh({ db: noJourney() });
+  await d2.ctx.addInitScript(geoAt(23.25, 90.85));
+  await d2.pg.goto(`${BASE}/journey/chandpur`);
+  await d2.pg.getByRole("dialog", { name: /Where do you want to start|start/i }).waitFor({ timeout: 20000 });
+  const popup = await d2.pg.getByRole("dialog").innerText();
+  check("R9. at Hajiganj both ways to begin are offered, the whole journey first", /whole journey from dhaka/i.test(popup) && /from hajiganj/i.test(popup) && popup.toLowerCase().indexOf("whole journey") < popup.toLowerCase().indexOf("from hajiganj"), popup.replace(/\n/g, " | "));
+  await d2.pg.getByRole("button", { name: /^Whole journey from Dhaka/ }).click();
+  await d2.pg.waitForURL((u) => u.pathname === "/", { timeout: 15000 });
+  check("R10. choosing the whole journey from Hajiganj still starts at Dhaka", (await userDoc(d2.pg)).startCheckpointIndex === 0);
+  await d2.ctx.close();
+
+  /* --- switching journeys keeps progress --- */
+  const sw = await fresh({ db: withJourney({ completedKm: 12.4 }) });
+  await sw.ctx.addInitScript(geoAt(23.9, 90.3));
+  await sw.pg.goto(`${BASE}/journey/sylhet`);
+  await sw.pg.getByRole("button", { name: "Start journey" }).click();
+  await sw.pg.waitForURL((u) => u.pathname === "/", { timeout: 15000 });
+  const afterSwitch = await userDoc(sw.pg);
+  check("R11. switching to Sylhet saves Chandpur's 12.4 km and starts Sylhet at 0", afterSwitch.currentRoute === "Sylhet" && afterSwitch.completedKm === 0 && afterSwitch.journeyProgress?.chandpur?.completedKm === 12.4 && sw.pg.dialogs.some((d) => /saved/.test(d)), JSON.stringify(afterSwitch.journeyProgress));
+  await sw.pg.goto(`${BASE}/journey`);
+  await sw.pg.getByRole("list", { name: "Journeys" }).waitFor();
+  check("R12. the Routes list shows the saved Chandpur progress", await until(async () => /9\.4% done/.test(await sw.pg.locator('ul[aria-label="Journeys"] > li').first().innerText()) && /saved/.test(await sw.pg.locator('ul[aria-label="Journeys"] > li').first().innerText()), 10000));
+  await sw.pg.goto(`${BASE}/journey/chandpur`);
+  await sw.pg.getByRole("button", { name: "Resume this journey" }).click();
+  await sw.pg.waitForURL((u) => u.pathname === "/", { timeout: 15000 });
+  const back = await userDoc(sw.pg);
+  check("R13. resuming Chandpur restores 12.4 km and its journey id; Sylhet is saved", back.currentRoute === "Chandpur" && back.completedKm === 12.4 && back.journeyId === "c1" && back.journeyProgress?.sylhet !== undefined);
+  await sw.ctx.close();
+
+  }
+  if (PART !== "a") {
+  /* --- a 5 km Route move: distance milestone once, never an arrival, progress counted once, survives a restart --- */
+  const m = await fresh({ db: withJourney() });
+  await installTiles(m.ctx, helper, dhaka);
+  await m.pg.goto(`${BASE}/run?mode=journey`);
+  await m.pg.getByText("Running").click();
+  await tracking(m.pg);
+  const LNG_STEP = 16 / (111320 * Math.cos((23.6 * Math.PI) / 180));
+  let lng = 90.5;
+  await emitAt(m.pg, 23.6, lng);
+  const toastIds = new Set();
+  const seen = async () => { const id = await m.pg.evaluate(() => document.querySelector("[data-milestone]")?.getAttribute("data-milestone") ?? null); if (id) toastIds.add(id); };
+  for (let i = 0; i < 280; i++) { lng += LNG_STEP; await emitAt(m.pg, 23.6, lng); if (i % 10 === 0) await seen(); }
+  await m.pg.waitForTimeout(500); await seen();
+  const km1 = bigKm(await text(m.pg));
+  check("R14. about 4.5 km recorded so far: no distance milestone yet", km1 > 4.3 && km1 < 5 && toastIds.size === 0, `${km1} ${[...toastIds]}`);
+  for (let i = 0; i < 60; i++) { lng += LNG_STEP; await emitAt(m.pg, 23.6, lng); if (i % 5 === 0) await seen(); }
+  await m.pg.waitForSelector('[data-milestone-kind="distance"]', { timeout: 10000 });
+  await seen();
+  const kmDone = bigKm(await text(m.pg));
+  check("R15. at 5 km the milestone appears once, worded for distance only", kmDone >= 5 && [...toastIds].length === 1 && /c1:km:5$/.test([...toastIds][0]) && /5 km of your journey to Chandpur/.test(await m.pg.locator("[data-milestone]").innerText()), `${kmDone} ${[...toastIds]}`);
+  check("R16. 5 km walked in the middle of nowhere never says you arrived somewhere", (await m.pg.locator('[data-milestone-kind="arrival"]').count()) === 0);
+  await shot(m.pg, "r4-milestone-5km-390x800");
+  const keptLocally = await m.pg.evaluate(() => Object.entries(localStorage).filter(([k]) => k.startsWith("move.milestones.")).map(([, v]) => v));
+  check("R17. the milestone is remembered on the phone", keptLocally.some((v) => v.includes("c1:km:5")), JSON.stringify(keptLocally));
+  // restart the app in the middle of the move
+  await m.pg.reload();
+  await m.pg.getByRole("button", { name: "Continue Activity" }).click({ timeout: 20000 });
+  await tracking(m.pg);
+  for (let i = 0; i < 12; i++) { lng += LNG_STEP; await emitAt(m.pg, 23.6, lng); }
+  await m.pg.waitForTimeout(1200);
+  check("R18. after an app restart the 5 km milestone is not celebrated again", (await m.pg.locator("[data-milestone]").count()) === 0);
+  await m.pg.getByRole("button", { name: "Finish activity" }).click();
+  await m.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  await m.pg.waitForTimeout(800);
+  const done = await userDoc(m.pg);
+  check("R19. the finished move added its distance to the journey exactly once", done.completedKm > 5.1 && done.completedKm < 5.7 && done.totalKm === done.completedKm, `${done.completedKm}/${done.totalKm}`);
+  check("R20. no uncaught page errors", m.pg.errors.length === 0, m.pg.errors.join(" | ").slice(0, 200));
+  await m.ctx.close();
+
+  /* --- arrival at a verified place: Jatrabari, only for a real GPS presence, fired once --- */
+  const g = await fresh({ db: withJourney() });
+  await installTiles(g.ctx, helper, dhaka);
+  await g.pg.goto(`${BASE}/run?mode=journey`);
+  await g.pg.getByText("Walking").click();
+  await tracking(g.pg);
+  const JLAT = 23.7105, JLNG = 90.4355;
+  for (let i = 0; i <= 24; i++) await emitAt(g.pg, JLAT - 0.0014 + i * 0.0001, JLNG); // 270 m of walking that ends in Jatrabari
+  await g.pg.waitForSelector('[data-milestone-kind="arrival"]', { timeout: 10000 });
+  const arrival = await g.pg.locator("[data-milestone]").innerText();
+  check("R21. reaching verified Jatrabari with real movement shows the arrival milestone", /Jatrabari, the gateway to Dhaka/.test(arrival), arrival.replace(/\n/g, " | "));
+  await shot(g.pg, "r5-milestone-arrival-390x800");
+  await g.pg.getByRole("button", { name: "Dismiss" }).click();
+  for (let i = 0; i < 8; i++) await emitAt(g.pg, JLAT + 0.0011 + i * 0.00005, JLNG);
+  await g.pg.waitForTimeout(800);
+  check("R22. staying around there does not repeat it", (await g.pg.locator("[data-milestone]").count()) === 0);
+  await g.ctx.close();
+
+  /* --- a stationary phone whose fixes jitter next to Jatrabari is not an arrival --- */
+  const j = await fresh({ db: withJourney() });
+  await installTiles(j.ctx, helper, dhaka);
+  await j.pg.goto(`${BASE}/run?mode=journey`);
+  await j.pg.getByText("Walking").click();
+  await tracking(j.pg);
+  for (let i = 0; i < 10; i++) await emitAt(j.pg, JLAT + (i % 2) * 0.00002, JLNG);
+  await j.pg.waitForTimeout(800);
+  check("R23. a phone standing still at Jatrabari (no real movement) is not an arrival", (await j.pg.locator("[data-milestone]").count()) === 0);
+  await j.ctx.close();
+
+  /* --- Territory and Route share one valid move: each by its own rules, nothing doubled, a free move counts for neither --- */
+  const tdb = () => { const d = withJourney({ completedKm: 2 }); d["users/u1"].territory = stored({ selectedAt: Date.now() - 3600000 }); return d; };
+  const t = await fresh({ db: tdb() });
+  await installTiles(t.ctx, helper, dhaka);
+  await t.pg.goto(`${BASE}/run?mode=territory`);
+  await t.pg.getByText("Walking").click();
+  await tracking(t.pg);
+  const [s0] = STREETS[0];
+  const a = cellCentre(s0), b = cellCentre(s0 + 15);
+  const n = Math.max(2, Math.floor(Math.hypot((b.lat - a.lat) * 111320, (b.lng - a.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180)) / 2.8));
+  for (let k = 0; k <= n; k++) await emitAt(t.pg, a.lat + ((b.lat - a.lat) * k) / n, a.lng + ((b.lng - a.lng) * k) / n);
+  await t.pg.waitForSelector("text=CONQUERED", { timeout: 20000 });
+  const tlive = await text(t.pg);
+  check("R24. a Territory move shows Territory, not the Journey's route", /CONQUERED/.test(tlive) && !/Dhaka → Chandpur|Next ·/.test(tlive));
+  const kmT = bigKm(tlive);
+  await t.pg.getByRole("button", { name: "Finish activity" }).click();
+  await t.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  await t.pg.waitForTimeout(800);
+  const tu = await userDoc(t.pg);
+  check("R25. the same Territory move also advanced the journey, once, and explored Territory", Math.abs(tu.completedKm - (2 + kmT)) < 0.06 && tu.territory.applied.length === 1, `${tu.completedKm} vs ${2 + kmT}`);
+  await t.ctx.close();
+
+  const f = await fresh({ db: withJourney({ completedKm: 2 }) });
+  await installTiles(f.ctx, helper, dhaka);
+  await f.pg.goto(`${BASE}/run?mode=normal`);
+  await f.pg.getByText("Walking").click();
+  await tracking(f.pg);
+  for (let k = 0; k < 40; k++) await emitAt(f.pg, 23.6 + k * 0.00003, 90.5);
+  await f.pg.getByRole("button", { name: "Finish activity" }).click();
+  await f.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  await f.pg.waitForTimeout(600);
+  const fu = await userDoc(f.pg);
+  check("R26. a free move adds to the user's totals but not to the journey", fu.completedKm === 2 && fu.totalKm > 0.05, `${fu.completedKm}/${fu.totalKm}`);
+  await f.ctx.close();
+
+  /* --- offline: the activity finishes locally, and journey progress is applied once when it syncs --- */
+  const o = await fresh({ db: withJourney({ completedKm: 1 }) });
+  await installTiles(o.ctx, helper, dhaka);
+  await o.pg.goto(`${BASE}/run?mode=journey`);
+  await o.pg.getByText("Walking").click();
+  await tracking(o.pg);
+  await o.ctx.setOffline(true);
+  for (let k = 0; k < 60; k++) await emitAt(o.pg, 23.6 + k * 0.00004, 90.5);
+  await o.pg.getByRole("button", { name: "Finish activity" }).click();
+  await o.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  const pendingKm = (await userDoc(o.pg)).completedKm;
+  await o.ctx.setOffline(false);
+  await o.pg.goto(`${BASE}/`);
+  const synced = await until(async () => (await userDoc(o.pg)).completedKm > 1.1, 20000);
+  await o.pg.waitForTimeout(1500);
+  const finalKm = (await userDoc(o.pg)).completedKm;
+  check("R27. an offline move counts toward the journey once it syncs, and only once", synced && finalKm > 1.1 && finalKm < 1.5 && pendingKm === 1, `${pendingKm} -> ${finalKm}`);
+  await o.pg.reload();
+  await o.pg.waitForTimeout(2500);
+  check("R28. restarting the app and syncing again does not add it a second time", (await userDoc(o.pg)).completedKm === finalKm);
+  await o.ctx.close();
+  }
+  await helperCtx.close();
+}
+
+async function scenarioRoutesImages() {
+  // The Routes page on a slow connection: usable early, images small and in a stable box.
+  const s = await fresh({ db: (() => { const d = baseDb(); d["users/u1"].completedKm = 3; return d; })() });
+  const imgs = [];
+  s.pg.on("response", async (res) => { if (/\/images\//.test(res.url())) imgs.push({ url: res.url().replace(BASE, ""), len: (await res.body().catch(() => Buffer.alloc(0))).length, cc: res.headers()["cache-control"] }); });
+  const cdp = await s.ctx.newCDPSession(s.pg);
+  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: (1.5 * 1024 * 1024) / 8, uploadThroughput: 50000 });
+  const t0 = Date.now();
+  await s.pg.goto(`${BASE}/journey`, { waitUntil: "domcontentloaded" });
+  await s.pg.getByRole("list", { name: "Journeys" }).waitFor({ timeout: 30000 });
+  const tList = Date.now() - t0;
+  const boxes = await s.pg.evaluate(() => [...document.querySelectorAll('ul[aria-label="Journeys"] > li img')].map((i) => ({ w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.loading, box: i.parentElement.getBoundingClientRect().height })));
+  check("I1. on a slow connection the journey list is usable within 5 s, before the photos", tList < 5000, `${tList} ms`);
+  check("I2. every photo has its size reserved (width/height and a fixed-ratio box) so nothing jumps", boxes.length === 8 && boxes.every((b) => b.w && b.h && b.box > 100), JSON.stringify(boxes.slice(0, 2)));
+  check("I3. only the first photo is eager; the rest wait until scrolled near", boxes[0].lazy === "eager" && boxes.slice(1).every((b) => b.lazy === "lazy"));
+  await s.pg.waitForLoadState("networkidle", { timeout: 60000 }).catch(() => {});
+  const heavy = imgs.filter((i) => !/\.webp/.test(i.url));
+  const mb = imgs.reduce((a, i) => a + i.len, 0) / 1048576;
+  check("I4. photos are the optimised WebP files, not the 2-3 MB originals", imgs.length > 0 && heavy.length === 0, JSON.stringify(heavy.slice(0, 2)));
+  check("I5. the first screen costs well under 1 MB of photos", mb < 1, `${mb.toFixed(2)} MB in ${imgs.length} requests`);
+  check("I6. the photos are cacheable for a year", imgs.every((i) => /immutable/.test(i.cc || "") || /max-age=31536000/.test(i.cc || "")), JSON.stringify(imgs.slice(0, 1)));
+  // second visit: every photo request must be answered from the browser's cache (no bytes over the network)
+  await cdp.send("Network.enable");
+  const asked = new Map(); const cached = new Set();
+  cdp.on("Network.requestWillBeSent", (e) => { if (/\/images\//.test(e.request.url)) asked.set(e.requestId, e.request.url); });
+  cdp.on("Network.requestServedFromCache", (e) => cached.add(e.requestId));
+  await s.pg.goto(`${BASE}/journey`, { waitUntil: "domcontentloaded" });
+  await s.pg.getByRole("list", { name: "Journeys" }).waitFor();
+  await s.pg.waitForLoadState("networkidle", { timeout: 60000 }).catch(() => {});
+  const refetched = [...asked.keys()].filter((id) => !cached.has(id));
+  check("I7. coming back to Routes does not download the photos again (all from cache)", asked.size > 0 && refetched.length === 0, `${asked.size} asked, ${refetched.length} fetched`);
+  await s.ctx.close();
+}
+
 async function scenarioRegression() {
   // signed-out screens redirect
   let s = await fresh({ user: null });
@@ -1645,7 +1889,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

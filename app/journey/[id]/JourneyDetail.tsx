@@ -1,16 +1,17 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ROUTE_MAP, findNearestCheckpoint, type Route, type Checkpoint } from "../../data/routes";
+import { ROUTE_MAP, type Route, type Checkpoint } from "../../data/routes";
+import { nearbyStartOffer } from "../../lib/journeyStart";
 import { Loading } from "../../components/Loading";
-import { journeyOffsetKm } from "../../lib/activity";
+import { RouteImage } from "../../components/RouteImage";
+import { journeyOffsetKm, journeyOriginName } from "../../lib/activity";
+import { journeyOf } from "../../lib/journey";
+import { progressOn, restartJourney, switchJourney } from "../../lib/journeySwitch";
+import { addStreetTiles } from "../../lib/leafletTiles";
+import { ARRIVAL_MILESTONES, DISTANCE_MILESTONE_KM } from "../../data/milestones";
 import { resolveMode, useThemePrefs } from "../../lib/theme";
 
-interface UserData {
-  completedKm: number;
-  currentRoute: string;
-  startCheckpointIndex?: number;
-}
 
 function getCurrentCpIndex(route: Route, completedKm: number, startIdx: number = 0): number {
   let idx = startIdx;
@@ -33,6 +34,7 @@ function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { 
     }
 
     let cancelled = false;
+    let stopTiles = () => {};
     const init = async () => {
       try {
         const L = (await import("leaflet")).default;
@@ -41,16 +43,7 @@ function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { 
           zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 14,
         });
         mapInstance.current = map;
-        let tileErrors = 0;
-        const tiles = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`, {
-          subdomains: "abcd", maxZoom: 19,
-        });
-        // A map that never loads used to be an empty box with no explanation.
-        tiles.on("tileerror", () => {
-          tileErrors += 1;
-          if (tileErrors === 4) onFail();
-        });
-        tiles.addTo(map);
+        stopTiles = addStreetTiles(L, map, dark, (st) => st === "error" && onFail());
         map.setView([23.5, 90.3], 7);
 
         const activeCheckpoints = route.checkpoints.slice(startIdx);
@@ -115,6 +108,7 @@ function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { 
     void init();
     return () => {
       cancelled = true;
+      stopTiles();
       if (mapInstance.current) {
         (mapInstance.current as { remove: () => void }).remove();
         mapInstance.current = null;
@@ -144,19 +138,33 @@ export default function JourneyDetail() {
   const [completedKm, setCompletedKm] = useState(0);
   const [startIdx, setStartIdx] = useState(0);
   const [loading, setLoading] = useState(true);
+  // activeJourney: this route is the one the user is on now. savedJourney: they have progress on it from before they switched away.
   const [activeJourney, setActiveJourney] = useState(false);
+  const [savedJourney, setSavedJourney] = useState(false);
+  const [mapAttempt, setMapAttempt] = useState(0);
+  const [mapNear, setMapNear] = useState(() => typeof IntersectionObserver === "undefined");
+  const mapBox = useRef<HTMLDivElement>(null);
   const [selectedCp, setSelectedCp] = useState<number | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
   const prefs = useThemePrefs();
   const dark = resolveMode(prefs.mode) === "dark";
   const accentHex = { blue: "#4F6EF7", purple: "#7C3AED", green: "#22C55E", orange: "#F59E0B" }[prefs.accent];
   const onMapFail = useCallback(() => setMapFailed(true), []);
+  // the map (and its tiles) is only started when the user scrolls near it: the checkpoints above never wait for it
+  useEffect(() => {
+    const el = mapBox.current;
+    if (!el || mapNear || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && (setMapNear(true), io.disconnect()), { rootMargin: "400px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [mapNear, loading, route]);
 
   // Nearest checkpoint popup
   const [showPopup, setShowPopup] = useState(false);
   const [nearestCp, setNearestCp] = useState<Checkpoint | null>(null);
   const [nearestIdx, setNearestIdx] = useState(0);
-  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
+
+  const [firstJourneyId] = useState(() => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `j${Date.now().toString(36)}`));
 
   useEffect(() => {
     if (!route) return;
@@ -174,11 +182,13 @@ export default function JourneyDetail() {
           if (user) {
             const snap = await getDoc(doc(firebaseModule.db, "users", user.uid));
             if (snap.exists()) {
-              const d = snap.data() as UserData;
-              if (d.currentRoute === route.name || d.currentRoute === route.destination) {
-                setCompletedKm(d.completedKm || 0);
-                setStartIdx(d.startCheckpointIndex || 0);
-                setActiveJourney(true);
+              const mine = progressOn(snap.data() as Record<string, unknown>, route.name);
+              if (mine) {
+                const isActive = journeyOf(snap.data() as never)?.routeName === mine.routeName;
+                setCompletedKm(mine.completedKm);
+                setStartIdx(mine.startIdx);
+                setActiveJourney(isActive);
+                setSavedJourney(!isActive);
                 setLoading(false);
                 return;
               }
@@ -190,12 +200,11 @@ export default function JourneyDetail() {
             navigator.geolocation.getCurrentPosition(
               (pos) => {
                 const { latitude, longitude } = pos.coords;
-                setUserCoords([latitude, longitude]);
-                const { checkpoint, index } = findNearestCheckpoint(route, latitude, longitude);
-                // Only show popup if user is NOT near Dhaka (first checkpoint)
-                if (index > 0) {
-                  setNearestCp(checkpoint);
-                  setNearestIdx(index);
+
+                const offer = nearbyStartOffer(route, latitude, longitude);
+                if (offer) {
+                  setNearestCp(offer.checkpoint);
+                  setNearestIdx(offer.index);
                   setShowPopup(true);
                 }
                 setLoading(false);
@@ -230,25 +239,32 @@ export default function JourneyDetail() {
   const saveRoute = async (fromIdx: number) => {
     try {
       const firebaseModule = await import("../../firebase");
-      const { doc, setDoc } = await import("firebase/firestore");
+      const { doc, setDoc, getDoc } = await import("firebase/firestore");
       const user = firebaseModule.auth.currentUser;
-      if (user) {
-        const { getDoc } = await import("firebase/firestore");
-        const current = (await getDoc(doc(firebaseModule.db, "users", user.uid))).data();
-        const switching = current?.currentRoute && current.currentRoute !== route.name && (current.completedKm ?? 0) > 0;
-        if (switching && !confirm(`You're ${Number(current.completedKm).toFixed(1)} km into your ${current.currentRoute} journey. Starting ${route.name} will reset that progress. Continue?`)) return;
-        await setDoc(doc(firebaseModule.db, "users", user.uid), {
-          currentRoute: route.name,
-          completedKm: 0,
-          startCheckpointIndex: fromIdx,
-        }, { merge: true });
-        setStartIdx(fromIdx);
-        setCompletedKm(0);
-        setActiveJourney(true);
-        router.push("/");
-      } else {
-        router.push("/login");
-      }
+      if (!user) return router.push("/login");
+      const ref = doc(firebaseModule.db, "users", user.uid);
+      const current = ((await getDoc(ref)).data() ?? {}) as Record<string, unknown>;
+      const now = journeyOf(current as never);
+      if (now && now.routeName !== route.name && now.completedKm > 0 && !confirm(`Switch to ${route.name}? Your ${now.routeName} journey (${now.completedKm.toFixed(1)} km) is saved and you can resume it any time.`)) return;
+      const updates = switchJourney(current, { routeName: route.name }, fromIdx, firstJourneyId);
+      if (Object.keys(updates).length) await setDoc(ref, updates, { merge: true });
+      router.push("/");
+    } catch (e) { console.error(e); }
+  };
+
+  /** Begin this journey again (the user asked): the km on it so far and its milestones start over. The other saved journeys are untouched. */
+  const restart = async (fromIdx: number) => {
+    if (!confirm(`Start ${route.name} over${fromIdx > 0 ? ` from ${route.checkpoints[fromIdx].name}` : " from Dhaka"}? Your ${completedKm.toFixed(1)} km on it so far will be reset.`)) return;
+    try {
+      const firebaseModule = await import("../../firebase");
+      const { doc, setDoc, getDoc } = await import("firebase/firestore");
+      const user = firebaseModule.auth.currentUser;
+      if (!user) return;
+      const ref = doc(firebaseModule.db, "users", user.uid);
+      const updates = restartJourney(((await getDoc(ref)).data() ?? {}) as Record<string, unknown>, fromIdx, `${firstJourneyId}-r${Date.now().toString(36)}`);
+      if (Object.keys(updates).length) await setDoc(ref, updates, { merge: true });
+      setStartIdx(fromIdx);
+      setCompletedKm(0);
     } catch (e) { console.error(e); }
   };
 
@@ -279,20 +295,20 @@ export default function JourneyDetail() {
         <div role="dialog" aria-label="Where do you want to start?" style={{ position: "fixed", inset: 0, background: "var(--scrim)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div style={{ background: "var(--bg)", borderRadius: "24px 24px 0 0", padding: "24px 20px calc(env(safe-area-inset-bottom, 0px) + 28px)", width: "100%", maxWidth: 480 }}>
             <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--surf2)", margin: "0 auto 20px" }} />
-            <p className="lab" style={{ textAlign: "center" }}>We found you near</p>
+            <p className="lab" style={{ textAlign: "center" }}>You&apos;re near</p>
             <h2 className="title-blk" style={{ textAlign: "center", margin: "8px 0 4px" }}>{nearestCp.name}</h2>
-            <p className="body mute" style={{ textAlign: "center" }}>Nearest checkpoint on this route · {nearestCp.distanceFromStart} km from Dhaka</p>
-            <p className="body mute" style={{ textAlign: "center", margin: "20px 0 14px" }}>How would you like to start?</p>
-            <button className="btn btn-go" onClick={handleStartFromNearest}>Start from {nearestCp.name}</button>
-            <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={handleStartFromDhaka}>Start full journey from Dhaka</button>
+            <p className="body mute" style={{ textAlign: "center" }}>{nearestCp.distanceFromStart} km from Dhaka on this route</p>
+            <p className="body mute" style={{ textAlign: "center", margin: "20px 0 14px" }}>Where should your journey begin?</p>
+            <button className="btn btn-go" onClick={handleStartFromDhaka}>Whole journey from Dhaka · {route.checkpoints[route.checkpoints.length - 1].distanceFromStart} km</button>
+            <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={handleStartFromNearest}>From {nearestCp.name} · {(route.checkpoints[route.checkpoints.length - 1].distanceFromStart - nearestCp.distanceFromStart)} km to go</button>
+            <p className="mute" style={{ fontSize: 12, textAlign: "center", marginTop: 12 }}>Either way, every km Move records counts. Only the starting point and the distance to go change.</p>
           </div>
         </div>
       )}
 
       {/* HERO */}
       <div style={{ position: "relative", height: 230, overflow: "hidden", background: "var(--surf2)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={route.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <RouteImage routeId={route.id} fallbackSrc={route.image} sizes="(max-width: 520px) 100vw, 520px" priority />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.78) 100%)" }} />
         <button aria-label="Back to journeys" onClick={() => router.push("/journey")} className="icon-btn" style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 16px)", left: 16, background: "rgba(0,0,0,0.4)", color: "#fff" }}>
           <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
@@ -300,7 +316,7 @@ export default function JourneyDetail() {
         <div style={{ position: "absolute", bottom: 18, left: 20, right: 20, color: "#fff" }}>
           <p style={{ fontSize: 12, opacity: 0.75, letterSpacing: 1 }}>{route.highway} · {route.tagline}</p>
           <h1 className="title-blk" style={{ marginTop: 4, textTransform: "none", fontSize: 26 }}>
-            {startIdx > 0 ? route.checkpoints[startIdx].name : "Dhaka"} → {route.name}
+            {journeyOriginName(route, startIdx)} → {route.name}
           </h1>
         </div>
       </div>
@@ -328,8 +344,10 @@ export default function JourneyDetail() {
               <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
               Continue moving
             </button>
+          ) : savedJourney ? (
+            <button className="btn btn-go" onClick={() => saveRoute(startIdx)}>Resume this journey</button>
           ) : (
-            <button className="btn btn-go" onClick={() => { if (userCoords !== null && !activeJourney) setShowPopup(true); else saveRoute(0); }}>
+            <button className="btn btn-go" onClick={() => { if (nearestCp) setShowPopup(true); else saveRoute(0); }}>
               Start journey
             </button>
           )}
@@ -337,22 +355,12 @@ export default function JourneyDetail() {
             <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6" /></svg>
           </button>
         </div>
-
-        {/* MAP */}
-        <section aria-label="Route map" style={{ marginTop: 24 }}>
-          <p className="lab">Route map</p>
-          <div style={{ marginTop: 10, height: 380, borderRadius: 20, overflow: "hidden", background: "var(--land)", position: "relative" }}>
-            {mapFailed ? (
-              <div className="stack" style={{ height: "100%", alignItems: "center", justifyContent: "center", gap: 10, textAlign: "center", padding: 24 }}>
-                <svg className="ic mute" viewBox="0 0 24 24" style={{ width: 32, height: 32 }} aria-hidden="true">{pin}</svg>
-                <p className="body mute">The map couldn&apos;t load. Check your connection; the checkpoints below still work.</p>
-                <button className="btn btn-soft" style={{ width: "auto" }} onClick={() => setMapFailed(false)}>Retry map</button>
-              </div>
-            ) : (
-              <MapComponent route={route} completedKm={completedKm} startIdx={startIdx} dark={dark} accent={accentHex} onFail={onMapFail} />
-            )}
-          </div>
-        </section>
+        {(activeJourney || savedJourney) && (
+          <p className="mute" style={{ fontSize: 12, marginTop: 10 }}>
+            Started from {journeyOriginName(route, startIdx)}. A distance journey: every km Move records on a Route or Territory move counts, wherever you are.{" "}
+            <button style={{ background: "none", border: 0, padding: 0, color: "var(--acc-text)", fontWeight: 700, cursor: "pointer", font: "inherit" }} onClick={() => restart(0)}>Start over from Dhaka</button>
+          </p>
+        )}
 
         {/* MOTIVATION */}
         {nextCp && (
@@ -366,6 +374,18 @@ export default function JourneyDetail() {
             </div>
           </div>
         )}
+
+        {/* MILESTONES */}
+        {(activeJourney || savedJourney) && (() => {
+          const next = (Math.floor(completedKm / DISTANCE_MILESTONE_KM) + 1) * DISTANCE_MILESTONE_KM;
+          const arrivals = (ARRIVAL_MILESTONES[route.id] ?? []).filter((a) => route.checkpoints.findIndex((c) => c.name === a.checkpoint) > startIdx);
+          return (
+            <p className="mute" style={{ fontSize: 12, marginTop: 14 }} data-testid="milestones-info">
+              Next distance milestone: <b style={{ color: "var(--ink)" }}>{next < adjustedTotal ? `${next} km` : "the finish"}</b>
+              {arrivals.length ? ` · Place milestones: ${arrivals.map((a) => a.checkpoint).join(", ")}` : ""}
+            </p>
+          );
+        })()}
 
         {/* CHECKPOINTS */}
         <p className="lab" style={{ marginTop: 28 }}>Checkpoints</p>
@@ -402,6 +422,22 @@ export default function JourneyDetail() {
             );
           })}
         </div>
+
+        {/* MAP: below the checkpoints, mounted only when scrolled near, with a fixed height so nothing moves when it arrives */}
+        <section aria-label="Route map" style={{ marginTop: 28 }}>
+          <p className="lab">Route map</p>
+          <div ref={mapBox} style={{ marginTop: 10, height: 380, borderRadius: 20, overflow: "hidden", background: "var(--land)", position: "relative", isolation: "isolate" }}>
+            {!mapNear ? null : mapFailed ? (
+              <div role="alert" className="stack" style={{ height: "100%", alignItems: "center", justifyContent: "center", gap: 10, textAlign: "center", padding: 24 }}>
+                <svg className="ic mute" viewBox="0 0 24 24" style={{ width: 32, height: 32 }} aria-hidden="true">{pin}</svg>
+                <p className="body mute">The map couldn&apos;t load. Check your connection; the checkpoints above still work.</p>
+                <button className="btn btn-soft" style={{ width: "auto" }} onClick={() => { setMapFailed(false); setMapAttempt((n) => n + 1); }}>Retry map</button>
+              </div>
+            ) : (
+              <MapComponent key={mapAttempt} route={route} completedKm={completedKm} startIdx={startIdx} dark={dark} accent={accentHex} onFail={onMapFail} />
+            )}
+          </div>
+        </section>
       </div>
     </main>
   );

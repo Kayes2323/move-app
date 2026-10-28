@@ -128,3 +128,23 @@ test("retry delay backs off and is capped", () => {
   assert.deepEqual([0, 1, 2, 3].map(retryDelayMs), [5000, 10000, 20000, 40000]);
   assert.equal(retryDelayMs(30), 300_000);
 });
+
+test("a Territory move also counts toward the active journey, a free move never does, and neither is ever added twice", () => {
+  const user = { runs: [], totalKm: 0, streak: 0, currentRoute: "Chandpur", completedKm: 10, startCheckpointIndex: 0, journeyId: "c1" };
+  const ctx = { routeName: "Chandpur", startIdx: 0, completedKmBefore: 10, journeyId: "c1" };
+  const territory = applyActivityToUser(user, finished({ id: "t1", mode: "TERRITORY", journey: ctx, territory: { areaId: "bd-upa-dhaka-mohammadpur" } }));
+  assert.equal(territory.completedKm, 13, "3 km recorded on a Territory move reach the journey");
+  assert.equal(territory.totalKm, 3, "and the user's totals, once");
+  const free = applyActivityToUser(user, finished({ id: "f1", mode: "NORMAL", journey: null }));
+  assert.equal(free.completedKm, undefined, "a free move belongs to no journey");
+  const again = applyActivityToUser({ ...user, ...territory }, finished({ id: "t1", mode: "TERRITORY", journey: ctx }));
+  assert.deepEqual(again, {}, "the same activity synced twice changes nothing");
+  const route = applyActivityToUser(user, finished({ id: "r1", mode: "JOURNEY", journey: ctx }));
+  assert.equal(route.completedKm, 13);
+});
+
+test("a move tracked on one journey never lands on another journey's progress", () => {
+  const user = { runs: [], totalKm: 0, streak: 0, currentRoute: "Sylhet", completedKm: 1, startCheckpointIndex: 0, journeyId: "s1" };
+  const up = applyActivityToUser(user, finished({ id: "x1", mode: "JOURNEY", journey: { routeName: "Chandpur", startIdx: 0, completedKmBefore: 10, journeyId: "c1" } }));
+  assert.equal(up.completedKm, undefined);
+});

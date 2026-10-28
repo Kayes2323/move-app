@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { LiveRouteCard, type GpsStatus } from "../components/LiveRouteCard";
 import { TerritoryLiveScreen } from "../territory/TerritoryLiveScreen";
 import { StartMovingSheet } from "../components/StartMovingSheet";
-import { modeOf, parseMode, runHref, MODE_LABEL, type ActivityMode } from "../lib/activityMode";
+import { advancesJourney, modeOf, parseMode, runHref, MODE_LABEL, type ActivityMode } from "../lib/activityMode";
 import { journeyOf } from "../lib/journey";
 import { startDestination } from "../lib/startMoving";
 import { isOpenArea, openAreaName } from "../lib/territory/open";
@@ -13,10 +13,12 @@ import { resolveActiveId } from "../lib/territory/activeId";
 import { loadHistory } from "../lib/history";
 import { loadTerritory, type TerritorySnapshot } from "../lib/territoryState";
 import { ShareScreen } from "../components/ShareScreen";
-import { findRoute, formatClock, journeyOffsetKm, type ActivityKind } from "../lib/activity";
+import { findRoute, formatClock, journeyOffsetKm, journeyOriginName, type ActivityKind } from "../lib/activity";
 import { checkLocationAccess, isNativeApp, type LocationAccess } from "../lib/tracking/location";
 import { useTracking } from "../lib/tracking/useTracking";
 import { useLivePoints } from "../lib/tracking/useLivePoints";
+import { useJourneyMilestones } from "../lib/useJourneyMilestones";
+import { MilestoneToast } from "../components/MilestoneToast";
 import { activityMetrics } from "../lib/tracking/metrics";
 
 import type { Journey } from "../lib/journey";
@@ -101,6 +103,17 @@ export default function RunPage() {
   // The route so far, for every kind of move: the live map and the Territory view only read it. Tracking stays the source of truth.
   const livePoints = useLivePoints(runtime.store, activity?.id, activity?.pointCount);
 
+  // Milestones of the journey this move carries (Route or Territory move). A free move carries none.
+  const { toast: milestone, dismiss: dismissMilestone } = useJourneyMilestones({
+    uid,
+    ctx: activity?.journey ?? null,
+    route: findRoute(activity?.journey?.routeName),
+    kmNow: live?.distanceKm ?? 0,
+    points: livePoints,
+    active: journey ? { journeyId: journey.journeyId, milestones: journey.milestones } : null,
+    running: activity?.status === "active",
+  });
+
   /* Who is signed in, their journey, and any activity left over from before this screen existed. */
   useEffect(() => {
     let cancelled = false;
@@ -123,9 +136,9 @@ export default function RunPage() {
           // Weight and journey come from the server when possible, and from the last known copy on this phone
           // otherwise, so an activity can start with no connection.
           const cacheKey = `move.profile.${user.uid}`;
-          const apply = (p: { weight?: number; routeName?: string; completedKm?: number; startIdx?: number; territoryId?: string | null }) => {
+          const apply = (p: { weight?: number; routeName?: string; completedKm?: number; startIdx?: number; journeyId?: string; milestones?: string[]; territoryId?: string | null }) => {
             if (p.weight) setWeight(p.weight);
-            setJourney(p.routeName ? { routeName: p.routeName, completedKm: p.completedKm ?? 0, startIdx: p.startIdx ?? 0 } : null);
+            setJourney(p.routeName ? { routeName: p.routeName, completedKm: p.completedKm ?? 0, startIdx: p.startIdx ?? 0, journeyId: p.journeyId ?? `${p.routeName}:${p.startIdx ?? 0}`, milestones: p.milestones ?? [] } : null);
             setTerritoryId(p.territoryId ?? null);
             setProfileReady(true);
           };
@@ -137,7 +150,7 @@ export default function RunPage() {
             }
             const data = snap.data();
             const j = journeyOf(data);
-            const profile = { weight: data.weight, routeName: j?.routeName, completedKm: j?.completedKm ?? 0, startIdx: j?.startIdx ?? 0, territoryId: resolveActiveId(data) };
+            const profile = { weight: data.weight, routeName: j?.routeName, completedKm: j?.completedKm ?? 0, startIdx: j?.startIdx ?? 0, journeyId: j?.journeyId, milestones: j?.milestones ?? [], territoryId: resolveActiveId(data) };
             apply(profile);
             try {
               localStorage.setItem(cacheKey, JSON.stringify(profile));
@@ -193,7 +206,8 @@ export default function RunPage() {
         kind,
         weightKg: weight,
         mode: chosen,
-        journey: chosen === "JOURNEY" && journey ? { routeName: journey.routeName, startIdx: journey.startIdx, completedKmBefore: journey.completedKm } : null,
+        // a Route or Territory move carries the user's active journey (if any), so its recorded distance counts toward it exactly once
+        journey: advancesJourney(chosen) && journey ? { routeName: journey.routeName, startIdx: journey.startIdx, completedKmBefore: journey.completedKm, journeyId: journey.journeyId } : null,
         territory: chosen === "TERRITORY" && territoryId ? { areaId: territoryId } : null,
       });
     } catch (err) {
@@ -277,6 +291,12 @@ export default function RunPage() {
     const gpsStatus: GpsStatus = gps.status === "active" ? "active" : gps.status === "error" ? "error" : "waiting";
     const gap = activity.pendingGap ? (activity.pendingGap.to - activity.pendingGap.from) / 1000 : null;
     const metrics = activityMetrics(activity.kind, activity.weightKg, live.distanceKm, live.durationSec);
+    const withToast = (node: React.ReactNode) => (
+      <>
+        {node}
+        <MilestoneToast event={milestone} onClose={dismissMilestone} />
+      </>
+    );
     const cardProps = {
       kind: activity.kind,
       route,
@@ -303,18 +323,18 @@ export default function RunPage() {
     // Each context draws its own thing. A Territory move never falls back to a Journey route while it loads or if it can't: it shows
     // Territory, or says Territory isn't available. A free move has no route at all.
     if (liveMode === "TERRITORY") {
-      if (territoryCtx && territoryCtx.def.id === activity.territory?.areaId) return <TerritoryLiveScreen {...cardProps} snapshot={territoryCtx} activity={{ id: activity.id, kind: activity.kind, startedAt: activity.startedAt, userId: uid ?? "" }} />;
+      if (territoryCtx && territoryCtx.def.id === activity.territory?.areaId) return withToast(<TerritoryLiveScreen {...cardProps} snapshot={territoryCtx} activity={{ id: activity.id, kind: activity.kind, startedAt: activity.startedAt, userId: uid ?? "" }} />);
       const name = openAreaName(activity.territory?.areaId) ?? "your Territory";
       const text = territoryCtx || territoryUnavailable ? "Territory isn't available right now. Your move is still being tracked." : "Loading your Territory…";
-      return <LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Territory" title={name} text={text} />} />;
+      return withToast(<LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Territory" title={name} text={text} />} />);
     }
     if (liveMode === "NORMAL") return <LiveRouteCard {...cardProps} route={undefined} />;
-    return <LiveRouteCard {...cardProps} header={<MoveHeader lab="Route" title={activity.journey ? `Dhaka → ${activity.journey.routeName}` : "Journey"} />} />;
+    return withToast(<LiveRouteCard {...cardProps} header={<MoveHeader lab="Route" title={activity.journey ? `${journeyOriginName(route, activity.journey.startIdx)} → ${activity.journey.routeName}` : "Journey"} />} />);
   }
 
   /* ---------- Start moving: why are you moving? ---------- */
   const startContext = {
-    journeyLine: journey ? `Dhaka → ${journey.routeName}${findRoute(journey.routeName) ? ` · ${journey.completedKm.toFixed(1)} of ${Math.max(findRoute(journey.routeName)!.totalKm - journeyOffsetKm(findRoute(journey.routeName), journey.startIdx), 1).toFixed(0)} km` : ""}` : null,
+    journeyLine: journey ? `${journeyOriginName(findRoute(journey.routeName), journey.startIdx)} → ${journey.routeName}${findRoute(journey.routeName) ? ` · ${journey.completedKm.toFixed(1)} of ${Math.max(findRoute(journey.routeName)!.totalKm - journeyOffsetKm(findRoute(journey.routeName), journey.startIdx), 1).toFixed(0)} km` : ""}` : null,
     territory: territoryId ? { name: openAreaName(territoryId) ?? "", open: isOpenArea(territoryId) } : null,
   };
   if (search === null && !activity) return <main className="app nonav" aria-busy="true" />;

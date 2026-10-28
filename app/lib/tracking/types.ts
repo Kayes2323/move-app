@@ -39,6 +39,8 @@ export interface JourneyContext {
   startIdx: number;
   /** completedKm on the user's journey when the activity started. */
   completedKmBefore: number;
+  /** Which run at this journey it was (a journey can be restarted or switched away from and back to). Absent on older activities. */
+  journeyId?: string;
 }
 
 /** The Territory that was active when a TERRITORY move started: the move belongs to it even if the choice changes later. */
