@@ -31,6 +31,10 @@
   "outsideLargestCells": 9582,
   "doubtfulCells": 9997,
   "confidentShare": 0.374,
+  "reachOutsideLargestCells": 850,
+  "reachConfidentShare": 0.887,
+  "reachLargestShare": 0.947,
+  "reachRegions": 40,
   "regions": 149,
   "largestRegionCells": 6387,
   "largestShare": 0.4,
@@ -72,10 +76,10 @@
   }
  ],
  "recommendation": {
-  "status": "COMING_SOON",
-  "reason": "mapped streets are fragmented: only 40% are in one connected network (islands or rivers)",
-  "percent": null,
-  "requiredCells": null
+  "status": "OPEN_CANDIDATE",
+  "reason": "50% threshold (the area is large)",
+  "percent": 50,
+  "requiredCells": 7985
  },
  "maskBytes": 168601,
  "type": "UPAZILA",

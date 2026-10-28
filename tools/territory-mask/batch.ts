@@ -10,6 +10,33 @@ import { cellCenter, cellId, cellXY, fromTile, haversineM, toTile, traverse, typ
 import type { EligibilityMask } from "../../app/lib/territory/mask/types";
 import { bboxOfPolygons, buildMask, classifyWay, components, inPolygons, validateMask, type OverpassJson, type Polygons } from "./lib";
 
+/** How far apart (in cells, 35 m each) two mapped streets may be and still count as one connected network: a person can cross a short unmapped link. */
+export const REACH_GAP_CELLS = 3;
+
+/** Connected regions of `cells` where two cells within `gap` cells of each other (any direction) belong together. Largest region first. */
+export function regionsWithGap(cells: readonly number[], zoom: number, gap: number): number[][] {
+  const left = new Set(cells);
+  const out: number[][] = [];
+  for (const start of [...cells].sort((a, b) => a - b)) {
+    if (!left.has(start)) continue;
+    const comp: number[] = [];
+    const stack = [start];
+    left.delete(start);
+    while (stack.length) {
+      const c = stack.pop() as number;
+      comp.push(c);
+      const { x, y } = cellXY(c, zoom);
+      for (let dx = -gap; dx <= gap; dx++) for (let dy = -gap; dy <= gap; dy++) {
+        if (!dx && !dy) continue;
+        const n = cellId(x + dx, y + dy, zoom);
+        if (left.delete(n)) stack.push(n);
+      }
+    }
+    out.push(comp);
+  }
+  return out.sort((a, b) => b.length - a.length || a[0] - b[0]);
+}
+
 /** The cell size at the area's own latitude, for km figures. At z20 a cell is about 38 m x cos(latitude). */
 export const cellSideM = (lat: number, zoom = 20): number => (40_075_016.686 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
 
@@ -114,7 +141,7 @@ export const POLICY = {
   /** Unmapped built-up ground above this share, over at least `gapMinBuiltUp` built-up cells, sends the area back to be reviewed. */
   maxGapShare: 0.5,
   gapMinBuiltUp: 50,
-  /** Below this share of the mapped streets in one connected network the area is fragmented (islands, rivers). */
+  /** Below this share of the mapped streets in one network (allowing short unmapped links) the area is fragmented (islands, rivers). */
   minLargestShare: 0.6,
 } as const;
 
@@ -177,6 +204,11 @@ export interface AreaSummary {
     /** Union of the three: cells a normal walker may not reach, or may not be allowed onto. */
     doubtfulCells: number;
     confidentShare: number;
+    /** The same, but connectivity allows a short unmapped link (REACH_GAP_CELLS): what the status policy uses, because rural OSM often lacks the lane between two mapped roads. */
+    reachOutsideLargestCells: number;
+    reachConfidentShare: number;
+    reachLargestShare: number;
+    reachRegions: number;
     regions: number;
     largestRegionCells: number;
     largestShare: number;
@@ -233,6 +265,20 @@ export function analyseArea(input: AreaInput, zoom = 20): { mask: EligibilityMas
     doubtful.add(c);
   }
 
+  const reach = regionsWithGap(eligible, zoom, REACH_GAP_CELLS);
+  const reachDoubtful = new Set<number>();
+  for (const c of eligible) {
+    const m = cls.get(c);
+    if (m && m.main < min) reachDoubtful.add(c);
+  }
+  let reachOutside = 0;
+  for (const comp of reach.slice(1)) for (const c of comp) {
+    reachOutside++;
+    reachDoubtful.add(c);
+  }
+  const reachConfident = eligible.length ? (eligible.length - reachDoubtful.size) / eligible.length : 0;
+  const reachLargest = eligible.length ? (reach[0]?.length ?? 0) / eligible.length : 0;
+
   const buildCounts = new Map<number, number>();
   for (const b of input.buildings) {
     const t = toTile(b, zoom);
@@ -271,7 +317,7 @@ export function analyseArea(input: AreaInput, zoom = 20): { mask: EligibilityMas
   const builtUp = dense.length;
   const gapShare = builtUp ? unreached.length / builtUp : 0;
   const validationOk = problems.length === 0;
-  const rec = recommend({ eligibleCells: eligible.length, confidentShare, largestShare, builtUpCells: builtUp, gapShare, validationOk });
+  const rec = recommend({ eligibleCells: eligible.length, confidentShare: reachConfident, largestShare: reachLargest, builtUpCells: builtUp, gapShare, validationOk });
   const km = (cells: number) => round((cells * side) / 1000, 1);
   const summary: AreaSummary = {
     areaId: input.areaId,
@@ -287,6 +333,10 @@ export function analyseArea(input: AreaInput, zoom = 20): { mask: EligibilityMas
       outsideLargestCells: outside,
       doubtfulCells: doubtful.size,
       confidentShare: round(confidentShare, 3),
+      reachOutsideLargestCells: reachOutside,
+      reachConfidentShare: round(reachConfident, 3),
+      reachLargestShare: round(reachLargest, 3),
+      reachRegions: reach.length,
       regions: comps.length,
       largestRegionCells: largest,
       largestShare: round(largestShare, 3),
