@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-panchagarh-panchagarh-sadar",
+ "areaName": "Panchagarh Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-panchagarh-panchagarh-sadar:bc83ef39ff6c",
+ "contentHash": "bc83ef39ff6c26e60ebbc040e6af24c0488d897dc49c16fed83d09c36f5d3ec8",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 297305,
+  "eligibleCells": 35112,
+  "areaKm2": 348.55,
+  "eligibleShareOfOwned": 11.8,
+  "uniqueStreetKm": 1202.2
+ },
+ "roads": {
+  "waysInArea": 8999,
+  "includedKm": 1333.7,
+  "byClassKm": {
+   "trunk": 24.8,
+   "main": 1163.9,
+   "minor": 145
+  },
+  "densityKmPerKm2": 3.8
+ },
+ "quality": {
+  "trunkOnlyCells": 618,
+  "minorOnlyCells": 3680,
+  "outsideLargestCells": 7082,
+  "doubtfulCells": 10476,
+  "confidentShare": 0.702,
+  "reachOutsideLargestCells": 903,
+  "reachConfidentShare": 0.858,
+  "reachLargestShare": 0.974,
+  "reachRegions": 62,
+  "regions": 318,
+  "largestRegionCells": 28030,
+  "largestShare": 0.798,
+  "builtUpCells": 905,
+  "builtUpWithoutRoad": 283,
+  "gapShare": 0.313,
+  "singleCellHoles": 160
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 28090,
+   "uniqueStreetKm": 961.8,
+   "takeoverCredits": 56180
+  },
+  {
+   "percent": 70,
+   "requiredCells": 24579,
+   "uniqueStreetKm": 841.6,
+   "takeoverCredits": 49158
+  },
+  {
+   "percent": 60,
+   "requiredCells": 21068,
+   "uniqueStreetKm": 721.4,
+   "takeoverCredits": 42136
+  },
+  {
+   "percent": 50,
+   "requiredCells": 17556,
+   "uniqueStreetKm": 601.1,
+   "takeoverCredits": 35112
+  },
+  {
+   "percent": 40,
+   "requiredCells": 14045,
+   "uniqueStreetKm": 480.9,
+   "takeoverCredits": 28090
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "31% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 372797,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-panchagarh",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B34393793043573",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

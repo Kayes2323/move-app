@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-naogaon-patnitala",
+ "areaName": "Patnitala",
+ "maskVersion": "territory-mask/1:bd-upa-naogaon-patnitala:dbdac7cb7ee6",
+ "contentHash": "dbdac7cb7ee63740ca6239c904bac6fca082548b5c66d64934f6d78dc02e85af",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 324672,
+  "eligibleCells": 5322,
+  "areaKm2": 388.93,
+  "eligibleShareOfOwned": 1.6,
+  "uniqueStreetKm": 184.2
+ },
+ "roads": {
+  "waysInArea": 1233,
+  "includedKm": 205.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 201.5,
+   "minor": 4.1
+  },
+  "densityKmPerKm2": 0.5
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 99,
+  "outsideLargestCells": 4177,
+  "doubtfulCells": 4208,
+  "confidentShare": 0.209,
+  "reachOutsideLargestCells": 2556,
+  "reachConfidentShare": 0.511,
+  "reachLargestShare": 0.52,
+  "reachRegions": 18,
+  "regions": 86,
+  "largestRegionCells": 1145,
+  "largestShare": 0.215,
+  "builtUpCells": 1,
+  "builtUpWithoutRoad": 1,
+  "gapShare": 1,
+  "singleCellHoles": 5
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4258,
+   "uniqueStreetKm": 147.4,
+   "takeoverCredits": 8516
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3726,
+   "uniqueStreetKm": 129,
+   "takeoverCredits": 7452
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3194,
+   "uniqueStreetKm": 110.5,
+   "takeoverCredits": 6388
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2661,
+   "uniqueStreetKm": 92.1,
+   "takeoverCredits": 5322
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2129,
+   "uniqueStreetKm": 73.7,
+   "takeoverCredits": 4258
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 52% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 62795,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-naogaon",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B91431094862758",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

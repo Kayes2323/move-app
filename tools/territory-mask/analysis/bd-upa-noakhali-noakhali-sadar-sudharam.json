@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-noakhali-noakhali-sadar-sudharam",
+ "areaName": "Noakhali Sadar (Sudharam)",
+ "maskVersion": "territory-mask/1:bd-upa-noakhali-noakhali-sadar-sudharam:5d604fde4b09",
+ "contentHash": "5d604fde4b0950c96e2204fd260213ffe47d121ad10f62aac757280abca7d748",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 301352,
+  "eligibleCells": 16192,
+  "areaKm2": 374.15,
+  "eligibleShareOfOwned": 5.4,
+  "uniqueStreetKm": 570.5
+ },
+ "roads": {
+  "waysInArea": 2041,
+  "includedKm": 629.8,
+  "byClassKm": {
+   "trunk": 13.6,
+   "main": 558.7,
+   "minor": 57.4
+  },
+  "densityKmPerKm2": 1.7
+ },
+ "quality": {
+  "trunkOnlyCells": 219,
+  "minorOnlyCells": 1346,
+  "outsideLargestCells": 3553,
+  "doubtfulCells": 4966,
+  "confidentShare": 0.693,
+  "reachOutsideLargestCells": 758,
+  "reachConfidentShare": 0.86,
+  "reachLargestShare": 0.953,
+  "reachRegions": 19,
+  "regions": 98,
+  "largestRegionCells": 12639,
+  "largestShare": 0.781,
+  "builtUpCells": 128,
+  "builtUpWithoutRoad": 51,
+  "gapShare": 0.398,
+  "singleCellHoles": 90
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12954,
+   "uniqueStreetKm": 456.4,
+   "takeoverCredits": 25908
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11335,
+   "uniqueStreetKm": 399.4,
+   "takeoverCredits": 22670
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9716,
+   "uniqueStreetKm": 342.4,
+   "takeoverCredits": 19432
+  },
+  {
+   "percent": 50,
+   "requiredCells": 8096,
+   "uniqueStreetKm": 285.3,
+   "takeoverCredits": 16192
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6477,
+   "uniqueStreetKm": 228.2,
+   "takeoverCredits": 12954
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "40% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 155475,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-noakhali",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B59544750070179",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

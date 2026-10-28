@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-comilla-chandina",
+ "areaName": "Chandina",
+ "maskVersion": "territory-mask/1:bd-upa-comilla-chandina:3503f24974d0",
+ "contentHash": "3503f24974d04ee3f30186f7a2796940851623e4ceab3b8905e42f9683a2f549",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 165391,
+  "eligibleCells": 16870,
+  "areaKm2": 203.39,
+  "eligibleShareOfOwned": 10.2,
+  "uniqueStreetKm": 591.6
+ },
+ "roads": {
+  "waysInArea": 2223,
+  "includedKm": 645.1,
+  "byClassKm": {
+   "trunk": 20.9,
+   "main": 615.5,
+   "minor": 8.8
+  },
+  "densityKmPerKm2": 3.2
+ },
+ "quality": {
+  "trunkOnlyCells": 408,
+  "minorOnlyCells": 233,
+  "outsideLargestCells": 3185,
+  "doubtfulCells": 3592,
+  "confidentShare": 0.787,
+  "reachOutsideLargestCells": 418,
+  "reachConfidentShare": 0.94,
+  "reachLargestShare": 0.975,
+  "reachRegions": 25,
+  "regions": 99,
+  "largestRegionCells": 13685,
+  "largestShare": 0.811,
+  "builtUpCells": 1799,
+  "builtUpWithoutRoad": 913,
+  "gapShare": 0.508,
+  "singleCellHoles": 34
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 13496,
+   "uniqueStreetKm": 473.3,
+   "takeoverCredits": 26992
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11809,
+   "uniqueStreetKm": 414.1,
+   "takeoverCredits": 23618
+  },
+  {
+   "percent": 60,
+   "requiredCells": 10122,
+   "uniqueStreetKm": 355,
+   "takeoverCredits": 20244
+  },
+  {
+   "percent": 50,
+   "requiredCells": 8435,
+   "uniqueStreetKm": 295.8,
+   "takeoverCredits": 16870
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6748,
+   "uniqueStreetKm": 236.6,
+   "takeoverCredits": 13496
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "51% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 173406,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-comilla",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B69698146690678",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

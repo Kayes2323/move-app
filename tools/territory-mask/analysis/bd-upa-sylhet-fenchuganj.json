@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sylhet-fenchuganj",
+ "areaName": "Fenchuganj",
+ "maskVersion": "territory-mask/1:bd-upa-sylhet-fenchuganj:a6e48fe5adf2",
+ "contentHash": "a6e48fe5adf24445b2986cc83a180aa6456a6f380acca4fd2532a26c5eb727c3",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 94362,
+  "eligibleCells": 8142,
+  "areaKm2": 113.77,
+  "eligibleShareOfOwned": 8.6,
+  "uniqueStreetKm": 282.7
+ },
+ "roads": {
+  "waysInArea": 1089,
+  "includedKm": 323.1,
+  "byClassKm": {
+   "trunk": 11.2,
+   "main": 273.1,
+   "minor": 38.8
+  },
+  "densityKmPerKm2": 2.8
+ },
+ "quality": {
+  "trunkOnlyCells": 280,
+  "minorOnlyCells": 957,
+  "outsideLargestCells": 1348,
+  "doubtfulCells": 2293,
+  "confidentShare": 0.718,
+  "reachOutsideLargestCells": 68,
+  "reachConfidentShare": 0.845,
+  "reachLargestShare": 0.992,
+  "reachRegions": 9,
+  "regions": 60,
+  "largestRegionCells": 6794,
+  "largestShare": 0.834,
+  "builtUpCells": 66,
+  "builtUpWithoutRoad": 15,
+  "gapShare": 0.227,
+  "singleCellHoles": 42
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 6514,
+   "uniqueStreetKm": 226.2,
+   "takeoverCredits": 13028
+  },
+  {
+   "percent": 70,
+   "requiredCells": 5700,
+   "uniqueStreetKm": 197.9,
+   "takeoverCredits": 11400
+  },
+  {
+   "percent": 60,
+   "requiredCells": 4886,
+   "uniqueStreetKm": 169.7,
+   "takeoverCredits": 9772
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4071,
+   "uniqueStreetKm": 141.4,
+   "takeoverCredits": 8142
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3257,
+   "uniqueStreetKm": 113.1,
+   "takeoverCredits": 6514
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "75% threshold (part of its mapped streets are doubtful)",
+  "percent": 75,
+  "requiredCells": 6107
+ },
+ "maskBytes": 83043,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sylhet",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B87277518835017",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

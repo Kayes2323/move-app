@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-khagrachhari-ramgarh",
+ "areaName": "Ramgarh",
+ "maskVersion": "territory-mask/1:bd-upa-khagrachhari-ramgarh:0cb7fbb6be0b",
+ "contentHash": "0cb7fbb6be0bfca4efbba28af904e5d73fc21083494fe63a3729cfb1869b926e",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 200010,
+  "eligibleCells": 6277,
+  "areaKm2": 247.74,
+  "eligibleShareOfOwned": 3.1,
+  "uniqueStreetKm": 220.9
+ },
+ "roads": {
+  "waysInArea": 1131,
+  "includedKm": 249.6,
+  "byClassKm": {
+   "trunk": 0.4,
+   "main": 228.8,
+   "minor": 20.3
+  },
+  "densityKmPerKm2": 1
+ },
+ "quality": {
+  "trunkOnlyCells": 7,
+  "minorOnlyCells": 490,
+  "outsideLargestCells": 4625,
+  "doubtfulCells": 4645,
+  "confidentShare": 0.26,
+  "reachOutsideLargestCells": 3622,
+  "reachConfidentShare": 0.415,
+  "reachLargestShare": 0.423,
+  "reachRegions": 37,
+  "regions": 96,
+  "largestRegionCells": 1652,
+  "largestShare": 0.263,
+  "builtUpCells": 2,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 8
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 5022,
+   "uniqueStreetKm": 176.7,
+   "takeoverCredits": 10044
+  },
+  {
+   "percent": 70,
+   "requiredCells": 4394,
+   "uniqueStreetKm": 154.6,
+   "takeoverCredits": 8788
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3767,
+   "uniqueStreetKm": 132.6,
+   "takeoverCredits": 7534
+  },
+  {
+   "percent": 50,
+   "requiredCells": 3139,
+   "uniqueStreetKm": 110.5,
+   "takeoverCredits": 6278
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2511,
+   "uniqueStreetKm": 88.4,
+   "takeoverCredits": 5022
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 42% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 72705,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-khagrachhari",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B38799821527712",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

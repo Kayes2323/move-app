@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-kushtia-bheramara",
+ "areaName": "Bheramara",
+ "maskVersion": "territory-mask/1:bd-upa-kushtia-bheramara:7eff2e061493",
+ "contentHash": "7eff2e0614936fa552030e0356dd936d9ab51d4df7f9adbfd4ff727a34fc0911",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 128586,
+  "eligibleCells": 10499,
+  "areaKm2": 156.6,
+  "eligibleShareOfOwned": 8.2,
+  "uniqueStreetKm": 366.4
+ },
+ "roads": {
+  "waysInArea": 1486,
+  "includedKm": 412.7,
+  "byClassKm": {
+   "trunk": 11.8,
+   "main": 361.8,
+   "minor": 39
+  },
+  "densityKmPerKm2": 2.6
+ },
+ "quality": {
+  "trunkOnlyCells": 271,
+  "minorOnlyCells": 928,
+  "outsideLargestCells": 823,
+  "doubtfulCells": 1919,
+  "confidentShare": 0.817,
+  "reachOutsideLargestCells": 93,
+  "reachConfidentShare": 0.877,
+  "reachLargestShare": 0.991,
+  "reachRegions": 10,
+  "regions": 55,
+  "largestRegionCells": 9676,
+  "largestShare": 0.922,
+  "builtUpCells": 146,
+  "builtUpWithoutRoad": 27,
+  "gapShare": 0.185,
+  "singleCellHoles": 30
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 8400,
+   "uniqueStreetKm": 293.1,
+   "takeoverCredits": 16800
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7350,
+   "uniqueStreetKm": 256.5,
+   "takeoverCredits": 14700
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6300,
+   "uniqueStreetKm": 219.9,
+   "takeoverCredits": 12600
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5250,
+   "uniqueStreetKm": 183.2,
+   "takeoverCredits": 10500
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4200,
+   "uniqueStreetKm": 146.6,
+   "takeoverCredits": 8400
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "75% threshold (the area is large)",
+  "percent": 75,
+  "requiredCells": 7875
+ },
+ "maskBytes": 102128,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-kushtia",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B14686967042049",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

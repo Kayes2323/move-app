@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chuadanga-jiban-nagar",
+ "areaName": "Jiban Nagar",
+ "maskVersion": "territory-mask/1:bd-upa-chuadanga-jiban-nagar:a514b24e5d4a",
+ "contentHash": "a514b24e5d4ab32e8d055fb3e384a7d5dc24e08af44b53f78ab0619cbec2c09d",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 166445,
+  "eligibleCells": 9880,
+  "areaKm2": 204.65,
+  "eligibleShareOfOwned": 5.9,
+  "uniqueStreetKm": 346.4
+ },
+ "roads": {
+  "waysInArea": 902,
+  "includedKm": 387.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 386.6,
+   "minor": 0.9
+  },
+  "densityKmPerKm2": 1.9
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 23,
+  "outsideLargestCells": 2596,
+  "doubtfulCells": 2601,
+  "confidentShare": 0.737,
+  "reachOutsideLargestCells": 125,
+  "reachConfidentShare": 0.986,
+  "reachLargestShare": 0.987,
+  "reachRegions": 10,
+  "regions": 67,
+  "largestRegionCells": 7284,
+  "largestShare": 0.737,
+  "builtUpCells": 12,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 21
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 7904,
+   "uniqueStreetKm": 277.2,
+   "takeoverCredits": 15808
+  },
+  {
+   "percent": 70,
+   "requiredCells": 6916,
+   "uniqueStreetKm": 242.5,
+   "takeoverCredits": 13832
+  },
+  {
+   "percent": 60,
+   "requiredCells": 5928,
+   "uniqueStreetKm": 207.9,
+   "takeoverCredits": 11856
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4940,
+   "uniqueStreetKm": 173.2,
+   "takeoverCredits": 9880
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3952,
+   "uniqueStreetKm": 138.6,
+   "takeoverCredits": 7904
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 7904
+ },
+ "maskBytes": 112651,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chuadanga",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B6466456665233",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

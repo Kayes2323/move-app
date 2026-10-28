@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-dhaka-kotwali",
+ "areaName": "Kotwali",
+ "maskVersion": "territory-mask/1:bd-upa-dhaka-kotwali:989766864ecc",
+ "contentHash": "989766864ecc7ffe4a8be103aaab4ed5b90c3346f76f414261dfabebf0ab65d6",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 622,
+  "eligibleCells": 343,
+  "areaKm2": 0.76,
+  "eligibleShareOfOwned": 55.1,
+  "uniqueStreetKm": 12
+ },
+ "roads": {
+  "waysInArea": 658,
+  "includedKm": 17.6,
+  "byClassKm": {
+   "trunk": 1.7,
+   "main": 14.6,
+   "minor": 1.3
+  },
+  "densityKmPerKm2": 23.1
+ },
+ "quality": {
+  "trunkOnlyCells": 15,
+  "minorOnlyCells": 21,
+  "outsideLargestCells": 3,
+  "doubtfulCells": 39,
+  "confidentShare": 0.886,
+  "reachOutsideLargestCells": 0,
+  "reachConfidentShare": 0.895,
+  "reachLargestShare": 1,
+  "reachRegions": 1,
+  "regions": 2,
+  "largestRegionCells": 340,
+  "largestShare": 0.991,
+  "builtUpCells": 109,
+  "builtUpWithoutRoad": 10,
+  "gapShare": 0.092,
+  "singleCellHoles": 19
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 275,
+   "uniqueStreetKm": 9.6,
+   "takeoverCredits": 550
+  },
+  {
+   "percent": 70,
+   "requiredCells": 241,
+   "uniqueStreetKm": 8.4,
+   "takeoverCredits": 482
+  },
+  {
+   "percent": 60,
+   "requiredCells": 206,
+   "uniqueStreetKm": 7.2,
+   "takeoverCredits": 412
+  },
+  {
+   "percent": 50,
+   "requiredCells": 172,
+   "uniqueStreetKm": 6,
+   "takeoverCredits": 344
+  },
+  {
+   "percent": 40,
+   "requiredCells": 138,
+   "uniqueStreetKm": 4.8,
+   "takeoverCredits": 276
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 275
+ },
+ "maskBytes": 4706,
+ "type": "LOCAL_AREA",
+ "parentId": "bd-dis-dhaka",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B96747808832933",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

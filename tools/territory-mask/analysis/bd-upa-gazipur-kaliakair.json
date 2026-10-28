@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-gazipur-kaliakair",
+ "areaName": "Kaliakair",
+ "maskVersion": "territory-mask/1:bd-upa-gazipur-kaliakair:147759f90dba",
+ "contentHash": "147759f90dba4674816909fe72c9e6cd4f08b060d0f17b3d124efc6f60144593",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 258443,
+  "eligibleCells": 20009,
+  "areaKm2": 314.43,
+  "eligibleShareOfOwned": 7.7,
+  "uniqueStreetKm": 697.9
+ },
+ "roads": {
+  "waysInArea": 3492,
+  "includedKm": 805,
+  "byClassKm": {
+   "trunk": 42.4,
+   "main": 705.4,
+   "minor": 57.2
+  },
+  "densityKmPerKm2": 2.6
+ },
+ "quality": {
+  "trunkOnlyCells": 596,
+  "minorOnlyCells": 1342,
+  "outsideLargestCells": 5690,
+  "doubtfulCells": 7314,
+  "confidentShare": 0.634,
+  "reachOutsideLargestCells": 264,
+  "reachConfidentShare": 0.891,
+  "reachLargestShare": 0.987,
+  "reachRegions": 29,
+  "regions": 176,
+  "largestRegionCells": 14319,
+  "largestShare": 0.716,
+  "builtUpCells": 156,
+  "builtUpWithoutRoad": 77,
+  "gapShare": 0.494,
+  "singleCellHoles": 49
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 16008,
+   "uniqueStreetKm": 558.4,
+   "takeoverCredits": 32016
+  },
+  {
+   "percent": 70,
+   "requiredCells": 14007,
+   "uniqueStreetKm": 488.6,
+   "takeoverCredits": 28014
+  },
+  {
+   "percent": 60,
+   "requiredCells": 12006,
+   "uniqueStreetKm": 418.8,
+   "takeoverCredits": 24012
+  },
+  {
+   "percent": 50,
+   "requiredCells": 10005,
+   "uniqueStreetKm": 349,
+   "takeoverCredits": 20010
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8004,
+   "uniqueStreetKm": 279.2,
+   "takeoverCredits": 16008
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "49% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 209715,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-gazipur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B52699552656375",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

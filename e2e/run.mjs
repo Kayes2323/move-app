@@ -446,12 +446,160 @@ const streetChunk = (i, t0, { lat = 0, lng = 0 } = {}) => {
   for (let k = 0; k <= n; k++) { const f = k / n; flat.push(t0 + k * 1000, a.lat + (b.lat - a.lat) * f + lat, a.lng + (b.lng - a.lng) * f + lng, 6, -9999, 0); }
   return { seq: 0, count: n + 1, flat };
 };
+/** Like streetChunk, for any area's committed mask (a real eligible street of that area, walked at 1.4 m/s). */
+const maskOfArea = (id) => JSON.parse(readFileSync(new URL(`../public/geo/bd/masks/${id}.json`, import.meta.url), "utf8"));
+const streetChunkFor = (mask, i, t0) => {
+  const streets = [...mask.runs].filter(([, len]) => len >= 16).sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const [start] = streets[i];
+  const a = cellCentre(start), b = cellCentre(start + 15);
+  const metres = Math.hypot((b.lat - a.lat) * 111320, (b.lng - a.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180));
+  const n = Math.floor(metres / 1.4);
+  const flat = [];
+  for (let k = 0; k <= n; k++) { const f = k / n; flat.push(t0 + k * 1000, a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f, 6, -9999, 0); }
+  return { seq: 0, count: n + 1, flat };
+};
 const ELIGIBLE = (() => { const out = []; for (const [s, l] of MASK.runs) for (let k = 0; k < l; k++) out.push(s + k); return out; })();
 /** Explored cells as the app stores them: a flat [start, length, start, length, ...] list (Firestore has no nested arrays). */
 const runsOf = (cells) => { const r = []; for (const c of cells) { const n = r.length; if (n && r[n - 2] + r[n - 1] === c) r[n - 1]++; else r.push(c, 1); } return r; };
 const ap = (i, n, t) => ({ i, n, t });
 const stored = (over = {}) => ({ areaId: "bd-upa-dhaka-mohammadpur", selectedAt: Date.now() - 5 * 86400000, maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", coverageVersion: "territory-coverage/2", rulesVersion: "territory-rules/1", cells: [], applied: [], ...over });
 const TRACK = (id) => `users/u1/activities/${id}/tracks/0`;
+
+/* ---------- expansion: any open area behaves like the pilot, closed areas explain themselves and never count ---------- */
+async function scenarioExpansion() {
+  const MOH = "bd-upa-dhaka-mohammadpur";
+  const HAJ = "bd-upa-chandpur-hajiganj";
+  const CHS = "bd-upa-chandpur-chandpur-sadar";
+  const cat = JSON.parse(readFileSync(new URL("../app/data/territory-catalog.json", import.meta.url), "utf8")).areas;
+  const closed = JSON.parse(readFileSync(new URL("../public/geo/bd/territories.json", import.meta.url), "utf8")).areas;
+  const HM = maskOfArea(HAJ);
+  const now = Date.now();
+  const day = 86400000;
+  const ready = (pg, sel) => pg.waitForSelector(sel, { timeout: 30000 });
+  const hubText = async (pg) => { await pg.waitForTimeout(600); return text(pg); };
+  const seed = (territory, runs, tracks) => {
+    const db = baseDb();
+    db["users/u1"].territory = territory;
+    db["users/u1"].territoryActive = { areaId: territory.areaId, at: territory.selectedAt };
+    db["users/u1"].runs = runs;
+    for (const [id, chunk] of Object.entries(tracks)) db[TRACK(id)] = chunk;
+    return db;
+  };
+  const hajState = (over = {}) => ({ ...stored({ areaId: HAJ, maskVersion: HM.maskVersion, selectedAt: now - 5 * day }), ...over });
+  const walkRun = (id, daysAgo) => ({ id, km: 2, duration: "05:00", date: new Date(now - daysAgo * day).toISOString(), activity: "walking" });
+
+  check("X0. the catalog has Hajiganj open with its own threshold (50%, 7,868 cells), Mohammadpur at 80%, and Chandpur Sadar closed with a reason", cat[HAJ]?.percent === 50 && cat[HAJ]?.requiredCells === 7868 && cat[MOH]?.percent === 80 && !cat[CHS] && /map/i.test(closed[CHS]?.r ?? ""), JSON.stringify([cat[HAJ], closed[CHS]]));
+
+  // X1: a new user (Journey Chandpur is the default route) picks Hajiganj: open, saved, starts empty, no Journey anywhere
+  {
+    const s = await fresh();
+    await s.pg.goto(`${BASE}/territory`);
+    await s.pg.getByLabel("Search areas").waitFor({ timeout: 30000 });
+    await chooseArea(s.pg, "Hajiganj", { confirm: false });
+    const sheet = await s.pg.getByRole("alertdialog").innerText();
+    check("X1a. Hajiganj shows as open for Territory in the confirm step", /Open for Territory/i.test(sheet) && !/isn't open/i.test(sheet), sheet.replace(/\s+/g, " ").slice(0, 160));
+    await s.pg.getByRole("alertdialog").getByRole("button", { name: "Choose Territory" }).click();
+    await ready(s.pg, "text=Start exploring");
+    const db = await dbOf(s.pg);
+    const t = await hubText(s.pg);
+    check("X1. Hajiganj becomes the active Territory, saved with its own mask version, starting empty from now", db["users/u1"].territoryActive?.areaId === HAJ && db["users/u1"].territory?.areaId === HAJ && db["users/u1"].territory.maskVersion === HM.maskVersion && db["users/u1"].territory.cells.length === 0 && db["users/u1"].territory.selectedAt >= now, JSON.stringify(db["users/u1"].territory).slice(0, 200));
+    check("X1b. the Territory screen is Hajiganj, not Mohammadpur, and nothing of the Chandpur Journey leaks in", /HAJIGANJ/i.test(t) && !/Mohammadpur/i.test(t) && !/Dhaka\s*(→|to)\s*Chandpur/i.test(t) && !/km to go|checkpoint/i.test(t), t.slice(0, 220));
+    await s.pg.reload();
+    await ready(s.pg, "text=Start exploring");
+    check("X1c. after a refresh Hajiganj is still the active Territory", /HAJIGANJ/i.test(await hubText(s.pg)));
+    check("X1d. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // X2: a walk along a real Hajiganj street counts for Hajiganj, measured against ITS requirement; a Mohammadpur street adds nothing there
+  {
+    const db = seed(hajState(), [walkRun("h1", 2), walkRun("m1", 1)], { h1: streetChunkFor(HM, 0, now - 2 * day - 300000), m1: streetChunk(0, now - day - 300000) });
+    const s = await fresh({ db });
+    await s.pg.goto(`${BASE}/territory/current`);
+    await ready(s.pg, "text=Start exploring");
+    await s.pg.waitForTimeout(800);
+    const t = await text(s.pg);
+    const out = (await dbOf(s.pg))["users/u1"].territory;
+    const h1 = out.applied.find((a) => a.i === "h1");
+    const m1 = out.applied.find((a) => a.i === "m1");
+    const shown = Number((t.match(/([\d.]+)% conquered/i) || [])[1]);
+    const expected = Math.floor(((out.cells.reduce((n, v, i) => (i % 2 ? n + v : n), 0)) / 7868) * 1000) / 10;
+    check("X2. a Hajiganj walk explores Hajiganj ground", h1 && h1.n >= 12, JSON.stringify(out.applied));
+    check("X2b. the progress shown is measured against Hajiganj's own requirement (7,868 cells), not 80% of anything else", Math.abs(shown - expected) <= 0.1 && shown > 0, `${shown} vs ${expected}`);
+    check("X2c. a Mohammadpur street walked while Hajiganj is active adds nothing to Hajiganj", m1 && m1.n === 0, JSON.stringify(m1));
+    check("X2d. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // X3: switching Mohammadpur <-> Hajiganj keeps both, never back-fills, never touches ownership
+  {
+    const reignStart = now - 8 * day;
+    const db = baseDb();
+    db["users/u1"].territory = stored({ selectedAt: now - 10 * day, cells: runsOf(ELIGIBLE.slice(0, 3200)), applied: [ap("r0", 3200, now - 9 * day)], wins: [{ reign: 1, kind: "conquest", activityId: "r0", atMs: reignStart }], claim: { areaId: MOH, reign: 1, kind: "conquest", explored: 3200, credits: 0, campaignStartedAt: now - 10 * day, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", at: reignStart } });
+    db["users/u1"].territoryActive = { areaId: MOH, at: now - 10 * day };
+    db[`territories/${MOH}`] = { areaId: MOH, name: "Mohammadpur", ownerUid: "u1", ownerName: "Rafi", ownerPhoto: "", reign: 1, kind: "conquest", reignStartedAt: reignStart, updatedAt: reignStart, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion };
+    const s = await fresh({ db });
+    await s.ctx.addInitScript(() => localStorage.setItem("move.territory.celebrated.u1.bd-upa-dhaka-mohammadpur.1", "1"));
+    await s.pg.goto(`${BASE}/territory/current`);
+    await ready(s.pg, "text=Share your Territory");
+    const before = await dbOf(s.pg);
+    const own = JSON.stringify(before[`territories/${MOH}`]);
+    const cells = JSON.stringify(before["users/u1"].territory.cells);
+    await chooseArea(s.pg, "Hajiganj");
+    await ready(s.pg, "text=Start exploring");
+    const mid = await dbOf(s.pg);
+    check("X3a. switching to Hajiganj parks Mohammadpur whole (cells, wins, claim) and starts Hajiganj empty", mid["users/u1"].territoryParked?.[MOH] && JSON.stringify(mid["users/u1"].territoryParked[MOH].cells) === cells && mid["users/u1"].territoryParked[MOH].claim?.reign === 1 && mid["users/u1"].territory.areaId === HAJ && mid["users/u1"].territory.cells.length === 0);
+    check("X3b. you stay King of Mohammadpur: ownership unchanged, nothing written for Hajiganj", JSON.stringify(mid[`territories/${MOH}`]) === own && !Object.keys(mid).some((k) => k.startsWith(`territories/${HAJ}`)));
+    await chooseArea(s.pg, "Mohammadpur");
+    await ready(s.pg, "text=Share your Territory");
+    const back = await dbOf(s.pg);
+    check("X3c. back in Mohammadpur: still King with the same ground, the time away recorded, Hajiganj parked", /You are King/i.test(await hubText(s.pg)) && JSON.stringify(back["users/u1"].territory.cells) === cells && back["users/u1"].territory.gaps?.length === 2 && back["users/u1"].territoryParked?.[HAJ]);
+    check("X3d. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // X4: a closed area (Coming soon) says why, can still be chosen, and a walk there awards nothing anywhere
+  {
+    const s = await fresh();
+    await s.pg.goto(`${BASE}/territory`);
+    await s.pg.getByLabel("Search areas").waitFor({ timeout: 30000 });
+    await s.pg.getByLabel("Search areas").fill("Chandpur Sadar");
+    await s.pg.waitForTimeout(500);
+    const row = await s.pg.getByRole("button", { name: /^Chandpur Sadar,/ }).first().innerText();
+    check("X4a. Chandpur Sadar is listed as Coming soon", /coming soon/i.test(row), row);
+    await chooseArea(s.pg, "Chandpur Sadar");
+    await ready(s.pg, "text=isn't open for Territory yet");
+    const t = await hubText(s.pg);
+    check("X4b. its Territory screen explains the real reason (OpenStreetMap is missing streets in the town)", /Coming soon/i.test(t) && /mapping|street/i.test(t) && /because/i.test(t), t.replace(/\s+/g, " ").slice(0, 260));
+    await s.ctx.close();
+    const db = baseDb();
+    db["users/u1"].territoryActive = { areaId: CHS, at: now - 5 * day };
+    db["users/u1"].territory = null;
+    db["users/u1"].runs = [walkRun("c1", 1)];
+    db[TRACK("c1")] = streetChunk(0, now - day - 300000);
+    const w = await fresh({ db });
+    await w.pg.goto(`${BASE}/territory/current`);
+    await ready(w.pg, "text=isn't open for Territory yet");
+    await w.pg.waitForTimeout(600);
+    const after = await dbOf(w.pg);
+    check("X4c. a walk while a closed area is active awards no Territory credit anywhere", after["users/u1"].territory === null && !after["users/u1"].territoryParked && !Object.keys(after).some((k) => k.startsWith("territories/")), JSON.stringify(after["users/u1"].territory));
+    await w.ctx.close();
+  }
+
+  // X5: a Not open area (too large for one conquest) says so
+  {
+    const idx = JSON.parse(readFileSync(new URL("../public/geo/bd/index.json", import.meta.url), "utf8")).areas;
+    const id = Object.keys(closed).find((k) => closed[k].s === "N" && /too large/.test(closed[k].r));
+    const name = idx.find((a) => a.id === id)?.name ?? "";
+    const s = await fresh();
+    await s.pg.goto(`${BASE}/territory`);
+    await s.pg.getByLabel("Search areas").waitFor({ timeout: 30000 });
+    await chooseArea(s.pg, name, { confirm: false });
+    const sheet = await s.pg.getByRole("alertdialog").innerText();
+    check(`X5. ${name} (too large for one conquest) shows Not open with its reason, and a Territory is never promised there`, Boolean(id) && /not open yet/i.test(sheet) && /too large/i.test(sheet) && /won't count until it opens/.test(sheet), sheet.replace(/\s+/g, " ").slice(0, 260));
+    await s.ctx.close();
+  }
+}
 
 /* ---------- the active Territory: chosen by the user, switchable, never defaulted, progress and ownership preserved ---------- */
 async function scenarioSwitch() {
@@ -483,7 +631,7 @@ async function scenarioSwitch() {
     await sheet.getByRole("button", { name: /^Chandpur\s/ }).click();
     await sheet.getByRole("button", { name: /^Chandpur Sadar,/ }).click();
     const confirmText = await s.pg.getByRole("alertdialog").innerText();
-    check("W2a. the Bangladesh map (Division) then District > Upazila reaches Chandpur Sadar, and the confirm step says it is not open yet", /Chandpur Sadar/.test(confirmText) && /not open yet/i.test(confirmText) && /won't count yet/.test(confirmText), confirmText.replace(/\s+/g, " ").slice(0, 200));
+    check("W2a. the Bangladesh map (Division) then District > Upazila reaches Chandpur Sadar, and the confirm step says it is not open, and why", /Chandpur Sadar/.test(confirmText) && /coming soon|not open yet/i.test(confirmText) && /won't count until it opens/.test(confirmText) && /mapping|street/i.test(confirmText), confirmText.replace(/\s+/g, " ").slice(0, 260));
     await s.pg.getByRole("alertdialog").getByRole("button", { name: "Choose Territory" }).click();
     await ready(s.pg, "text=isn't open for Territory yet");
     const t = await hubText(s.pg);
@@ -1314,7 +1462,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

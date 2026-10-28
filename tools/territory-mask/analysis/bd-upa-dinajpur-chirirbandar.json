@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-dinajpur-chirirbandar",
+ "areaName": "Chirirbandar",
+ "maskVersion": "territory-mask/1:bd-upa-dinajpur-chirirbandar:d226b76ca84f",
+ "contentHash": "d226b76ca84fb98504c0ffcae84651bcec12d90be01debecd37da02c75674a6a",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 268564,
+  "eligibleCells": 37716,
+  "areaKm2": 318.72,
+  "eligibleShareOfOwned": 14,
+  "uniqueStreetKm": 1299.3
+ },
+ "roads": {
+  "waysInArea": 8593,
+  "includedKm": 1509.1,
+  "byClassKm": {
+   "trunk": 13.4,
+   "main": 1228.5,
+   "minor": 267.2
+  },
+  "densityKmPerKm2": 4.7
+ },
+ "quality": {
+  "trunkOnlyCells": 209,
+  "minorOnlyCells": 6250,
+  "outsideLargestCells": 1970,
+  "doubtfulCells": 7988,
+  "confidentShare": 0.788,
+  "reachOutsideLargestCells": 184,
+  "reachConfidentShare": 0.825,
+  "reachLargestShare": 0.995,
+  "reachRegions": 22,
+  "regions": 199,
+  "largestRegionCells": 35746,
+  "largestShare": 0.948,
+  "builtUpCells": 8,
+  "builtUpWithoutRoad": 2,
+  "gapShare": 0.25,
+  "singleCellHoles": 368
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 30173,
+   "uniqueStreetKm": 1039.4,
+   "takeoverCredits": 60346
+  },
+  {
+   "percent": 70,
+   "requiredCells": 26402,
+   "uniqueStreetKm": 909.5,
+   "takeoverCredits": 52804
+  },
+  {
+   "percent": 60,
+   "requiredCells": 22630,
+   "uniqueStreetKm": 779.6,
+   "takeoverCredits": 45260
+  },
+  {
+   "percent": 50,
+   "requiredCells": 18858,
+   "uniqueStreetKm": 649.7,
+   "takeoverCredits": 37716
+  },
+  {
+   "percent": 40,
+   "requiredCells": 15087,
+   "uniqueStreetKm": 519.7,
+   "takeoverCredits": 30174
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 15,087 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 369838,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-dinajpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B51943841593923",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

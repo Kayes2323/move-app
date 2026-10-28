@@ -138,8 +138,8 @@ export const POLICY = {
   minEligibleCells: 300,
   /** Margin kept between the confident share of the area and the threshold, for GPS misses (the pilot used 5). */
   marginPoints: 5,
-  /** Unmapped built-up ground above this share, over at least `gapMinBuiltUp` built-up cells, sends the area back to be reviewed. */
-  maxGapShare: 0.5,
+  /** Unmapped built-up ground above this share, over at least `gapMinBuiltUp` built-up cells, sends the area back to be reviewed (the pilot has 0%; Chandpur Sadar's town has 47%). */
+  maxGapShare: 0.3,
   gapMinBuiltUp: 50,
   /** Below this share of the mapped streets in one network (allowing short unmapped links) the area is fragmented (islands, rivers). */
   minLargestShare: 0.6,

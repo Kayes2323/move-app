@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-rangamati-kaptai",
+ "areaName": "Kaptai",
+ "maskVersion": "territory-mask/1:bd-upa-rangamati-kaptai:08d5d4dff2e2",
+ "contentHash": "08d5d4dff2e2d2825c5c76c1aed105867e06dddee1b084ce5b793d368b2521d6",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 178434,
+  "eligibleCells": 3905,
+  "areaKm2": 222.56,
+  "eligibleShareOfOwned": 2.2,
+  "uniqueStreetKm": 137.9
+ },
+ "roads": {
+  "waysInArea": 511,
+  "includedKm": 156,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 149.2,
+   "minor": 6.9
+  },
+  "densityKmPerKm2": 0.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 159,
+  "outsideLargestCells": 2900,
+  "doubtfulCells": 2900,
+  "confidentShare": 0.257,
+  "reachOutsideLargestCells": 1860,
+  "reachConfidentShare": 0.521,
+  "reachLargestShare": 0.524,
+  "reachRegions": 5,
+  "regions": 43,
+  "largestRegionCells": 1005,
+  "largestShare": 0.257,
+  "builtUpCells": 0,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 3
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 3124,
+   "uniqueStreetKm": 110.3,
+   "takeoverCredits": 6248
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2734,
+   "uniqueStreetKm": 96.6,
+   "takeoverCredits": 5468
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2343,
+   "uniqueStreetKm": 82.7,
+   "takeoverCredits": 4686
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1953,
+   "uniqueStreetKm": 69,
+   "takeoverCredits": 3906
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1562,
+   "uniqueStreetKm": 55.2,
+   "takeoverCredits": 3124
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 52% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 44870,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-rangamati",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B98244501145639",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-dhaka-keraniganj",
+ "areaName": "Keraniganj",
+ "maskVersion": "territory-mask/1:bd-upa-dhaka-keraniganj:f9106e9d1a51",
+ "contentHash": "f9106e9d1a51d16b1ad6f9aaa97e52f134b7c120a86cc5b288de8a1b0763415e",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 156507,
+  "eligibleCells": 26943,
+  "areaKm2": 191.69,
+  "eligibleShareOfOwned": 17.2,
+  "uniqueStreetKm": 942.9
+ },
+ "roads": {
+  "waysInArea": 20483,
+  "includedKm": 1122.1,
+  "byClassKm": {
+   "trunk": 13.1,
+   "main": 1024.9,
+   "minor": 84.1
+  },
+  "densityKmPerKm2": 5.9
+ },
+ "quality": {
+  "trunkOnlyCells": 189,
+  "minorOnlyCells": 1966,
+  "outsideLargestCells": 2339,
+  "doubtfulCells": 3971,
+  "confidentShare": 0.853,
+  "reachOutsideLargestCells": 1116,
+  "reachConfidentShare": 0.889,
+  "reachLargestShare": 0.959,
+  "reachRegions": 11,
+  "regions": 102,
+  "largestRegionCells": 24604,
+  "largestShare": 0.913,
+  "builtUpCells": 4189,
+  "builtUpWithoutRoad": 588,
+  "gapShare": 0.14,
+  "singleCellHoles": 630
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 21555,
+   "uniqueStreetKm": 754.4,
+   "takeoverCredits": 43110
+  },
+  {
+   "percent": 70,
+   "requiredCells": 18861,
+   "uniqueStreetKm": 660.1,
+   "takeoverCredits": 37722
+  },
+  {
+   "percent": 60,
+   "requiredCells": 16166,
+   "uniqueStreetKm": 565.8,
+   "takeoverCredits": 32332
+  },
+  {
+   "percent": 50,
+   "requiredCells": 13472,
+   "uniqueStreetKm": 471.5,
+   "takeoverCredits": 26944
+  },
+  {
+   "percent": 40,
+   "requiredCells": 10778,
+   "uniqueStreetKm": 377.2,
+   "takeoverCredits": 21556
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 10,778 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 249243,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-dhaka",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B13645595955380",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

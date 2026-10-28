@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-kurigram-raumari",
+ "areaName": "Raumari",
+ "maskVersion": "territory-mask/1:bd-upa-kurigram-raumari:7ca910bcb199",
+ "contentHash": "7ca910bcb1994f948acd91269aa3b8e087cf8885042e592dd39cdfea40a50388",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 170451,
+  "eligibleCells": 13668,
+  "areaKm2": 202.56,
+  "eligibleShareOfOwned": 8,
+  "uniqueStreetKm": 471.2
+ },
+ "roads": {
+  "waysInArea": 1780,
+  "includedKm": 533.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 450.4,
+   "minor": 83
+  },
+  "densityKmPerKm2": 2.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 2039,
+  "outsideLargestCells": 7474,
+  "doubtfulCells": 8567,
+  "confidentShare": 0.373,
+  "reachOutsideLargestCells": 589,
+  "reachConfidentShare": 0.826,
+  "reachLargestShare": 0.957,
+  "reachRegions": 18,
+  "regions": 137,
+  "largestRegionCells": 6194,
+  "largestShare": 0.453,
+  "builtUpCells": 811,
+  "builtUpWithoutRoad": 290,
+  "gapShare": 0.358,
+  "singleCellHoles": 36
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 10935,
+   "uniqueStreetKm": 377,
+   "takeoverCredits": 21870
+  },
+  {
+   "percent": 70,
+   "requiredCells": 9568,
+   "uniqueStreetKm": 329.8,
+   "takeoverCredits": 19136
+  },
+  {
+   "percent": 60,
+   "requiredCells": 8201,
+   "uniqueStreetKm": 282.7,
+   "takeoverCredits": 16402
+  },
+  {
+   "percent": 50,
+   "requiredCells": 6834,
+   "uniqueStreetKm": 235.6,
+   "takeoverCredits": 13668
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5468,
+   "uniqueStreetKm": 188.5,
+   "takeoverCredits": 10936
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "36% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 144988,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-kurigram",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B84227309830947",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

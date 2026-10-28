@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-pabna-pabna-sadar",
+ "areaName": "Pabna Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-pabna-pabna-sadar:1ced1bfabae5",
+ "contentHash": "1ced1bfabae5487dbd2fc36b6ecba1a1ec2acd9c9bb4a95fa325f5d616c8077a",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 352237,
+  "eligibleCells": 21266,
+  "areaKm2": 429.49,
+  "eligibleShareOfOwned": 6,
+  "uniqueStreetKm": 742.6
+ },
+ "roads": {
+  "waysInArea": 2365,
+  "includedKm": 841.8,
+  "byClassKm": {
+   "trunk": 41.1,
+   "main": 759.6,
+   "minor": 41.1
+  },
+  "densityKmPerKm2": 2
+ },
+ "quality": {
+  "trunkOnlyCells": 937,
+  "minorOnlyCells": 944,
+  "outsideLargestCells": 3500,
+  "doubtfulCells": 5004,
+  "confidentShare": 0.765,
+  "reachOutsideLargestCells": 276,
+  "reachConfidentShare": 0.899,
+  "reachLargestShare": 0.987,
+  "reachRegions": 18,
+  "regions": 117,
+  "largestRegionCells": 17766,
+  "largestShare": 0.835,
+  "builtUpCells": 77,
+  "builtUpWithoutRoad": 33,
+  "gapShare": 0.429,
+  "singleCellHoles": 85
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 17013,
+   "uniqueStreetKm": 594.1,
+   "takeoverCredits": 34026
+  },
+  {
+   "percent": 70,
+   "requiredCells": 14887,
+   "uniqueStreetKm": 519.8,
+   "takeoverCredits": 29774
+  },
+  {
+   "percent": 60,
+   "requiredCells": 12760,
+   "uniqueStreetKm": 445.6,
+   "takeoverCredits": 25520
+  },
+  {
+   "percent": 50,
+   "requiredCells": 10633,
+   "uniqueStreetKm": 371.3,
+   "takeoverCredits": 21266
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8507,
+   "uniqueStreetKm": 297.1,
+   "takeoverCredits": 17014
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "43% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 225124,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-pabna",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B21601893255114",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-pirojpur-nazirpur",
+ "areaName": "Nazirpur",
+ "maskVersion": "territory-mask/1:bd-upa-pirojpur-nazirpur:33390659eba1",
+ "contentHash": "33390659eba18de7fb340232fe5811bc29e7c83b69821cf2e7c6a5998692aa8a",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 183519,
+  "eligibleCells": 2011,
+  "areaKm2": 227.9,
+  "eligibleShareOfOwned": 1.1,
+  "uniqueStreetKm": 70.9
+ },
+ "roads": {
+  "waysInArea": 196,
+  "includedKm": 77.7,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 76,
+   "minor": 1.7
+  },
+  "densityKmPerKm2": 0.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 38,
+  "outsideLargestCells": 1652,
+  "doubtfulCells": 1652,
+  "confidentShare": 0.179,
+  "reachOutsideLargestCells": 272,
+  "reachConfidentShare": 0.865,
+  "reachLargestShare": 0.865,
+  "reachRegions": 22,
+  "regions": 61,
+  "largestRegionCells": 359,
+  "largestShare": 0.179,
+  "builtUpCells": 0,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 2
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 1609,
+   "uniqueStreetKm": 56.7,
+   "takeoverCredits": 3218
+  },
+  {
+   "percent": 70,
+   "requiredCells": 1408,
+   "uniqueStreetKm": 49.6,
+   "takeoverCredits": 2816
+  },
+  {
+   "percent": 60,
+   "requiredCells": 1207,
+   "uniqueStreetKm": 42.5,
+   "takeoverCredits": 2414
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1006,
+   "uniqueStreetKm": 35.5,
+   "takeoverCredits": 2012
+  },
+  {
+   "percent": 40,
+   "requiredCells": 805,
+   "uniqueStreetKm": 28.4,
+   "takeoverCredits": 1610
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 1609
+ },
+ "maskBytes": 23396,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-pirojpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B52021808696745",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

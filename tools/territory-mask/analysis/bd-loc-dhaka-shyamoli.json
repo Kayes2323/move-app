@@ -1,0 +1,10 @@
+{
+ "areaId": "bd-loc-dhaka-shyamoli",
+ "areaName": "Shyamoli",
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "no boundary available for this place yet",
+  "percent": null,
+  "requiredCells": null
+ }
+}

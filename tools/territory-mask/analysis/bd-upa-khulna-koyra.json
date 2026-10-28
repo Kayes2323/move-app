@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-khulna-koyra",
+ "areaName": "Koyra",
+ "maskVersion": "territory-mask/1:bd-upa-khulna-koyra:9ffcd9481955",
+ "contentHash": "9ffcd948195519ee7580eb3b5da4e63bba73fa5b2564163e64e31be7211eb1b8",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 1006590,
+  "eligibleCells": 7644,
+  "areaKm2": 1262.01,
+  "eligibleShareOfOwned": 0.8,
+  "uniqueStreetKm": 270.7
+ },
+ "roads": {
+  "waysInArea": 734,
+  "includedKm": 298.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 277.5,
+   "minor": 21
+  },
+  "densityKmPerKm2": 0.2
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 523,
+  "outsideLargestCells": 6288,
+  "doubtfulCells": 6290,
+  "confidentShare": 0.177,
+  "reachOutsideLargestCells": 1833,
+  "reachConfidentShare": 0.732,
+  "reachLargestShare": 0.76,
+  "reachRegions": 18,
+  "regions": 92,
+  "largestRegionCells": 1356,
+  "largestShare": 0.177,
+  "builtUpCells": 27,
+  "builtUpWithoutRoad": 3,
+  "gapShare": 0.111,
+  "singleCellHoles": 13
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 6116,
+   "uniqueStreetKm": 216.6,
+   "takeoverCredits": 12232
+  },
+  {
+   "percent": 70,
+   "requiredCells": 5351,
+   "uniqueStreetKm": 189.5,
+   "takeoverCredits": 10702
+  },
+  {
+   "percent": 60,
+   "requiredCells": 4587,
+   "uniqueStreetKm": 162.4,
+   "takeoverCredits": 9174
+  },
+  {
+   "percent": 50,
+   "requiredCells": 3822,
+   "uniqueStreetKm": 135.3,
+   "takeoverCredits": 7644
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3058,
+   "uniqueStreetKm": 108.3,
+   "takeoverCredits": 6116
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "65% threshold (part of its mapped streets are doubtful)",
+  "percent": 65,
+  "requiredCells": 4969
+ },
+ "maskBytes": 83226,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-khulna",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B74268178694093",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

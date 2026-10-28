@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-kurigram-ulipur",
+ "areaName": "Ulipur",
+ "maskVersion": "territory-mask/1:bd-upa-kurigram-ulipur:246509587df8",
+ "contentHash": "246509587df865c4449039e0e279e222e5674ec3921267244ebf8254b86af0f2",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 390315,
+  "eligibleCells": 25645,
+  "areaKm2": 463,
+  "eligibleShareOfOwned": 6.6,
+  "uniqueStreetKm": 883.3
+ },
+ "roads": {
+  "waysInArea": 7134,
+  "includedKm": 1002,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 895.9,
+   "minor": 106.1
+  },
+  "densityKmPerKm2": 2.2
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 2607,
+  "outsideLargestCells": 13049,
+  "doubtfulCells": 13625,
+  "confidentShare": 0.469,
+  "reachOutsideLargestCells": 4143,
+  "reachConfidentShare": 0.797,
+  "reachLargestShare": 0.838,
+  "reachRegions": 81,
+  "regions": 311,
+  "largestRegionCells": 12596,
+  "largestShare": 0.491,
+  "builtUpCells": 441,
+  "builtUpWithoutRoad": 150,
+  "gapShare": 0.34,
+  "singleCellHoles": 93
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 20516,
+   "uniqueStreetKm": 706.6,
+   "takeoverCredits": 41032
+  },
+  {
+   "percent": 70,
+   "requiredCells": 17952,
+   "uniqueStreetKm": 618.3,
+   "takeoverCredits": 35904
+  },
+  {
+   "percent": 60,
+   "requiredCells": 15387,
+   "uniqueStreetKm": 530,
+   "takeoverCredits": 30774
+  },
+  {
+   "percent": 50,
+   "requiredCells": 12823,
+   "uniqueStreetKm": 441.6,
+   "takeoverCredits": 25646
+  },
+  {
+   "percent": 40,
+   "requiredCells": 10258,
+   "uniqueStreetKm": 353.3,
+   "takeoverCredits": 20516
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "34% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 270243,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-kurigram",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B25253769673904",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

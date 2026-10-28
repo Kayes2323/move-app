@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jessore-keshabpur",
+ "areaName": "Keshabpur",
+ "maskVersion": "territory-mask/1:bd-upa-jessore-keshabpur:18a16c46b595",
+ "contentHash": "18a16c46b59564cf2e72b666af6018e287cf371d531e63cc4d235742a08782b9",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 208533,
+  "eligibleCells": 19568,
+  "areaKm2": 258.59,
+  "eligibleShareOfOwned": 9.4,
+  "uniqueStreetKm": 689.1
+ },
+ "roads": {
+  "waysInArea": 1537,
+  "includedKm": 776,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 732.5,
+   "minor": 43.6
+  },
+  "densityKmPerKm2": 3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1063,
+  "outsideLargestCells": 6023,
+  "doubtfulCells": 6680,
+  "confidentShare": 0.659,
+  "reachOutsideLargestCells": 801,
+  "reachConfidentShare": 0.906,
+  "reachLargestShare": 0.959,
+  "reachRegions": 30,
+  "regions": 157,
+  "largestRegionCells": 13545,
+  "largestShare": 0.692,
+  "builtUpCells": 1739,
+  "builtUpWithoutRoad": 1061,
+  "gapShare": 0.61,
+  "singleCellHoles": 48
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 15655,
+   "uniqueStreetKm": 551.3,
+   "takeoverCredits": 31310
+  },
+  {
+   "percent": 70,
+   "requiredCells": 13698,
+   "uniqueStreetKm": 482.4,
+   "takeoverCredits": 27396
+  },
+  {
+   "percent": 60,
+   "requiredCells": 11741,
+   "uniqueStreetKm": 413.4,
+   "takeoverCredits": 23482
+  },
+  {
+   "percent": 50,
+   "requiredCells": 9784,
+   "uniqueStreetKm": 344.5,
+   "takeoverCredits": 19568
+  },
+  {
+   "percent": 40,
+   "requiredCells": 7828,
+   "uniqueStreetKm": 275.7,
+   "takeoverCredits": 15656
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "61% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 213225,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jessore",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B35284050445786",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

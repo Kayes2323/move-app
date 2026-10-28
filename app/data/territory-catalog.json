@@ -1,6 +1,742 @@
 {
  "schema": 1,
  "areas": {
+  "bd-upa-bagerhat-chitalmari": {
+   "name": "Chitalmari",
+   "percent": 70,
+   "eligibleCells": 3188,
+   "requiredCells": 2232,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-chitalmari:2418bc41bd39",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-fakirhat": {
+   "name": "Fakirhat",
+   "percent": 75,
+   "eligibleCells": 10491,
+   "requiredCells": 7869,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-fakirhat:8cf843912d02",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-kachua": {
+   "name": "Kachua",
+   "percent": 45,
+   "eligibleCells": 3453,
+   "requiredCells": 1554,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-kachua:dba30377e24b",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-mollahat": {
+   "name": "Mollahat",
+   "percent": 80,
+   "eligibleCells": 6804,
+   "requiredCells": 5444,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-mollahat:19d156481e53",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-mongla": {
+   "name": "Mongla",
+   "percent": 55,
+   "eligibleCells": 14522,
+   "requiredCells": 7988,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-mongla:12e532b489eb",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-morrelganj": {
+   "name": "Morrelganj",
+   "percent": 55,
+   "eligibleCells": 14046,
+   "requiredCells": 7726,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-morrelganj:7639bd85230e",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-rampal": {
+   "name": "Rampal",
+   "percent": 60,
+   "eligibleCells": 12868,
+   "requiredCells": 7721,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-rampal:83ecad8a7074",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bagerhat-sarankhola": {
+   "name": "Sarankhola",
+   "percent": 75,
+   "eligibleCells": 10079,
+   "requiredCells": 7560,
+   "maskVersion": "territory-mask/1:bd-upa-bagerhat-sarankhola:ff8c2811a1bd",
+   "chunk": "upazilas/bagerhat"
+  },
+  "bd-upa-bandarban-bandarban-sadar": {
+   "name": "Bandarban Sadar",
+   "percent": 50,
+   "eligibleCells": 8919,
+   "requiredCells": 4460,
+   "maskVersion": "territory-mask/1:bd-upa-bandarban-bandarban-sadar:1aefdaabc028",
+   "chunk": "upazilas/bandarban"
+  },
+  "bd-upa-bandarban-thanchi": {
+   "name": "Thanchi",
+   "percent": 45,
+   "eligibleCells": 7015,
+   "requiredCells": 3157,
+   "maskVersion": "territory-mask/1:bd-upa-bandarban-thanchi:8db32c6814c4",
+   "chunk": "upazilas/bandarban"
+  },
+  "bd-upa-barguna-bamna": {
+   "name": "Bamna",
+   "percent": 80,
+   "eligibleCells": 2859,
+   "requiredCells": 2288,
+   "maskVersion": "territory-mask/1:bd-upa-barguna-bamna:aa26093bd5a1",
+   "chunk": "upazilas/barguna"
+  },
+  "bd-upa-barguna-patharghata": {
+   "name": "Patharghata",
+   "percent": 60,
+   "eligibleCells": 12887,
+   "requiredCells": 7733,
+   "maskVersion": "territory-mask/1:bd-upa-barguna-patharghata:8f77f91b3251",
+   "chunk": "upazilas/barguna"
+  },
+  "bd-upa-barisal-agailjhara": {
+   "name": "Agailjhara",
+   "percent": 80,
+   "eligibleCells": 2648,
+   "requiredCells": 2119,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-agailjhara:fd212ee8d5f5",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-barisal-babuganj": {
+   "name": "Babuganj",
+   "percent": 80,
+   "eligibleCells": 6078,
+   "requiredCells": 4863,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-babuganj:4b62981adf58",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-barisal-bakerganj": {
+   "name": "Bakerganj",
+   "percent": 55,
+   "eligibleCells": 8703,
+   "requiredCells": 4787,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-bakerganj:2b78c373986c",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-barisal-gaurnadi": {
+   "name": "Gaurnadi",
+   "percent": 80,
+   "eligibleCells": 7623,
+   "requiredCells": 6099,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-gaurnadi:bee01f6bb941",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-barisal-hizla": {
+   "name": "Hizla",
+   "percent": 80,
+   "eligibleCells": 1020,
+   "requiredCells": 816,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-hizla:0f3ef6c4a289",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-barisal-muladi": {
+   "name": "Muladi",
+   "percent": 60,
+   "eligibleCells": 1188,
+   "requiredCells": 713,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-muladi:e10f339e11b6",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-barisal-wazirpur": {
+   "name": "Wazirpur",
+   "percent": 80,
+   "eligibleCells": 5508,
+   "requiredCells": 4407,
+   "maskVersion": "territory-mask/1:bd-upa-barisal-wazirpur:d58aa82f3425",
+   "chunk": "upazilas/barisal"
+  },
+  "bd-upa-bhola-burhanuddin": {
+   "name": "Burhanuddin",
+   "percent": 70,
+   "eligibleCells": 4416,
+   "requiredCells": 3092,
+   "maskVersion": "territory-mask/1:bd-upa-bhola-burhanuddin:ac2a033ca43b",
+   "chunk": "upazilas/bhola"
+  },
+  "bd-upa-bhola-char-fasson": {
+   "name": "Char Fasson",
+   "percent": 40,
+   "eligibleCells": 18194,
+   "requiredCells": 7278,
+   "maskVersion": "territory-mask/1:bd-upa-bhola-char-fasson:c1d0c490b0a4",
+   "chunk": "upazilas/bhola"
+  },
+  "bd-upa-bhola-lalmohan": {
+   "name": "Lalmohan",
+   "percent": 80,
+   "eligibleCells": 3833,
+   "requiredCells": 3067,
+   "maskVersion": "territory-mask/1:bd-upa-bhola-lalmohan:77f20284780a",
+   "chunk": "upazilas/bhola"
+  },
+  "bd-upa-bhola-manpura": {
+   "name": "Manpura",
+   "percent": 80,
+   "eligibleCells": 6878,
+   "requiredCells": 5503,
+   "maskVersion": "territory-mask/1:bd-upa-bhola-manpura:778b4dede04f",
+   "chunk": "upazilas/bhola"
+  },
+  "bd-upa-bogra-bogra-sadar": {
+   "name": "Bogra Sadar",
+   "percent": 50,
+   "eligibleCells": 15539,
+   "requiredCells": 7770,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-bogra-sadar:a7fdcd0631d6",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-dhunat": {
+   "name": "Dhunat",
+   "percent": 65,
+   "eligibleCells": 5771,
+   "requiredCells": 3752,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-dhunat:194b10f17e8a",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-dhupchanchia": {
+   "name": "Dhupchanchia",
+   "percent": 80,
+   "eligibleCells": 1852,
+   "requiredCells": 1482,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-dhupchanchia:df84df83e6f8",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-kahaloo": {
+   "name": "Kahaloo",
+   "percent": 60,
+   "eligibleCells": 6147,
+   "requiredCells": 3689,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-kahaloo:6d0a83c954f7",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-nandigram": {
+   "name": "Nandigram",
+   "percent": 80,
+   "eligibleCells": 5976,
+   "requiredCells": 4781,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-nandigram:c12b5ddf53e7",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-shajahanpur": {
+   "name": "Shajahanpur",
+   "percent": 70,
+   "eligibleCells": 11104,
+   "requiredCells": 7773,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-shajahanpur:5d8f84599438",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-sherpur": {
+   "name": "Sherpur",
+   "percent": 75,
+   "eligibleCells": 10338,
+   "requiredCells": 7754,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-sherpur:c466c949b77d",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-shibganj": {
+   "name": "Shibganj",
+   "percent": 75,
+   "eligibleCells": 6988,
+   "requiredCells": 5241,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-shibganj:ce1d34b040b6",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-bogra-sonatola": {
+   "name": "Sonatola",
+   "percent": 65,
+   "eligibleCells": 1963,
+   "requiredCells": 1276,
+   "maskVersion": "territory-mask/1:bd-upa-bogra-sonatola:ff0ad98d4955",
+   "chunk": "upazilas/bogra"
+  },
+  "bd-upa-brahamanbaria-akhaura": {
+   "name": "Akhaura",
+   "percent": 80,
+   "eligibleCells": 7574,
+   "requiredCells": 6060,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-akhaura:f2b1b3beae86",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-brahamanbaria-ashuganj": {
+   "name": "Ashuganj",
+   "percent": 75,
+   "eligibleCells": 5891,
+   "requiredCells": 4419,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-ashuganj:c974151dcd47",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-brahamanbaria-banchharampur": {
+   "name": "Banchharampur",
+   "percent": 80,
+   "eligibleCells": 8193,
+   "requiredCells": 6555,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-banchharampur:06c2cd1096ca",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-brahamanbaria-bijoynagar": {
+   "name": "Bijoynagar",
+   "percent": 75,
+   "eligibleCells": 10446,
+   "requiredCells": 7835,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-bijoynagar:5e9bb01f881a",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-brahamanbaria-brahmanbaria-sadar": {
+   "name": "Brahmanbaria Sadar",
+   "percent": 50,
+   "eligibleCells": 15572,
+   "requiredCells": 7786,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-brahmanbaria-sadar:719966b83a73",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-brahamanbaria-nasirnagar": {
+   "name": "Nasirnagar",
+   "percent": 70,
+   "eligibleCells": 5611,
+   "requiredCells": 3928,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-nasirnagar:f25e745a125b",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-brahamanbaria-sarail": {
+   "name": "Sarail",
+   "percent": 80,
+   "eligibleCells": 7189,
+   "requiredCells": 5752,
+   "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-sarail:9c48efe2deb9",
+   "chunk": "upazilas/brahamanbaria"
+  },
+  "bd-upa-chandpur-faridganj": {
+   "name": "Faridganj",
+   "percent": 65,
+   "eligibleCells": 11836,
+   "requiredCells": 7694,
+   "maskVersion": "territory-mask/1:bd-upa-chandpur-faridganj:6eb85f246006",
+   "chunk": "upazilas/chandpur"
+  },
+  "bd-upa-chandpur-hajiganj": {
+   "name": "Hajiganj",
+   "percent": 50,
+   "eligibleCells": 15736,
+   "requiredCells": 7868,
+   "maskVersion": "territory-mask/1:bd-upa-chandpur-hajiganj:e685353a2049",
+   "chunk": "upazilas/chandpur"
+  },
+  "bd-upa-chandpur-matlab-dakshin": {
+   "name": "Matlab Dakshin",
+   "percent": 75,
+   "eligibleCells": 8752,
+   "requiredCells": 6564,
+   "maskVersion": "territory-mask/1:bd-upa-chandpur-matlab-dakshin:2ffd67702051",
+   "chunk": "upazilas/chandpur"
+  },
+  "bd-upa-chandpur-shahrasti": {
+   "name": "Shahrasti",
+   "percent": 80,
+   "eligibleCells": 6943,
+   "requiredCells": 5555,
+   "maskVersion": "territory-mask/1:bd-upa-chandpur-shahrasti:f6b59e476925",
+   "chunk": "upazilas/chandpur"
+  },
+  "bd-upa-chittagong-bakalia": {
+   "name": "Bakalia",
+   "percent": 80,
+   "eligibleCells": 2530,
+   "requiredCells": 2024,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-bakalia:84e925dbf446",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-bayejid-bostami": {
+   "name": "Bayejid Bostami",
+   "percent": 80,
+   "eligibleCells": 7380,
+   "requiredCells": 5904,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-bayejid-bostami:6dfac8eef3b9",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-chandgaon": {
+   "name": "Chandgaon",
+   "percent": 80,
+   "eligibleCells": 4544,
+   "requiredCells": 3636,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-chandgaon:dbf8401022bd",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-chittagong-port": {
+   "name": "Chittagong Port",
+   "percent": 55,
+   "eligibleCells": 3197,
+   "requiredCells": 1759,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-chittagong-port:8eb84a8c50e0",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-double-mooring": {
+   "name": "Double Mooring",
+   "percent": 80,
+   "eligibleCells": 2887,
+   "requiredCells": 2310,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-double-mooring:3738c4ef6fb9",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-halishahar": {
+   "name": "Halishahar",
+   "percent": 80,
+   "eligibleCells": 3671,
+   "requiredCells": 2937,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-halishahar:acdd441cdc72",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-khulshi": {
+   "name": "Khulshi",
+   "percent": 80,
+   "eligibleCells": 3718,
+   "requiredCells": 2975,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-khulshi:914d8f7ee113",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-kotwali": {
+   "name": "Kotwali",
+   "percent": 80,
+   "eligibleCells": 3544,
+   "requiredCells": 2836,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-kotwali:699440810750",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-pahartali": {
+   "name": "Pahartali",
+   "percent": 75,
+   "eligibleCells": 1944,
+   "requiredCells": 1458,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-pahartali:b2ea9a2537f0",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-panchlaish": {
+   "name": "Panchlaish",
+   "percent": 80,
+   "eligibleCells": 2669,
+   "requiredCells": 2136,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-panchlaish:dcbeb4d2628a",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-patenga": {
+   "name": "Patenga",
+   "percent": 60,
+   "eligibleCells": 5125,
+   "requiredCells": 3075,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-patenga:acfb25767cab",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-rangunia": {
+   "name": "Rangunia",
+   "percent": 40,
+   "eligibleCells": 18742,
+   "requiredCells": 7497,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-rangunia:77443e78ee7d",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-raozan": {
+   "name": "Raozan",
+   "percent": 40,
+   "eligibleCells": 19461,
+   "requiredCells": 7785,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-raozan:e450207bab35",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chittagong-sandwip": {
+   "name": "Sandwip",
+   "percent": 75,
+   "eligibleCells": 9244,
+   "requiredCells": 6933,
+   "maskVersion": "territory-mask/1:bd-upa-chittagong-sandwip:7e7372caa5b7",
+   "chunk": "upazilas/chittagong"
+  },
+  "bd-upa-chuadanga-alamdanga": {
+   "name": "Alamdanga",
+   "percent": 80,
+   "eligibleCells": 9879,
+   "requiredCells": 7904,
+   "maskVersion": "territory-mask/1:bd-upa-chuadanga-alamdanga:d2100f374880",
+   "chunk": "upazilas/chuadanga"
+  },
+  "bd-upa-chuadanga-chuadanga-sadar": {
+   "name": "Chuadanga Sadar",
+   "percent": 55,
+   "eligibleCells": 13846,
+   "requiredCells": 7616,
+   "maskVersion": "territory-mask/1:bd-upa-chuadanga-chuadanga-sadar:07bee2f5d005",
+   "chunk": "upazilas/chuadanga"
+  },
+  "bd-upa-chuadanga-damurhuda": {
+   "name": "Damurhuda",
+   "percent": 60,
+   "eligibleCells": 12733,
+   "requiredCells": 7640,
+   "maskVersion": "territory-mask/1:bd-upa-chuadanga-damurhuda:b287ac3bc55a",
+   "chunk": "upazilas/chuadanga"
+  },
+  "bd-upa-chuadanga-jiban-nagar": {
+   "name": "Jiban Nagar",
+   "percent": 80,
+   "eligibleCells": 9880,
+   "requiredCells": 7904,
+   "maskVersion": "territory-mask/1:bd-upa-chuadanga-jiban-nagar:a514b24e5d4a",
+   "chunk": "upazilas/chuadanga"
+  },
+  "bd-upa-comilla-comilla-adarsha-sadar": {
+   "name": "Comilla Adarsha Sadar",
+   "percent": 45,
+   "eligibleCells": 17048,
+   "requiredCells": 7672,
+   "maskVersion": "territory-mask/1:bd-upa-comilla-comilla-adarsha-sadar:03b704d662be",
+   "chunk": "upazilas/comilla"
+  },
+  "bd-upa-comilla-laksam": {
+   "name": "Laksam",
+   "percent": 55,
+   "eligibleCells": 13511,
+   "requiredCells": 7432,
+   "maskVersion": "territory-mask/1:bd-upa-comilla-laksam:264d4c796e31",
+   "chunk": "upazilas/comilla"
+  },
+  "bd-upa-comilla-manoharganj": {
+   "name": "Manoharganj",
+   "percent": 65,
+   "eligibleCells": 11516,
+   "requiredCells": 7486,
+   "maskVersion": "territory-mask/1:bd-upa-comilla-manoharganj:78f969120d25",
+   "chunk": "upazilas/comilla"
+  },
+  "bd-upa-comilla-titas": {
+   "name": "Titas",
+   "percent": 80,
+   "eligibleCells": 8209,
+   "requiredCells": 6568,
+   "maskVersion": "territory-mask/1:bd-upa-comilla-titas:d45c1eaafab9",
+   "chunk": "upazilas/comilla"
+  },
+  "bd-upa-cox-s-bazar-kutubdia": {
+   "name": "Kutubdia",
+   "percent": 80,
+   "eligibleCells": 4554,
+   "requiredCells": 3644,
+   "maskVersion": "territory-mask/1:bd-upa-cox-s-bazar-kutubdia:3ef33e2840fe",
+   "chunk": "upazilas/cox-s-bazar"
+  },
+  "bd-upa-cox-s-bazar-maheshkhali": {
+   "name": "Maheshkhali",
+   "percent": 75,
+   "eligibleCells": 8927,
+   "requiredCells": 6696,
+   "maskVersion": "territory-mask/1:bd-upa-cox-s-bazar-maheshkhali:5f158c8f4273",
+   "chunk": "upazilas/cox-s-bazar"
+  },
+  "bd-upa-cox-s-bazar-pekua": {
+   "name": "Pekua",
+   "percent": 80,
+   "eligibleCells": 8553,
+   "requiredCells": 6843,
+   "maskVersion": "territory-mask/1:bd-upa-cox-s-bazar-pekua:07c396a802c9",
+   "chunk": "upazilas/cox-s-bazar"
+  },
+  "bd-upa-dhaka-adabor": {
+   "name": "Adabor",
+   "percent": 80,
+   "eligibleCells": 1257,
+   "requiredCells": 1006,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-adabor:bccd26ce74f7",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-badda": {
+   "name": "Badda",
+   "percent": 60,
+   "eligibleCells": 13192,
+   "requiredCells": 7916,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-badda:3b04d7d3475b",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-bangshal": {
+   "name": "Bangshal",
+   "percent": 80,
+   "eligibleCells": 782,
+   "requiredCells": 626,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-bangshal:7b51b32e3905",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-biman-bandar": {
+   "name": "Biman Bandar",
+   "percent": 55,
+   "eligibleCells": 1166,
+   "requiredCells": 642,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-biman-bandar:dec7010e34f8",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-cantonment": {
+   "name": "Cantonment",
+   "percent": 70,
+   "eligibleCells": 2993,
+   "requiredCells": 2096,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-cantonment:d0af02b03697",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-chak-bazar": {
+   "name": "Chak Bazar",
+   "percent": 80,
+   "eligibleCells": 658,
+   "requiredCells": 527,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-chak-bazar:3b318b5b8e9c",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-dakshinkhan": {
+   "name": "Dakshinkhan",
+   "percent": 80,
+   "eligibleCells": 2098,
+   "requiredCells": 1679,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-dakshinkhan:11ace48ca2d6",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-darus-salam": {
+   "name": "Darus Salam",
+   "percent": 55,
+   "eligibleCells": 1357,
+   "requiredCells": 747,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-darus-salam:9898e31393ce",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-demra": {
+   "name": "Demra",
+   "percent": 80,
+   "eligibleCells": 4527,
+   "requiredCells": 3622,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-demra:c1afda0d6170",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-dhanmondi": {
+   "name": "Dhanmondi",
+   "percent": 80,
+   "eligibleCells": 1193,
+   "requiredCells": 955,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-dhanmondi:e3e96c9a6b99",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-dohar": {
+   "name": "Dohar",
+   "percent": 80,
+   "eligibleCells": 9359,
+   "requiredCells": 7488,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-dohar:d81acacd2d79",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-gendaria": {
+   "name": "Gendaria",
+   "percent": 80,
+   "eligibleCells": 710,
+   "requiredCells": 568,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-gendaria:97d9c1827b5f",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-gulshan": {
+   "name": "Gulshan",
+   "percent": 80,
+   "eligibleCells": 3803,
+   "requiredCells": 3043,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-gulshan:860bdc46fbd1",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-hazaribagh": {
+   "name": "Hazaribagh",
+   "percent": 80,
+   "eligibleCells": 2498,
+   "requiredCells": 1999,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-hazaribagh:9a8be199d834",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-jatrabari": {
+   "name": "Jatrabari",
+   "percent": 80,
+   "eligibleCells": 4101,
+   "requiredCells": 3281,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-jatrabari:0ec96b93f8d8",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-kadamtali": {
+   "name": "Kadamtali",
+   "percent": 80,
+   "eligibleCells": 3277,
+   "requiredCells": 2622,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-kadamtali:e07ba2a72ca0",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-kafrul": {
+   "name": "Kafrul",
+   "percent": 80,
+   "eligibleCells": 3228,
+   "requiredCells": 2583,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-kafrul:020928ce2f78",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-kalabagan": {
+   "name": "Kalabagan",
+   "percent": 80,
+   "eligibleCells": 583,
+   "requiredCells": 467,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-kalabagan:f4acf1a4dcc8",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-kamrangir-char": {
+   "name": "Kamrangir Char",
+   "percent": 80,
+   "eligibleCells": 789,
+   "requiredCells": 632,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-kamrangir-char:beb2ac66f45b",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-khilgaon": {
+   "name": "Khilgaon",
+   "percent": 80,
+   "eligibleCells": 3574,
+   "requiredCells": 2860,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-khilgaon:78e7c050a5cf",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-khilkhet": {
+   "name": "Khilkhet",
+   "percent": 80,
+   "eligibleCells": 3970,
+   "requiredCells": 3176,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-khilkhet:b588dbf30dde",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-kotwali": {
+   "name": "Kotwali",
+   "percent": 80,
+   "eligibleCells": 343,
+   "requiredCells": 275,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-kotwali:989766864ecc",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-lalbagh": {
+   "name": "Lalbagh",
+   "percent": 80,
+   "eligibleCells": 2027,
+   "requiredCells": 1622,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-lalbagh:bfc7f35fef5a",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-mirpur": {
+   "name": "Mirpur",
+   "percent": 80,
+   "eligibleCells": 3400,
+   "requiredCells": 2720,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-mirpur:873b70d1714e",
+   "chunk": "upazilas/dhaka"
+  },
   "bd-upa-dhaka-mohammadpur": {
    "name": "Mohammadpur",
    "percent": 80,
@@ -8,6 +744,1894 @@
    "requiredCells": 3104,
    "maskVersion": "territory-mask/1:bd-upa-dhaka-mohammadpur:2d8866a921f6",
    "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-motijheel": {
+   "name": "Motijheel",
+   "percent": 80,
+   "eligibleCells": 1699,
+   "requiredCells": 1360,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-motijheel:bb39954bae8d",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-nawabganj": {
+   "name": "Nawabganj",
+   "percent": 55,
+   "eligibleCells": 13427,
+   "requiredCells": 7385,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-nawabganj:698d37cbc619",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-new-market": {
+   "name": "New Market",
+   "percent": 65,
+   "eligibleCells": 619,
+   "requiredCells": 403,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-new-market:a19cf5cd5e23",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-pallabi": {
+   "name": "Pallabi",
+   "percent": 80,
+   "eligibleCells": 4936,
+   "requiredCells": 3949,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-pallabi:2c1db2109fca",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-paltan": {
+   "name": "Paltan",
+   "percent": 75,
+   "eligibleCells": 535,
+   "requiredCells": 402,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-paltan:0c2b0e3056a5",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-ramna": {
+   "name": "Ramna",
+   "percent": 80,
+   "eligibleCells": 1452,
+   "requiredCells": 1162,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-ramna:c125ce16773a",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-rampura": {
+   "name": "Rampura",
+   "percent": 80,
+   "eligibleCells": 1465,
+   "requiredCells": 1172,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-rampura:92529df415cf",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-sabujbagh": {
+   "name": "Sabujbagh",
+   "percent": 80,
+   "eligibleCells": 1886,
+   "requiredCells": 1509,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-sabujbagh:db125634faaa",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-shah-ali": {
+   "name": "Shah Ali",
+   "percent": 75,
+   "eligibleCells": 1342,
+   "requiredCells": 1007,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-shah-ali:a4e301227d6e",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-shahbagh": {
+   "name": "Shahbagh",
+   "percent": 45,
+   "eligibleCells": 1725,
+   "requiredCells": 777,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-shahbagh:4097831c7118",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-sher-e-bangla-nagar": {
+   "name": "Sher-e-bangla Nagar",
+   "percent": 60,
+   "eligibleCells": 1716,
+   "requiredCells": 1030,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-sher-e-bangla-nagar:dc36f073ba8f",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-shyampur": {
+   "name": "Shyampur",
+   "percent": 80,
+   "eligibleCells": 984,
+   "requiredCells": 788,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-shyampur:eef3351d6713",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-sutrapur": {
+   "name": "Sutrapur",
+   "percent": 80,
+   "eligibleCells": 993,
+   "requiredCells": 795,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-sutrapur:a607035e976c",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-tejgaon": {
+   "name": "Tejgaon",
+   "percent": 70,
+   "eligibleCells": 1005,
+   "requiredCells": 704,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-tejgaon:552613ae2fcc",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-tejgaon-ind-area": {
+   "name": "Tejgaon Ind. Area",
+   "percent": 80,
+   "eligibleCells": 1150,
+   "requiredCells": 920,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-tejgaon-ind-area:a56a89e28deb",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-turag": {
+   "name": "Turag",
+   "percent": 75,
+   "eligibleCells": 7450,
+   "requiredCells": 5588,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-turag:c4bfa1978b4b",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-uttar-khan": {
+   "name": "Uttar Khan",
+   "percent": 80,
+   "eligibleCells": 2572,
+   "requiredCells": 2058,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-uttar-khan:eb73caf27484",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dhaka-uttara": {
+   "name": "Uttara",
+   "percent": 80,
+   "eligibleCells": 3439,
+   "requiredCells": 2752,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-uttara:637452904908",
+   "chunk": "upazilas/dhaka"
+  },
+  "bd-upa-dinajpur-bochaganj": {
+   "name": "Bochaganj",
+   "percent": 40,
+   "eligibleCells": 19228,
+   "requiredCells": 7692,
+   "maskVersion": "territory-mask/1:bd-upa-dinajpur-bochaganj:65ee5f5cbd9b",
+   "chunk": "upazilas/dinajpur"
+  },
+  "bd-upa-dinajpur-ghoraghat": {
+   "name": "Ghoraghat",
+   "percent": 55,
+   "eligibleCells": 14519,
+   "requiredCells": 7986,
+   "maskVersion": "territory-mask/1:bd-upa-dinajpur-ghoraghat:1a3b578503bd",
+   "chunk": "upazilas/dinajpur"
+  },
+  "bd-upa-dinajpur-hakimpur": {
+   "name": "Hakimpur",
+   "percent": 55,
+   "eligibleCells": 10374,
+   "requiredCells": 5706,
+   "maskVersion": "territory-mask/1:bd-upa-dinajpur-hakimpur:55fad10ac8e1",
+   "chunk": "upazilas/dinajpur"
+  },
+  "bd-upa-faridpur-alfadanga": {
+   "name": "Alfadanga",
+   "percent": 80,
+   "eligibleCells": 2881,
+   "requiredCells": 2305,
+   "maskVersion": "territory-mask/1:bd-upa-faridpur-alfadanga:c36efc7de5b2",
+   "chunk": "upazilas/faridpur"
+  },
+  "bd-upa-faridpur-boalmari": {
+   "name": "Boalmari",
+   "percent": 80,
+   "eligibleCells": 7985,
+   "requiredCells": 6388,
+   "maskVersion": "territory-mask/1:bd-upa-faridpur-boalmari:bfaa372fd6a6",
+   "chunk": "upazilas/faridpur"
+  },
+  "bd-upa-faridpur-nagarkanda": {
+   "name": "Nagarkanda",
+   "percent": 65,
+   "eligibleCells": 11462,
+   "requiredCells": 7451,
+   "maskVersion": "territory-mask/1:bd-upa-faridpur-nagarkanda:df59ab090e22",
+   "chunk": "upazilas/faridpur"
+  },
+  "bd-upa-faridpur-sadarpur": {
+   "name": "Sadarpur",
+   "percent": 55,
+   "eligibleCells": 11199,
+   "requiredCells": 6160,
+   "maskVersion": "territory-mask/1:bd-upa-faridpur-sadarpur:dd45d2c3c71b",
+   "chunk": "upazilas/faridpur"
+  },
+  "bd-upa-faridpur-saltha": {
+   "name": "Saltha",
+   "percent": 80,
+   "eligibleCells": 9308,
+   "requiredCells": 7447,
+   "maskVersion": "territory-mask/1:bd-upa-faridpur-saltha:be7a62fb862e",
+   "chunk": "upazilas/faridpur"
+  },
+  "bd-upa-feni-chhagalnaiya": {
+   "name": "Chhagalnaiya",
+   "percent": 60,
+   "eligibleCells": 12716,
+   "requiredCells": 7630,
+   "maskVersion": "territory-mask/1:bd-upa-feni-chhagalnaiya:5bee4f1774bc",
+   "chunk": "upazilas/feni"
+  },
+  "bd-upa-feni-daganbhuiyan": {
+   "name": "Daganbhuiyan",
+   "percent": 50,
+   "eligibleCells": 14925,
+   "requiredCells": 7463,
+   "maskVersion": "territory-mask/1:bd-upa-feni-daganbhuiyan:449a4812917c",
+   "chunk": "upazilas/feni"
+  },
+  "bd-upa-gaibandha-gobindaganj": {
+   "name": "Gobindaganj",
+   "percent": 45,
+   "eligibleCells": 16434,
+   "requiredCells": 7396,
+   "maskVersion": "territory-mask/1:bd-upa-gaibandha-gobindaganj:9eded95d57cf",
+   "chunk": "upazilas/gaibandha"
+  },
+  "bd-upa-gaibandha-sadullapur": {
+   "name": "Sadullapur",
+   "percent": 65,
+   "eligibleCells": 11513,
+   "requiredCells": 7484,
+   "maskVersion": "territory-mask/1:bd-upa-gaibandha-sadullapur:c99d51ec58bd",
+   "chunk": "upazilas/gaibandha"
+  },
+  "bd-upa-gaibandha-saghatta": {
+   "name": "Saghatta",
+   "percent": 80,
+   "eligibleCells": 8134,
+   "requiredCells": 6508,
+   "maskVersion": "territory-mask/1:bd-upa-gaibandha-saghatta:a2a6a887ab7d",
+   "chunk": "upazilas/gaibandha"
+  },
+  "bd-upa-gazipur-kaliganj": {
+   "name": "Kaliganj",
+   "percent": 50,
+   "eligibleCells": 15042,
+   "requiredCells": 7521,
+   "maskVersion": "territory-mask/1:bd-upa-gazipur-kaliganj:4ef0bbc1224e",
+   "chunk": "upazilas/gazipur"
+  },
+  "bd-upa-gopalganj-gopalganj-sadar": {
+   "name": "Gopalganj Sadar",
+   "percent": 55,
+   "eligibleCells": 14537,
+   "requiredCells": 7996,
+   "maskVersion": "territory-mask/1:bd-upa-gopalganj-gopalganj-sadar:cc7af506965b",
+   "chunk": "upazilas/gopalganj"
+  },
+  "bd-upa-gopalganj-kashiani": {
+   "name": "Kashiani",
+   "percent": 75,
+   "eligibleCells": 10517,
+   "requiredCells": 7888,
+   "maskVersion": "territory-mask/1:bd-upa-gopalganj-kashiani:8da1524b89e8",
+   "chunk": "upazilas/gopalganj"
+  },
+  "bd-upa-gopalganj-kotali-para": {
+   "name": "Kotali Para",
+   "percent": 80,
+   "eligibleCells": 6841,
+   "requiredCells": 5473,
+   "maskVersion": "territory-mask/1:bd-upa-gopalganj-kotali-para:a9ff5faa75c1",
+   "chunk": "upazilas/gopalganj"
+  },
+  "bd-upa-gopalganj-muksudpur": {
+   "name": "Muksudpur",
+   "percent": 65,
+   "eligibleCells": 12251,
+   "requiredCells": 7964,
+   "maskVersion": "territory-mask/1:bd-upa-gopalganj-muksudpur:c90f175f6aa2",
+   "chunk": "upazilas/gopalganj"
+  },
+  "bd-upa-gopalganj-tungi-para": {
+   "name": "Tungi Para",
+   "percent": 80,
+   "eligibleCells": 4061,
+   "requiredCells": 3249,
+   "maskVersion": "territory-mask/1:bd-upa-gopalganj-tungi-para:6c1a84f2d586",
+   "chunk": "upazilas/gopalganj"
+  },
+  "bd-upa-habiganj-bahubal": {
+   "name": "Bahubal",
+   "percent": 70,
+   "eligibleCells": 6615,
+   "requiredCells": 4631,
+   "maskVersion": "territory-mask/1:bd-upa-habiganj-bahubal:b3393a589b85",
+   "chunk": "upazilas/habiganj"
+  },
+  "bd-upa-habiganj-chunarughat": {
+   "name": "Chunarughat",
+   "percent": 75,
+   "eligibleCells": 10197,
+   "requiredCells": 7648,
+   "maskVersion": "territory-mask/1:bd-upa-habiganj-chunarughat:0a77de167c4c",
+   "chunk": "upazilas/habiganj"
+  },
+  "bd-upa-habiganj-habiganj-sadar": {
+   "name": "Habiganj Sadar",
+   "percent": 70,
+   "eligibleCells": 10230,
+   "requiredCells": 7161,
+   "maskVersion": "territory-mask/1:bd-upa-habiganj-habiganj-sadar:7f7bc4986f2d",
+   "chunk": "upazilas/habiganj"
+  },
+  "bd-upa-habiganj-lakhai": {
+   "name": "Lakhai",
+   "percent": 70,
+   "eligibleCells": 1667,
+   "requiredCells": 1167,
+   "maskVersion": "territory-mask/1:bd-upa-habiganj-lakhai:1c8282e1f8b9",
+   "chunk": "upazilas/habiganj"
+  },
+  "bd-upa-habiganj-madhabpur": {
+   "name": "Madhabpur",
+   "percent": 50,
+   "eligibleCells": 15619,
+   "requiredCells": 7810,
+   "maskVersion": "territory-mask/1:bd-upa-habiganj-madhabpur:af3ac598a0d6",
+   "chunk": "upazilas/habiganj"
+  },
+  "bd-upa-habiganj-nabiganj": {
+   "name": "Nabiganj",
+   "percent": 60,
+   "eligibleCells": 13001,
+   "requiredCells": 7801,
+   "maskVersion": "territory-mask/1:bd-upa-habiganj-nabiganj:86e2ef51c5ec",
+   "chunk": "upazilas/habiganj"
+  },
+  "bd-upa-jamalpur-bakshiganj": {
+   "name": "Bakshiganj",
+   "percent": 80,
+   "eligibleCells": 6659,
+   "requiredCells": 5328,
+   "maskVersion": "territory-mask/1:bd-upa-jamalpur-bakshiganj:ef4b132f6733",
+   "chunk": "upazilas/jamalpur"
+  },
+  "bd-upa-jamalpur-dewanganj": {
+   "name": "Dewanganj",
+   "percent": 75,
+   "eligibleCells": 6817,
+   "requiredCells": 5113,
+   "maskVersion": "territory-mask/1:bd-upa-jamalpur-dewanganj:c7abdd3a7109",
+   "chunk": "upazilas/jamalpur"
+  },
+  "bd-upa-jamalpur-sarishabari": {
+   "name": "Sarishabari",
+   "percent": 80,
+   "eligibleCells": 8264,
+   "requiredCells": 6612,
+   "maskVersion": "territory-mask/1:bd-upa-jamalpur-sarishabari:beaf6b63a397",
+   "chunk": "upazilas/jamalpur"
+  },
+  "bd-upa-jessore-abhaynagar": {
+   "name": "Abhaynagar",
+   "percent": 40,
+   "eligibleCells": 18698,
+   "requiredCells": 7480,
+   "maskVersion": "territory-mask/1:bd-upa-jessore-abhaynagar:c005fb662eb2",
+   "chunk": "upazilas/jessore"
+  },
+  "bd-upa-jhalokati-jhalokati-sadar": {
+   "name": "Jhalokati Sadar",
+   "percent": 70,
+   "eligibleCells": 5044,
+   "requiredCells": 3531,
+   "maskVersion": "territory-mask/1:bd-upa-jhalokati-jhalokati-sadar:6845081f2c69",
+   "chunk": "upazilas/jhalokati"
+  },
+  "bd-upa-jhalokati-kanthalia": {
+   "name": "Kanthalia",
+   "percent": 55,
+   "eligibleCells": 3415,
+   "requiredCells": 1879,
+   "maskVersion": "territory-mask/1:bd-upa-jhalokati-kanthalia:af23ddcdd04a",
+   "chunk": "upazilas/jhalokati"
+  },
+  "bd-upa-jhalokati-nalchity": {
+   "name": "Nalchity",
+   "percent": 70,
+   "eligibleCells": 6987,
+   "requiredCells": 4891,
+   "maskVersion": "territory-mask/1:bd-upa-jhalokati-nalchity:d6dfbc18871b",
+   "chunk": "upazilas/jhalokati"
+  },
+  "bd-upa-jhalokati-rajapur": {
+   "name": "Rajapur",
+   "percent": 65,
+   "eligibleCells": 2219,
+   "requiredCells": 1443,
+   "maskVersion": "territory-mask/1:bd-upa-jhalokati-rajapur:aff3c2384f85",
+   "chunk": "upazilas/jhalokati"
+  },
+  "bd-upa-jhenaidah-jhenaidah-sadar": {
+   "name": "Jhenaidah Sadar",
+   "percent": 45,
+   "eligibleCells": 16343,
+   "requiredCells": 7355,
+   "maskVersion": "territory-mask/1:bd-upa-jhenaidah-jhenaidah-sadar:ac0f15cc899a",
+   "chunk": "upazilas/jhenaidah"
+  },
+  "bd-upa-jhenaidah-kaliganj": {
+   "name": "Kaliganj",
+   "percent": 50,
+   "eligibleCells": 15580,
+   "requiredCells": 7790,
+   "maskVersion": "territory-mask/1:bd-upa-jhenaidah-kaliganj:3626c381644e",
+   "chunk": "upazilas/jhenaidah"
+  },
+  "bd-upa-jhenaidah-kotchandpur": {
+   "name": "Kotchandpur",
+   "percent": 80,
+   "eligibleCells": 7804,
+   "requiredCells": 6244,
+   "maskVersion": "territory-mask/1:bd-upa-jhenaidah-kotchandpur:cf2aeb3678a5",
+   "chunk": "upazilas/jhenaidah"
+  },
+  "bd-upa-jhenaidah-maheshpur": {
+   "name": "Maheshpur",
+   "percent": 40,
+   "eligibleCells": 18033,
+   "requiredCells": 7214,
+   "maskVersion": "territory-mask/1:bd-upa-jhenaidah-maheshpur:1e6db5407c1d",
+   "chunk": "upazilas/jhenaidah"
+  },
+  "bd-upa-joypurhat-akkelpur": {
+   "name": "Akkelpur",
+   "percent": 80,
+   "eligibleCells": 3243,
+   "requiredCells": 2595,
+   "maskVersion": "territory-mask/1:bd-upa-joypurhat-akkelpur:21c9b6b04bc1",
+   "chunk": "upazilas/joypurhat"
+  },
+  "bd-upa-joypurhat-joypurhat-sadar": {
+   "name": "Joypurhat Sadar",
+   "percent": 80,
+   "eligibleCells": 7873,
+   "requiredCells": 6299,
+   "maskVersion": "territory-mask/1:bd-upa-joypurhat-joypurhat-sadar:e69abedcba1f",
+   "chunk": "upazilas/joypurhat"
+  },
+  "bd-upa-joypurhat-kalai": {
+   "name": "Kalai",
+   "percent": 80,
+   "eligibleCells": 2876,
+   "requiredCells": 2301,
+   "maskVersion": "territory-mask/1:bd-upa-joypurhat-kalai:763cfb20f015",
+   "chunk": "upazilas/joypurhat"
+  },
+  "bd-upa-joypurhat-khetlal": {
+   "name": "Khetlal",
+   "percent": 80,
+   "eligibleCells": 3811,
+   "requiredCells": 3049,
+   "maskVersion": "territory-mask/1:bd-upa-joypurhat-khetlal:17968cbf3f1d",
+   "chunk": "upazilas/joypurhat"
+  },
+  "bd-upa-joypurhat-panchbibi": {
+   "name": "Panchbibi",
+   "percent": 80,
+   "eligibleCells": 8694,
+   "requiredCells": 6956,
+   "maskVersion": "territory-mask/1:bd-upa-joypurhat-panchbibi:67c014367560",
+   "chunk": "upazilas/joypurhat"
+  },
+  "bd-upa-khagrachhari-dighinala": {
+   "name": "Dighinala",
+   "percent": 60,
+   "eligibleCells": 2636,
+   "requiredCells": 1582,
+   "maskVersion": "territory-mask/1:bd-upa-khagrachhari-dighinala:343c0b4005a9",
+   "chunk": "upazilas/khagrachhari"
+  },
+  "bd-upa-khagrachhari-khagrachhari-sadar": {
+   "name": "Khagrachhari Sadar",
+   "percent": 80,
+   "eligibleCells": 6630,
+   "requiredCells": 5304,
+   "maskVersion": "territory-mask/1:bd-upa-khagrachhari-khagrachhari-sadar:6c1574e0e3c4",
+   "chunk": "upazilas/khagrachhari"
+  },
+  "bd-upa-khagrachhari-lakshmichhari": {
+   "name": "Lakshmichhari",
+   "percent": 55,
+   "eligibleCells": 1175,
+   "requiredCells": 647,
+   "maskVersion": "territory-mask/1:bd-upa-khagrachhari-lakshmichhari:71ecb7c8e9dd",
+   "chunk": "upazilas/khagrachhari"
+  },
+  "bd-upa-khagrachhari-matiranga": {
+   "name": "Matiranga",
+   "percent": 80,
+   "eligibleCells": 7168,
+   "requiredCells": 5735,
+   "maskVersion": "territory-mask/1:bd-upa-khagrachhari-matiranga:f6e56338c939",
+   "chunk": "upazilas/khagrachhari"
+  },
+  "bd-upa-khagrachhari-panchhari": {
+   "name": "Panchhari",
+   "percent": 80,
+   "eligibleCells": 2208,
+   "requiredCells": 1767,
+   "maskVersion": "territory-mask/1:bd-upa-khagrachhari-panchhari:c0cdc1bd9a63",
+   "chunk": "upazilas/khagrachhari"
+  },
+  "bd-upa-khulna-batiaghata": {
+   "name": "Batiaghata",
+   "percent": 50,
+   "eligibleCells": 15824,
+   "requiredCells": 7912,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-batiaghata:ef05e6a4dafb",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-daulatpur": {
+   "name": "Daulatpur",
+   "percent": 80,
+   "eligibleCells": 3130,
+   "requiredCells": 2504,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-daulatpur:231b97bb9132",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-dighalia": {
+   "name": "Dighalia",
+   "percent": 70,
+   "eligibleCells": 4472,
+   "requiredCells": 3131,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-dighalia:e39f9836b198",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-khalishpur": {
+   "name": "Khalishpur",
+   "percent": 80,
+   "eligibleCells": 3319,
+   "requiredCells": 2656,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-khalishpur:ec81085f254d",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-khan-jahan-ali": {
+   "name": "Khan Jahan Ali",
+   "percent": 70,
+   "eligibleCells": 3532,
+   "requiredCells": 2473,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-khan-jahan-ali:71505d87a026",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-khulna-sadar": {
+   "name": "Khulna Sadar",
+   "percent": 80,
+   "eligibleCells": 4037,
+   "requiredCells": 3230,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-khulna-sadar:323a61603eaa",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-koyra": {
+   "name": "Koyra",
+   "percent": 65,
+   "eligibleCells": 7644,
+   "requiredCells": 4969,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-koyra:9ffcd9481955",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-phultala": {
+   "name": "Phultala",
+   "percent": 80,
+   "eligibleCells": 4029,
+   "requiredCells": 3224,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-phultala:f44c0991c347",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-rupsa": {
+   "name": "Rupsa",
+   "percent": 80,
+   "eligibleCells": 7416,
+   "requiredCells": 5933,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-rupsa:e07360c5f533",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-sonadanga": {
+   "name": "Sonadanga",
+   "percent": 80,
+   "eligibleCells": 3120,
+   "requiredCells": 2496,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-sonadanga:db23e724c5ae",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-khulna-terokhada": {
+   "name": "Terokhada",
+   "percent": 80,
+   "eligibleCells": 4962,
+   "requiredCells": 3970,
+   "maskVersion": "territory-mask/1:bd-upa-khulna-terokhada:520b88290e5b",
+   "chunk": "upazilas/khulna"
+  },
+  "bd-upa-kishoreganj-austagram": {
+   "name": "Austagram",
+   "percent": 75,
+   "eligibleCells": 4973,
+   "requiredCells": 3730,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-austagram:478750751c4c",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-bajitpur": {
+   "name": "Bajitpur",
+   "percent": 80,
+   "eligibleCells": 4730,
+   "requiredCells": 3784,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-bajitpur:afca9074cc58",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-bhairab": {
+   "name": "Bhairab",
+   "percent": 80,
+   "eligibleCells": 6207,
+   "requiredCells": 4966,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-bhairab:8dd4a7368c4f",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-hossainpur": {
+   "name": "Hossainpur",
+   "percent": 80,
+   "eligibleCells": 4065,
+   "requiredCells": 3252,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-hossainpur:d77b3e3a2cea",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-katiadi": {
+   "name": "Katiadi",
+   "percent": 80,
+   "eligibleCells": 9899,
+   "requiredCells": 7920,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-katiadi:0c8367aa3d2e",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-kishoreganj-sadar": {
+   "name": "Kishoreganj Sadar",
+   "percent": 65,
+   "eligibleCells": 11655,
+   "requiredCells": 7576,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-kishoreganj-sadar:7c700288fe2d",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-kuliar-char": {
+   "name": "Kuliar Char",
+   "percent": 80,
+   "eligibleCells": 4894,
+   "requiredCells": 3916,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-kuliar-char:fb3690775e12",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-mithamain": {
+   "name": "Mithamain",
+   "percent": 55,
+   "eligibleCells": 2084,
+   "requiredCells": 1147,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-mithamain:e582a75ffee4",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-nikli": {
+   "name": "Nikli",
+   "percent": 55,
+   "eligibleCells": 5140,
+   "requiredCells": 2827,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-nikli:676ae44d6120",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kishoreganj-pakundia": {
+   "name": "Pakundia",
+   "percent": 70,
+   "eligibleCells": 10969,
+   "requiredCells": 7679,
+   "maskVersion": "territory-mask/1:bd-upa-kishoreganj-pakundia:a8b20faadd18",
+   "chunk": "upazilas/kishoreganj"
+  },
+  "bd-upa-kurigram-char-rajibpur": {
+   "name": "Char Rajibpur",
+   "percent": 40,
+   "eligibleCells": 6305,
+   "requiredCells": 2522,
+   "maskVersion": "territory-mask/1:bd-upa-kurigram-char-rajibpur:28894a9ed991",
+   "chunk": "upazilas/kurigram"
+  },
+  "bd-upa-kurigram-rajarhat": {
+   "name": "Rajarhat",
+   "percent": 45,
+   "eligibleCells": 16415,
+   "requiredCells": 7387,
+   "maskVersion": "territory-mask/1:bd-upa-kurigram-rajarhat:ff36ca93d24e",
+   "chunk": "upazilas/kurigram"
+  },
+  "bd-upa-kushtia-bheramara": {
+   "name": "Bheramara",
+   "percent": 75,
+   "eligibleCells": 10499,
+   "requiredCells": 7875,
+   "maskVersion": "territory-mask/1:bd-upa-kushtia-bheramara:7eff2e061493",
+   "chunk": "upazilas/kushtia"
+  },
+  "bd-upa-kushtia-khoksa": {
+   "name": "Khoksa",
+   "percent": 60,
+   "eligibleCells": 3941,
+   "requiredCells": 2365,
+   "maskVersion": "territory-mask/1:bd-upa-kushtia-khoksa:0156babf12a9",
+   "chunk": "upazilas/kushtia"
+  },
+  "bd-upa-kushtia-mirpur": {
+   "name": "Mirpur",
+   "percent": 40,
+   "eligibleCells": 18507,
+   "requiredCells": 7403,
+   "maskVersion": "territory-mask/1:bd-upa-kushtia-mirpur:6d68f9dccee9",
+   "chunk": "upazilas/kushtia"
+  },
+  "bd-upa-lakshmipur-kamalnagar": {
+   "name": "Kamalnagar",
+   "percent": 80,
+   "eligibleCells": 2113,
+   "requiredCells": 1691,
+   "maskVersion": "territory-mask/1:bd-upa-lakshmipur-kamalnagar:86b6c91d8f61",
+   "chunk": "upazilas/lakshmipur"
+  },
+  "bd-upa-lakshmipur-lakshmipur-sadar": {
+   "name": "Lakshmipur Sadar",
+   "percent": 40,
+   "eligibleCells": 19837,
+   "requiredCells": 7935,
+   "maskVersion": "territory-mask/1:bd-upa-lakshmipur-lakshmipur-sadar:8e6193bb1389",
+   "chunk": "upazilas/lakshmipur"
+  },
+  "bd-upa-lakshmipur-ramganj": {
+   "name": "Ramganj",
+   "percent": 80,
+   "eligibleCells": 9996,
+   "requiredCells": 7997,
+   "maskVersion": "territory-mask/1:bd-upa-lakshmipur-ramganj:591d333498e7",
+   "chunk": "upazilas/lakshmipur"
+  },
+  "bd-upa-lakshmipur-ramgati": {
+   "name": "Ramgati",
+   "percent": 70,
+   "eligibleCells": 2666,
+   "requiredCells": 1867,
+   "maskVersion": "territory-mask/1:bd-upa-lakshmipur-ramgati:0e34560c68ab",
+   "chunk": "upazilas/lakshmipur"
+  },
+  "bd-upa-lakshmipur-roypur": {
+   "name": "Roypur",
+   "percent": 80,
+   "eligibleCells": 6642,
+   "requiredCells": 5314,
+   "maskVersion": "territory-mask/1:bd-upa-lakshmipur-roypur:b1da006327eb",
+   "chunk": "upazilas/lakshmipur"
+  },
+  "bd-upa-lalmonirhat-aditmari": {
+   "name": "Aditmari",
+   "percent": 45,
+   "eligibleCells": 17042,
+   "requiredCells": 7669,
+   "maskVersion": "territory-mask/1:bd-upa-lalmonirhat-aditmari:afe0b696e97f",
+   "chunk": "upazilas/lalmonirhat"
+  },
+  "bd-upa-lalmonirhat-hatibandha": {
+   "name": "Hatibandha",
+   "percent": 60,
+   "eligibleCells": 12731,
+   "requiredCells": 7639,
+   "maskVersion": "territory-mask/1:bd-upa-lalmonirhat-hatibandha:744d59256599",
+   "chunk": "upazilas/lalmonirhat"
+  },
+  "bd-upa-lalmonirhat-kaliganj": {
+   "name": "Kaliganj",
+   "percent": 40,
+   "eligibleCells": 19127,
+   "requiredCells": 7651,
+   "maskVersion": "territory-mask/1:bd-upa-lalmonirhat-kaliganj:9081127251eb",
+   "chunk": "upazilas/lalmonirhat"
+  },
+  "bd-upa-madaripur-kalkini": {
+   "name": "Kalkini",
+   "percent": 60,
+   "eligibleCells": 7256,
+   "requiredCells": 4354,
+   "maskVersion": "territory-mask/1:bd-upa-madaripur-kalkini:9ec900e86cb2",
+   "chunk": "upazilas/madaripur"
+  },
+  "bd-upa-madaripur-madaripur-sadar": {
+   "name": "Madaripur Sadar",
+   "percent": 70,
+   "eligibleCells": 11041,
+   "requiredCells": 7729,
+   "maskVersion": "territory-mask/1:bd-upa-madaripur-madaripur-sadar:920c934c746f",
+   "chunk": "upazilas/madaripur"
+  },
+  "bd-upa-madaripur-rajoir": {
+   "name": "Rajoir",
+   "percent": 80,
+   "eligibleCells": 6969,
+   "requiredCells": 5576,
+   "maskVersion": "territory-mask/1:bd-upa-madaripur-rajoir:ea9ed21827ab",
+   "chunk": "upazilas/madaripur"
+  },
+  "bd-upa-madaripur-shib-char": {
+   "name": "Shib Char",
+   "percent": 50,
+   "eligibleCells": 15424,
+   "requiredCells": 7712,
+   "maskVersion": "territory-mask/1:bd-upa-madaripur-shib-char:d39259e51ac6",
+   "chunk": "upazilas/madaripur"
+  },
+  "bd-upa-magura-shalikha": {
+   "name": "Shalikha",
+   "percent": 80,
+   "eligibleCells": 9469,
+   "requiredCells": 7576,
+   "maskVersion": "territory-mask/1:bd-upa-magura-shalikha:2e5028ea7541",
+   "chunk": "upazilas/magura"
+  },
+  "bd-upa-manikganj-ghior": {
+   "name": "Ghior",
+   "percent": 55,
+   "eligibleCells": 4123,
+   "requiredCells": 2268,
+   "maskVersion": "territory-mask/1:bd-upa-manikganj-ghior:2863340372a2",
+   "chunk": "upazilas/manikganj"
+  },
+  "bd-upa-manikganj-manikganj-sadar": {
+   "name": "Manikganj Sadar",
+   "percent": 65,
+   "eligibleCells": 11862,
+   "requiredCells": 7711,
+   "maskVersion": "territory-mask/1:bd-upa-manikganj-manikganj-sadar:7157214da628",
+   "chunk": "upazilas/manikganj"
+  },
+  "bd-upa-manikganj-saturia": {
+   "name": "Saturia",
+   "percent": 75,
+   "eligibleCells": 4948,
+   "requiredCells": 3711,
+   "maskVersion": "territory-mask/1:bd-upa-manikganj-saturia:d22a7482d896",
+   "chunk": "upazilas/manikganj"
+  },
+  "bd-upa-manikganj-singair": {
+   "name": "Singair",
+   "percent": 45,
+   "eligibleCells": 16005,
+   "requiredCells": 7203,
+   "maskVersion": "territory-mask/1:bd-upa-manikganj-singair:07d8922f0db0",
+   "chunk": "upazilas/manikganj"
+  },
+  "bd-upa-maulvibazar-juri": {
+   "name": "Juri",
+   "percent": 65,
+   "eligibleCells": 2989,
+   "requiredCells": 1943,
+   "maskVersion": "territory-mask/1:bd-upa-maulvibazar-juri:cdb970081f70",
+   "chunk": "upazilas/maulvibazar"
+  },
+  "bd-upa-maulvibazar-kamalganj": {
+   "name": "Kamalganj",
+   "percent": 80,
+   "eligibleCells": 7086,
+   "requiredCells": 5669,
+   "maskVersion": "territory-mask/1:bd-upa-maulvibazar-kamalganj:1955c03f6f85",
+   "chunk": "upazilas/maulvibazar"
+  },
+  "bd-upa-maulvibazar-kulaura": {
+   "name": "Kulaura",
+   "percent": 80,
+   "eligibleCells": 8630,
+   "requiredCells": 6904,
+   "maskVersion": "territory-mask/1:bd-upa-maulvibazar-kulaura:caa3a85a761f",
+   "chunk": "upazilas/maulvibazar"
+  },
+  "bd-upa-maulvibazar-maulvi-bazar-sadar": {
+   "name": "Maulvi Bazar Sadar",
+   "percent": 50,
+   "eligibleCells": 14622,
+   "requiredCells": 7311,
+   "maskVersion": "territory-mask/1:bd-upa-maulvibazar-maulvi-bazar-sadar:0e60682aee66",
+   "chunk": "upazilas/maulvibazar"
+  },
+  "bd-upa-maulvibazar-rajnagar": {
+   "name": "Rajnagar",
+   "percent": 65,
+   "eligibleCells": 9966,
+   "requiredCells": 6478,
+   "maskVersion": "territory-mask/1:bd-upa-maulvibazar-rajnagar:9d3825f8a37a",
+   "chunk": "upazilas/maulvibazar"
+  },
+  "bd-upa-maulvibazar-sreemangal": {
+   "name": "Sreemangal",
+   "percent": 55,
+   "eligibleCells": 13799,
+   "requiredCells": 7590,
+   "maskVersion": "territory-mask/1:bd-upa-maulvibazar-sreemangal:eb279271bc88",
+   "chunk": "upazilas/maulvibazar"
+  },
+  "bd-upa-meherpur-gangni": {
+   "name": "Gangni",
+   "percent": 55,
+   "eligibleCells": 14038,
+   "requiredCells": 7721,
+   "maskVersion": "territory-mask/1:bd-upa-meherpur-gangni:8ad48f72e72f",
+   "chunk": "upazilas/meherpur"
+  },
+  "bd-upa-meherpur-meherpur-sadar": {
+   "name": "Meherpur Sadar",
+   "percent": 55,
+   "eligibleCells": 14434,
+   "requiredCells": 7939,
+   "maskVersion": "territory-mask/1:bd-upa-meherpur-meherpur-sadar:1c3508c7074e",
+   "chunk": "upazilas/meherpur"
+  },
+  "bd-upa-meherpur-mujib-nagar": {
+   "name": "Mujib Nagar",
+   "percent": 75,
+   "eligibleCells": 5122,
+   "requiredCells": 3842,
+   "maskVersion": "territory-mask/1:bd-upa-meherpur-mujib-nagar:9019a6f27570",
+   "chunk": "upazilas/meherpur"
+  },
+  "bd-upa-munshiganj-munshiganj-sadar": {
+   "name": "Munshiganj Sadar",
+   "percent": 80,
+   "eligibleCells": 7844,
+   "requiredCells": 6276,
+   "maskVersion": "territory-mask/1:bd-upa-munshiganj-munshiganj-sadar:5c1c9c3b1e1a",
+   "chunk": "upazilas/munshiganj"
+  },
+  "bd-upa-munshiganj-tongibari": {
+   "name": "Tongibari",
+   "percent": 80,
+   "eligibleCells": 7363,
+   "requiredCells": 5891,
+   "maskVersion": "territory-mask/1:bd-upa-munshiganj-tongibari:02b8def30108",
+   "chunk": "upazilas/munshiganj"
+  },
+  "bd-upa-mymensingh-bhaluka": {
+   "name": "Bhaluka",
+   "percent": 40,
+   "eligibleCells": 19307,
+   "requiredCells": 7723,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-bhaluka:a94c75651623",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-dhobaura": {
+   "name": "Dhobaura",
+   "percent": 80,
+   "eligibleCells": 9859,
+   "requiredCells": 7888,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-dhobaura:efbf725d1fdb",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-fulbaria": {
+   "name": "Fulbaria",
+   "percent": 60,
+   "eligibleCells": 12567,
+   "requiredCells": 7541,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-fulbaria:a657ea93acf4",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-gaffargaon": {
+   "name": "Gaffargaon",
+   "percent": 70,
+   "eligibleCells": 11046,
+   "requiredCells": 7733,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-gaffargaon:8d0e1ec2c39f",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-gauripur": {
+   "name": "Gauripur",
+   "percent": 60,
+   "eligibleCells": 11060,
+   "requiredCells": 6636,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-gauripur:345f83d29399",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-haluaghat": {
+   "name": "Haluaghat",
+   "percent": 80,
+   "eligibleCells": 9190,
+   "requiredCells": 7352,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-haluaghat:94192d9c8c3c",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-muktagachha": {
+   "name": "Muktagachha",
+   "percent": 70,
+   "eligibleCells": 10775,
+   "requiredCells": 7543,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-muktagachha:62b09b41e6d1",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-mymensingh-phulpur": {
+   "name": "Phulpur",
+   "percent": 40,
+   "eligibleCells": 18914,
+   "requiredCells": 7566,
+   "maskVersion": "territory-mask/1:bd-upa-mymensingh-phulpur:86ba5cb8f85a",
+   "chunk": "upazilas/mymensingh"
+  },
+  "bd-upa-naogaon-atrai": {
+   "name": "Atrai",
+   "percent": 80,
+   "eligibleCells": 3740,
+   "requiredCells": 2992,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-atrai:475024a16883",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-badalgachhi": {
+   "name": "Badalgachhi",
+   "percent": 55,
+   "eligibleCells": 7402,
+   "requiredCells": 4072,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-badalgachhi:d065f9106a6a",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-dhamoirhat": {
+   "name": "Dhamoirhat",
+   "percent": 80,
+   "eligibleCells": 6504,
+   "requiredCells": 5204,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-dhamoirhat:3286a4255cb7",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-mahadebpur": {
+   "name": "Mahadebpur",
+   "percent": 80,
+   "eligibleCells": 7798,
+   "requiredCells": 6239,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-mahadebpur:eab4d7dc6ca2",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-manda": {
+   "name": "Manda",
+   "percent": 80,
+   "eligibleCells": 4099,
+   "requiredCells": 3280,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-manda:34fee5eef81d",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-naogaon-sadar": {
+   "name": "Naogaon Sadar",
+   "percent": 75,
+   "eligibleCells": 6207,
+   "requiredCells": 4656,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-naogaon-sadar:ffc0545ccc3c",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-niamatpur": {
+   "name": "Niamatpur",
+   "percent": 65,
+   "eligibleCells": 2675,
+   "requiredCells": 1739,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-niamatpur:073b3a3ba0a6",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-porsha": {
+   "name": "Porsha",
+   "percent": 75,
+   "eligibleCells": 2998,
+   "requiredCells": 2249,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-porsha:4c55bb4881bc",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-raninagar": {
+   "name": "Raninagar",
+   "percent": 80,
+   "eligibleCells": 4107,
+   "requiredCells": 3286,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-raninagar:05577524592c",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-naogaon-sapahar": {
+   "name": "Sapahar",
+   "percent": 80,
+   "eligibleCells": 6183,
+   "requiredCells": 4947,
+   "maskVersion": "territory-mask/1:bd-upa-naogaon-sapahar:e55fc6125039",
+   "chunk": "upazilas/naogaon"
+  },
+  "bd-upa-narail-lohagara": {
+   "name": "Lohagara",
+   "percent": 45,
+   "eligibleCells": 16139,
+   "requiredCells": 7263,
+   "maskVersion": "territory-mask/1:bd-upa-narail-lohagara:4f6a5ae16a0e",
+   "chunk": "upazilas/narail"
+  },
+  "bd-upa-narayanganj-araihazar": {
+   "name": "Araihazar",
+   "percent": 60,
+   "eligibleCells": 12519,
+   "requiredCells": 7512,
+   "maskVersion": "territory-mask/1:bd-upa-narayanganj-araihazar:58e82f6b47fd",
+   "chunk": "upazilas/narayanganj"
+  },
+  "bd-upa-narayanganj-bandar": {
+   "name": "Bandar",
+   "percent": 80,
+   "eligibleCells": 7754,
+   "requiredCells": 6204,
+   "maskVersion": "territory-mask/1:bd-upa-narayanganj-bandar:85129bcfae1f",
+   "chunk": "upazilas/narayanganj"
+  },
+  "bd-upa-narayanganj-narayanganj-sadar": {
+   "name": "Narayanganj Sadar",
+   "percent": 40,
+   "eligibleCells": 18822,
+   "requiredCells": 7529,
+   "maskVersion": "territory-mask/1:bd-upa-narayanganj-narayanganj-sadar:f5d616b8a7f3",
+   "chunk": "upazilas/narayanganj"
+  },
+  "bd-upa-narayanganj-sonargaon": {
+   "name": "Sonargaon",
+   "percent": 50,
+   "eligibleCells": 15734,
+   "requiredCells": 7867,
+   "maskVersion": "territory-mask/1:bd-upa-narayanganj-sonargaon:992d1f427318",
+   "chunk": "upazilas/narayanganj"
+  },
+  "bd-upa-narsingdi-belabo": {
+   "name": "Belabo",
+   "percent": 80,
+   "eligibleCells": 9047,
+   "requiredCells": 7238,
+   "maskVersion": "territory-mask/1:bd-upa-narsingdi-belabo:b8c3cbdd76ac",
+   "chunk": "upazilas/narsingdi"
+  },
+  "bd-upa-narsingdi-manohardi": {
+   "name": "Manohardi",
+   "percent": 50,
+   "eligibleCells": 15374,
+   "requiredCells": 7687,
+   "maskVersion": "territory-mask/1:bd-upa-narsingdi-manohardi:5b63f27166db",
+   "chunk": "upazilas/narsingdi"
+  },
+  "bd-upa-narsingdi-narsingdi-sadar": {
+   "name": "Narsingdi Sadar",
+   "percent": 45,
+   "eligibleCells": 16342,
+   "requiredCells": 7354,
+   "maskVersion": "territory-mask/1:bd-upa-narsingdi-narsingdi-sadar:a45da6a90f74",
+   "chunk": "upazilas/narsingdi"
+  },
+  "bd-upa-narsingdi-palash": {
+   "name": "Palash",
+   "percent": 80,
+   "eligibleCells": 8058,
+   "requiredCells": 6447,
+   "maskVersion": "territory-mask/1:bd-upa-narsingdi-palash:87726c94ac82",
+   "chunk": "upazilas/narsingdi"
+  },
+  "bd-upa-narsingdi-roypura": {
+   "name": "Roypura",
+   "percent": 60,
+   "eligibleCells": 13236,
+   "requiredCells": 7942,
+   "maskVersion": "territory-mask/1:bd-upa-narsingdi-roypura:d636e485f0fc",
+   "chunk": "upazilas/narsingdi"
+  },
+  "bd-upa-narsingdi-shibpur": {
+   "name": "Shibpur",
+   "percent": 50,
+   "eligibleCells": 14879,
+   "requiredCells": 7440,
+   "maskVersion": "territory-mask/1:bd-upa-narsingdi-shibpur:4109877b47d5",
+   "chunk": "upazilas/narsingdi"
+  },
+  "bd-upa-natore-baraigram": {
+   "name": "Baraigram",
+   "percent": 70,
+   "eligibleCells": 11224,
+   "requiredCells": 7857,
+   "maskVersion": "territory-mask/1:bd-upa-natore-baraigram:9a4e68e2b7bc",
+   "chunk": "upazilas/natore"
+  },
+  "bd-upa-natore-gurudaspur": {
+   "name": "Gurudaspur",
+   "percent": 80,
+   "eligibleCells": 5699,
+   "requiredCells": 4560,
+   "maskVersion": "territory-mask/1:bd-upa-natore-gurudaspur:15f7f39c6379",
+   "chunk": "upazilas/natore"
+  },
+  "bd-upa-natore-natore-sadar": {
+   "name": "Natore Sadar",
+   "percent": 70,
+   "eligibleCells": 9764,
+   "requiredCells": 6835,
+   "maskVersion": "territory-mask/1:bd-upa-natore-natore-sadar:65343d51db0d",
+   "chunk": "upazilas/natore"
+  },
+  "bd-upa-nawabganj-bholahat": {
+   "name": "Bholahat",
+   "percent": 80,
+   "eligibleCells": 5362,
+   "requiredCells": 4290,
+   "maskVersion": "territory-mask/1:bd-upa-nawabganj-bholahat:c40b50a10cf7",
+   "chunk": "upazilas/nawabganj"
+  },
+  "bd-upa-nawabganj-gomastapur": {
+   "name": "Gomastapur",
+   "percent": 80,
+   "eligibleCells": 7428,
+   "requiredCells": 5943,
+   "maskVersion": "territory-mask/1:bd-upa-nawabganj-gomastapur:97855157dc26",
+   "chunk": "upazilas/nawabganj"
+  },
+  "bd-upa-nawabganj-nawabganj-sadar": {
+   "name": "Nawabganj Sadar",
+   "percent": 80,
+   "eligibleCells": 8775,
+   "requiredCells": 7020,
+   "maskVersion": "territory-mask/1:bd-upa-nawabganj-nawabganj-sadar:7d6a25955a12",
+   "chunk": "upazilas/nawabganj"
+  },
+  "bd-upa-nawabganj-shibganj": {
+   "name": "Shibganj",
+   "percent": 70,
+   "eligibleCells": 11385,
+   "requiredCells": 7970,
+   "maskVersion": "territory-mask/1:bd-upa-nawabganj-shibganj:7ba520049cf9",
+   "chunk": "upazilas/nawabganj"
+  },
+  "bd-upa-netrakona-barhatta": {
+   "name": "Barhatta",
+   "percent": 70,
+   "eligibleCells": 10709,
+   "requiredCells": 7497,
+   "maskVersion": "territory-mask/1:bd-upa-netrakona-barhatta:836b7d882bd3",
+   "chunk": "upazilas/netrakona"
+  },
+  "bd-upa-netrakona-durgapur": {
+   "name": "Durgapur",
+   "percent": 40,
+   "eligibleCells": 17965,
+   "requiredCells": 7186,
+   "maskVersion": "territory-mask/1:bd-upa-netrakona-durgapur:549bf4ebca4a",
+   "chunk": "upazilas/netrakona"
+  },
+  "bd-upa-netrakona-kalmakanda": {
+   "name": "Kalmakanda",
+   "percent": 55,
+   "eligibleCells": 13555,
+   "requiredCells": 7456,
+   "maskVersion": "territory-mask/1:bd-upa-netrakona-kalmakanda:c3d377c81cb7",
+   "chunk": "upazilas/netrakona"
+  },
+  "bd-upa-nilphamari-jaldhaka": {
+   "name": "Jaldhaka",
+   "percent": 40,
+   "eligibleCells": 18721,
+   "requiredCells": 7489,
+   "maskVersion": "territory-mask/1:bd-upa-nilphamari-jaldhaka:997c388c32a8",
+   "chunk": "upazilas/nilphamari"
+  },
+  "bd-upa-nilphamari-kishoreganj": {
+   "name": "Kishoreganj",
+   "percent": 60,
+   "eligibleCells": 13030,
+   "requiredCells": 7818,
+   "maskVersion": "territory-mask/1:bd-upa-nilphamari-kishoreganj:c8e6197cfa8a",
+   "chunk": "upazilas/nilphamari"
+  },
+  "bd-upa-nilphamari-saidpur": {
+   "name": "Saidpur",
+   "percent": 65,
+   "eligibleCells": 11725,
+   "requiredCells": 7622,
+   "maskVersion": "territory-mask/1:bd-upa-nilphamari-saidpur:bf3d44ffc043",
+   "chunk": "upazilas/nilphamari"
+  },
+  "bd-upa-noakhali-kabirhat": {
+   "name": "Kabirhat",
+   "percent": 80,
+   "eligibleCells": 9037,
+   "requiredCells": 7230,
+   "maskVersion": "territory-mask/1:bd-upa-noakhali-kabirhat:a88c40f98e33",
+   "chunk": "upazilas/noakhali"
+  },
+  "bd-upa-noakhali-subarnachar": {
+   "name": "Subarnachar",
+   "percent": 40,
+   "eligibleCells": 17945,
+   "requiredCells": 7178,
+   "maskVersion": "territory-mask/1:bd-upa-noakhali-subarnachar:2010c34ee7b4",
+   "chunk": "upazilas/noakhali"
+  },
+  "bd-upa-pabna-atgharia": {
+   "name": "Atgharia",
+   "percent": 60,
+   "eligibleCells": 4810,
+   "requiredCells": 2886,
+   "maskVersion": "territory-mask/1:bd-upa-pabna-atgharia:e2e9eae14cba",
+   "chunk": "upazilas/pabna"
+  },
+  "bd-upa-pabna-bhangura": {
+   "name": "Bhangura",
+   "percent": 80,
+   "eligibleCells": 4798,
+   "requiredCells": 3839,
+   "maskVersion": "territory-mask/1:bd-upa-pabna-bhangura:f2df1ebc0c91",
+   "chunk": "upazilas/pabna"
+  },
+  "bd-upa-pabna-chatmohar": {
+   "name": "Chatmohar",
+   "percent": 80,
+   "eligibleCells": 6799,
+   "requiredCells": 5440,
+   "maskVersion": "territory-mask/1:bd-upa-pabna-chatmohar:b1312a6625f1",
+   "chunk": "upazilas/pabna"
+  },
+  "bd-upa-pabna-santhia": {
+   "name": "Santhia",
+   "percent": 60,
+   "eligibleCells": 7567,
+   "requiredCells": 4541,
+   "maskVersion": "territory-mask/1:bd-upa-pabna-santhia:d9575f8c11b4",
+   "chunk": "upazilas/pabna"
+  },
+  "bd-upa-pabna-sujanagar": {
+   "name": "Sujanagar",
+   "percent": 70,
+   "eligibleCells": 6193,
+   "requiredCells": 4336,
+   "maskVersion": "territory-mask/1:bd-upa-pabna-sujanagar:9d793f55fab2",
+   "chunk": "upazilas/pabna"
+  },
+  "bd-upa-panchagarh-tentulia": {
+   "name": "Tentulia",
+   "percent": 40,
+   "eligibleCells": 19355,
+   "requiredCells": 7742,
+   "maskVersion": "territory-mask/1:bd-upa-panchagarh-tentulia:07f194099272",
+   "chunk": "upazilas/panchagarh"
+  },
+  "bd-upa-patuakhali-bauphal": {
+   "name": "Bauphal",
+   "percent": 75,
+   "eligibleCells": 8106,
+   "requiredCells": 6080,
+   "maskVersion": "territory-mask/1:bd-upa-patuakhali-bauphal:f97b41d402a5",
+   "chunk": "upazilas/patuakhali"
+  },
+  "bd-upa-patuakhali-dashmina": {
+   "name": "Dashmina",
+   "percent": 65,
+   "eligibleCells": 5083,
+   "requiredCells": 3304,
+   "maskVersion": "territory-mask/1:bd-upa-patuakhali-dashmina:b4f07d7806bb",
+   "chunk": "upazilas/patuakhali"
+  },
+  "bd-upa-patuakhali-dumki": {
+   "name": "Dumki",
+   "percent": 65,
+   "eligibleCells": 3815,
+   "requiredCells": 2480,
+   "maskVersion": "territory-mask/1:bd-upa-patuakhali-dumki:497aaeb3a868",
+   "chunk": "upazilas/patuakhali"
+  },
+  "bd-upa-patuakhali-mirzaganj": {
+   "name": "Mirzaganj",
+   "percent": 75,
+   "eligibleCells": 3315,
+   "requiredCells": 2487,
+   "maskVersion": "territory-mask/1:bd-upa-patuakhali-mirzaganj:f097eed2a9b9",
+   "chunk": "upazilas/patuakhali"
+  },
+  "bd-upa-pirojpur-bhandaria": {
+   "name": "Bhandaria",
+   "percent": 75,
+   "eligibleCells": 10419,
+   "requiredCells": 7815,
+   "maskVersion": "territory-mask/1:bd-upa-pirojpur-bhandaria:b17b86227412",
+   "chunk": "upazilas/pirojpur"
+  },
+  "bd-upa-pirojpur-kawkhali": {
+   "name": "Kawkhali",
+   "percent": 65,
+   "eligibleCells": 6221,
+   "requiredCells": 4044,
+   "maskVersion": "territory-mask/1:bd-upa-pirojpur-kawkhali:93b4d3f6b987",
+   "chunk": "upazilas/pirojpur"
+  },
+  "bd-upa-pirojpur-mathbaria": {
+   "name": "Mathbaria",
+   "percent": 65,
+   "eligibleCells": 12157,
+   "requiredCells": 7903,
+   "maskVersion": "territory-mask/1:bd-upa-pirojpur-mathbaria:e6a434d72053",
+   "chunk": "upazilas/pirojpur"
+  },
+  "bd-upa-pirojpur-nazirpur": {
+   "name": "Nazirpur",
+   "percent": 80,
+   "eligibleCells": 2011,
+   "requiredCells": 1609,
+   "maskVersion": "territory-mask/1:bd-upa-pirojpur-nazirpur:33390659eba1",
+   "chunk": "upazilas/pirojpur"
+  },
+  "bd-upa-pirojpur-zianagar": {
+   "name": "Zianagar",
+   "percent": 80,
+   "eligibleCells": 3241,
+   "requiredCells": 2593,
+   "maskVersion": "territory-mask/1:bd-upa-pirojpur-zianagar:9b0155e37b51",
+   "chunk": "upazilas/pirojpur"
+  },
+  "bd-upa-rajbari-balia-kandi": {
+   "name": "Balia Kandi",
+   "percent": 80,
+   "eligibleCells": 5765,
+   "requiredCells": 4612,
+   "maskVersion": "territory-mask/1:bd-upa-rajbari-balia-kandi:5aa84cdb66c8",
+   "chunk": "upazilas/rajbari"
+  },
+  "bd-upa-rajbari-goalandaghat": {
+   "name": "Goalandaghat",
+   "percent": 65,
+   "eligibleCells": 6730,
+   "requiredCells": 4375,
+   "maskVersion": "territory-mask/1:bd-upa-rajbari-goalandaghat:423e45aae74b",
+   "chunk": "upazilas/rajbari"
+  },
+  "bd-upa-rajbari-kalukhali": {
+   "name": "Kalukhali",
+   "percent": 75,
+   "eligibleCells": 5073,
+   "requiredCells": 3805,
+   "maskVersion": "territory-mask/1:bd-upa-rajbari-kalukhali:f73e9eb3ca02",
+   "chunk": "upazilas/rajbari"
+  },
+  "bd-upa-rajbari-rajbari-sadar": {
+   "name": "Rajbari Sadar",
+   "percent": 40,
+   "eligibleCells": 18311,
+   "requiredCells": 7325,
+   "maskVersion": "territory-mask/1:bd-upa-rajbari-rajbari-sadar:4d67320d23ac",
+   "chunk": "upazilas/rajbari"
+  },
+  "bd-upa-rajshahi-bagha": {
+   "name": "Bagha",
+   "percent": 70,
+   "eligibleCells": 3363,
+   "requiredCells": 2355,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-bagha:63d6b155ffae",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-baghmara": {
+   "name": "Baghmara",
+   "percent": 55,
+   "eligibleCells": 2149,
+   "requiredCells": 1182,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-baghmara:c07621d7049a",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-boalia": {
+   "name": "Boalia",
+   "percent": 80,
+   "eligibleCells": 6404,
+   "requiredCells": 5124,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-boalia:3768fdc611d2",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-charghat": {
+   "name": "Charghat",
+   "percent": 80,
+   "eligibleCells": 5000,
+   "requiredCells": 4000,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-charghat:b4708ff5203d",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-durgapur": {
+   "name": "Durgapur",
+   "percent": 80,
+   "eligibleCells": 3571,
+   "requiredCells": 2857,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-durgapur:8d625b87ee12",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-godagari": {
+   "name": "Godagari",
+   "percent": 80,
+   "eligibleCells": 8245,
+   "requiredCells": 6596,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-godagari:78dc7cfa1d38",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-matihar": {
+   "name": "Matihar",
+   "percent": 75,
+   "eligibleCells": 2180,
+   "requiredCells": 1635,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-matihar:9751b243cf18",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-mohanpur": {
+   "name": "Mohanpur",
+   "percent": 80,
+   "eligibleCells": 2939,
+   "requiredCells": 2352,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-mohanpur:0adb52ac079b",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-paba": {
+   "name": "Paba",
+   "percent": 55,
+   "eligibleCells": 14274,
+   "requiredCells": 7851,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-paba:ca7d348f1fb9",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-puthia": {
+   "name": "Puthia",
+   "percent": 70,
+   "eligibleCells": 3011,
+   "requiredCells": 2108,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-puthia:0bc8d8ef94ea",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-rajpara": {
+   "name": "Rajpara",
+   "percent": 80,
+   "eligibleCells": 3537,
+   "requiredCells": 2830,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-rajpara:59b3cce4dcc8",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-shah-makhdum": {
+   "name": "Shah Makhdum",
+   "percent": 80,
+   "eligibleCells": 2068,
+   "requiredCells": 1655,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-shah-makhdum:ee84955fb9ee",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rajshahi-tanore": {
+   "name": "Tanore",
+   "percent": 80,
+   "eligibleCells": 2395,
+   "requiredCells": 1916,
+   "maskVersion": "territory-mask/1:bd-upa-rajshahi-tanore:6bd8e550a0a5",
+   "chunk": "upazilas/rajshahi"
+  },
+  "bd-upa-rangamati-jurai-chhari": {
+   "name": "Jurai Chhari",
+   "percent": 80,
+   "eligibleCells": 712,
+   "requiredCells": 570,
+   "maskVersion": "territory-mask/1:bd-upa-rangamati-jurai-chhari:d4499297ee7e",
+   "chunk": "upazilas/rangamati"
+  },
+  "bd-upa-rangamati-langadu": {
+   "name": "Langadu",
+   "percent": 80,
+   "eligibleCells": 1370,
+   "requiredCells": 1096,
+   "maskVersion": "territory-mask/1:bd-upa-rangamati-langadu:2ca767eb8b4a",
+   "chunk": "upazilas/rangamati"
+  },
+  "bd-upa-rangamati-naniarchar": {
+   "name": "Naniarchar",
+   "percent": 70,
+   "eligibleCells": 1483,
+   "requiredCells": 1039,
+   "maskVersion": "territory-mask/1:bd-upa-rangamati-naniarchar:442c8fded0b9",
+   "chunk": "upazilas/rangamati"
+  },
+  "bd-upa-rangamati-rangamati-sadar": {
+   "name": "Rangamati Sadar",
+   "percent": 60,
+   "eligibleCells": 3744,
+   "requiredCells": 2247,
+   "maskVersion": "territory-mask/1:bd-upa-rangamati-rangamati-sadar:01e5ea967909",
+   "chunk": "upazilas/rangamati"
+  },
+  "bd-upa-rangpur-badarganj": {
+   "name": "Badarganj",
+   "percent": 50,
+   "eligibleCells": 15458,
+   "requiredCells": 7729,
+   "maskVersion": "territory-mask/1:bd-upa-rangpur-badarganj:8b04211a28f7",
+   "chunk": "upazilas/rangpur"
+  },
+  "bd-upa-rangpur-kaunia": {
+   "name": "Kaunia",
+   "percent": 60,
+   "eligibleCells": 13087,
+   "requiredCells": 7853,
+   "maskVersion": "territory-mask/1:bd-upa-rangpur-kaunia:c5bcf20de3fa",
+   "chunk": "upazilas/rangpur"
+  },
+  "bd-upa-rangpur-pirganj": {
+   "name": "Pirganj",
+   "percent": 40,
+   "eligibleCells": 17982,
+   "requiredCells": 7193,
+   "maskVersion": "territory-mask/1:bd-upa-rangpur-pirganj:cf8b139ad350",
+   "chunk": "upazilas/rangpur"
+  },
+  "bd-upa-rangpur-taraganj": {
+   "name": "Taraganj",
+   "percent": 70,
+   "eligibleCells": 5387,
+   "requiredCells": 3771,
+   "maskVersion": "territory-mask/1:bd-upa-rangpur-taraganj:189e66330247",
+   "chunk": "upazilas/rangpur"
+  },
+  "bd-upa-satkhira-assasuni": {
+   "name": "Assasuni",
+   "percent": 75,
+   "eligibleCells": 10601,
+   "requiredCells": 7951,
+   "maskVersion": "territory-mask/1:bd-upa-satkhira-assasuni:3d7d7a8d1e5a",
+   "chunk": "upazilas/satkhira"
+  },
+  "bd-upa-satkhira-debhata": {
+   "name": "Debhata",
+   "percent": 80,
+   "eligibleCells": 5393,
+   "requiredCells": 4315,
+   "maskVersion": "territory-mask/1:bd-upa-satkhira-debhata:3bd71be32269",
+   "chunk": "upazilas/satkhira"
+  },
+  "bd-upa-satkhira-kaliganj": {
+   "name": "Kaliganj",
+   "percent": 80,
+   "eligibleCells": 9775,
+   "requiredCells": 7820,
+   "maskVersion": "territory-mask/1:bd-upa-satkhira-kaliganj:36ab56d38288",
+   "chunk": "upazilas/satkhira"
+  },
+  "bd-upa-shariatpur-bhedarganj": {
+   "name": "Bhedarganj",
+   "percent": 55,
+   "eligibleCells": 5678,
+   "requiredCells": 3123,
+   "maskVersion": "territory-mask/1:bd-upa-shariatpur-bhedarganj:c1e0d3a90bd9",
+   "chunk": "upazilas/shariatpur"
+  },
+  "bd-upa-shariatpur-damudya": {
+   "name": "Damudya",
+   "percent": 65,
+   "eligibleCells": 2364,
+   "requiredCells": 1537,
+   "maskVersion": "territory-mask/1:bd-upa-shariatpur-damudya:8d3e24521477",
+   "chunk": "upazilas/shariatpur"
+  },
+  "bd-upa-shariatpur-gosairhat": {
+   "name": "Gosairhat",
+   "percent": 55,
+   "eligibleCells": 2381,
+   "requiredCells": 1310,
+   "maskVersion": "territory-mask/1:bd-upa-shariatpur-gosairhat:6e99827b3ae9",
+   "chunk": "upazilas/shariatpur"
+  },
+  "bd-upa-shariatpur-naria": {
+   "name": "Naria",
+   "percent": 70,
+   "eligibleCells": 8661,
+   "requiredCells": 6063,
+   "maskVersion": "territory-mask/1:bd-upa-shariatpur-naria:ec643179c5a3",
+   "chunk": "upazilas/shariatpur"
+  },
+  "bd-upa-shariatpur-shariatpur-sadar": {
+   "name": "Shariatpur Sadar",
+   "percent": 70,
+   "eligibleCells": 11081,
+   "requiredCells": 7757,
+   "maskVersion": "territory-mask/1:bd-upa-shariatpur-shariatpur-sadar:fd66ffd63ac6",
+   "chunk": "upazilas/shariatpur"
+  },
+  "bd-upa-shariatpur-zanjira": {
+   "name": "Zanjira",
+   "percent": 75,
+   "eligibleCells": 10341,
+   "requiredCells": 7756,
+   "maskVersion": "territory-mask/1:bd-upa-shariatpur-zanjira:64a13a9b969a",
+   "chunk": "upazilas/shariatpur"
+  },
+  "bd-upa-sherpur-jhenaigati": {
+   "name": "Jhenaigati",
+   "percent": 80,
+   "eligibleCells": 3562,
+   "requiredCells": 2850,
+   "maskVersion": "territory-mask/1:bd-upa-sherpur-jhenaigati:fd1d7b47782b",
+   "chunk": "upazilas/sherpur"
+  },
+  "bd-upa-sherpur-nakla": {
+   "name": "Nakla",
+   "percent": 80,
+   "eligibleCells": 4572,
+   "requiredCells": 3658,
+   "maskVersion": "territory-mask/1:bd-upa-sherpur-nakla:1303cd6bb621",
+   "chunk": "upazilas/sherpur"
+  },
+  "bd-upa-sherpur-nalitabari": {
+   "name": "Nalitabari",
+   "percent": 80,
+   "eligibleCells": 4729,
+   "requiredCells": 3784,
+   "maskVersion": "territory-mask/1:bd-upa-sherpur-nalitabari:a732c02a003b",
+   "chunk": "upazilas/sherpur"
+  },
+  "bd-upa-sherpur-sherpur-sadar": {
+   "name": "Sherpur Sadar",
+   "percent": 80,
+   "eligibleCells": 9387,
+   "requiredCells": 7510,
+   "maskVersion": "territory-mask/1:bd-upa-sherpur-sherpur-sadar:28fe5c1f925b",
+   "chunk": "upazilas/sherpur"
+  },
+  "bd-upa-sherpur-sreebardi": {
+   "name": "Sreebardi",
+   "percent": 70,
+   "eligibleCells": 5766,
+   "requiredCells": 4037,
+   "maskVersion": "territory-mask/1:bd-upa-sherpur-sreebardi:77c09e0ea05b",
+   "chunk": "upazilas/sherpur"
+  },
+  "bd-upa-sirajganj-kazipur": {
+   "name": "Kazipur",
+   "percent": 65,
+   "eligibleCells": 1479,
+   "requiredCells": 962,
+   "maskVersion": "territory-mask/1:bd-upa-sirajganj-kazipur:fd4de7861994",
+   "chunk": "upazilas/sirajganj"
+  },
+  "bd-upa-sirajganj-royganj": {
+   "name": "Royganj",
+   "percent": 80,
+   "eligibleCells": 9778,
+   "requiredCells": 7823,
+   "maskVersion": "territory-mask/1:bd-upa-sirajganj-royganj:7eb9ebc1487c",
+   "chunk": "upazilas/sirajganj"
+  },
+  "bd-upa-sunamganj-bishwambarpur": {
+   "name": "Bishwambarpur",
+   "percent": 50,
+   "eligibleCells": 15502,
+   "requiredCells": 7751,
+   "maskVersion": "territory-mask/1:bd-upa-sunamganj-bishwambarpur:1e1dd9aa251e",
+   "chunk": "upazilas/sunamganj"
+  },
+  "bd-upa-sunamganj-dakshin-sunamganj": {
+   "name": "Dakshin Sunamganj",
+   "percent": 40,
+   "eligibleCells": 19989,
+   "requiredCells": 7996,
+   "maskVersion": "territory-mask/1:bd-upa-sunamganj-dakshin-sunamganj:1801759e46e4",
+   "chunk": "upazilas/sunamganj"
+  },
+  "bd-upa-sylhet-companiganj": {
+   "name": "Companiganj",
+   "percent": 40,
+   "eligibleCells": 19526,
+   "requiredCells": 7811,
+   "maskVersion": "territory-mask/1:bd-upa-sylhet-companiganj:0f6fb7800285",
+   "chunk": "upazilas/sylhet"
+  },
+  "bd-upa-sylhet-fenchuganj": {
+   "name": "Fenchuganj",
+   "percent": 75,
+   "eligibleCells": 8142,
+   "requiredCells": 6107,
+   "maskVersion": "territory-mask/1:bd-upa-sylhet-fenchuganj:a6e48fe5adf2",
+   "chunk": "upazilas/sylhet"
+  },
+  "bd-upa-tangail-basail": {
+   "name": "Basail",
+   "percent": 75,
+   "eligibleCells": 4799,
+   "requiredCells": 3600,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-basail:d8e734a03a8a",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-bhuapur": {
+   "name": "Bhuapur",
+   "percent": 60,
+   "eligibleCells": 3960,
+   "requiredCells": 2376,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-bhuapur:aaa22b55c03f",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-delduar": {
+   "name": "Delduar",
+   "percent": 80,
+   "eligibleCells": 5090,
+   "requiredCells": 4072,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-delduar:286c77afe9cd",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-dhanbari": {
+   "name": "Dhanbari",
+   "percent": 80,
+   "eligibleCells": 4729,
+   "requiredCells": 3784,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-dhanbari:027fafa4b689",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-ghatail": {
+   "name": "Ghatail",
+   "percent": 80,
+   "eligibleCells": 8133,
+   "requiredCells": 6507,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-ghatail:977b6402bed1",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-gopalpur": {
+   "name": "Gopalpur",
+   "percent": 80,
+   "eligibleCells": 3649,
+   "requiredCells": 2920,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-gopalpur:e58e7689e541",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-kalihati": {
+   "name": "Kalihati",
+   "percent": 55,
+   "eligibleCells": 10114,
+   "requiredCells": 5563,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-kalihati:e760206a22f4",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-madhupur": {
+   "name": "Madhupur",
+   "percent": 55,
+   "eligibleCells": 14029,
+   "requiredCells": 7716,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-madhupur:b014522f9d6f",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-nagarpur": {
+   "name": "Nagarpur",
+   "percent": 65,
+   "eligibleCells": 5908,
+   "requiredCells": 3841,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-nagarpur:60a00af47e88",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-sakhipur": {
+   "name": "Sakhipur",
+   "percent": 55,
+   "eligibleCells": 14109,
+   "requiredCells": 7760,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-sakhipur:99be6b6ddb20",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-tangail-tangail-sadar": {
+   "name": "Tangail Sadar",
+   "percent": 65,
+   "eligibleCells": 12262,
+   "requiredCells": 7971,
+   "maskVersion": "territory-mask/1:bd-upa-tangail-tangail-sadar:99034c0acc0c",
+   "chunk": "upazilas/tangail"
+  },
+  "bd-upa-thakurgaon-haripur": {
+   "name": "Haripur",
+   "percent": 65,
+   "eligibleCells": 2991,
+   "requiredCells": 1945,
+   "maskVersion": "territory-mask/1:bd-upa-thakurgaon-haripur:f1f0103f255e",
+   "chunk": "upazilas/thakurgaon"
+  },
+  "bd-upa-thakurgaon-ranisankail": {
+   "name": "Ranisankail",
+   "percent": 75,
+   "eligibleCells": 3316,
+   "requiredCells": 2487,
+   "maskVersion": "territory-mask/1:bd-upa-thakurgaon-ranisankail:32dca3158da5",
+   "chunk": "upazilas/thakurgaon"
   }
  }
 }

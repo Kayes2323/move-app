@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-bagerhat-morrelganj",
+ "areaName": "Morrelganj",
+ "maskVersion": "territory-mask/1:bd-upa-bagerhat-morrelganj:7639bd85230e",
+ "contentHash": "7639bd85230e3c39e07e001181f6c83448222969ed489e605624c23ce5f44df5",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 357835,
+  "eligibleCells": 14046,
+  "areaKm2": 446.27,
+  "eligibleShareOfOwned": 3.9,
+  "uniqueStreetKm": 496
+ },
+ "roads": {
+  "waysInArea": 1794,
+  "includedKm": 549.7,
+  "byClassKm": {
+   "trunk": 8.8,
+   "main": 530.4,
+   "minor": 10.6
+  },
+  "densityKmPerKm2": 1.2
+ },
+ "quality": {
+  "trunkOnlyCells": 229,
+  "minorOnlyCells": 270,
+  "outsideLargestCells": 8644,
+  "doubtfulCells": 8749,
+  "confidentShare": 0.377,
+  "reachOutsideLargestCells": 5115,
+  "reachConfidentShare": 0.619,
+  "reachLargestShare": 0.636,
+  "reachRegions": 49,
+  "regions": 172,
+  "largestRegionCells": 5402,
+  "largestShare": 0.385,
+  "builtUpCells": 2,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 13
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 11237,
+   "uniqueStreetKm": 396.8,
+   "takeoverCredits": 22474
+  },
+  {
+   "percent": 70,
+   "requiredCells": 9833,
+   "uniqueStreetKm": 347.3,
+   "takeoverCredits": 19666
+  },
+  {
+   "percent": 60,
+   "requiredCells": 8428,
+   "uniqueStreetKm": 297.6,
+   "takeoverCredits": 16856
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7023,
+   "uniqueStreetKm": 248,
+   "takeoverCredits": 14046
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5619,
+   "uniqueStreetKm": 198.4,
+   "takeoverCredits": 11238
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "55% threshold (part of its mapped streets are doubtful)",
+  "percent": 55,
+  "requiredCells": 7726
+ },
+ "maskBytes": 154057,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-bagerhat",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B56461064683403",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

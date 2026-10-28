@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-faridpur-sadarpur",
+ "areaName": "Sadarpur",
+ "maskVersion": "territory-mask/1:bd-upa-faridpur-sadarpur:dd45d2c3c71b",
+ "contentHash": "dd45d2c3c71ba01401cf9ed9d322b05d468be3871aae96a097a4f16c9c2cb98b",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 226901,
+  "eligibleCells": 11199,
+  "areaKm2": 278.85,
+  "eligibleShareOfOwned": 4.9,
+  "uniqueStreetKm": 392.6
+ },
+ "roads": {
+  "waysInArea": 2138,
+  "includedKm": 447,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 376.5,
+   "minor": 70.5
+  },
+  "densityKmPerKm2": 1.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1715,
+  "outsideLargestCells": 4846,
+  "doubtfulCells": 5349,
+  "confidentShare": 0.522,
+  "reachOutsideLargestCells": 3439,
+  "reachConfidentShare": 0.639,
+  "reachLargestShare": 0.693,
+  "reachRegions": 27,
+  "regions": 100,
+  "largestRegionCells": 6353,
+  "largestShare": 0.567,
+  "builtUpCells": 448,
+  "builtUpWithoutRoad": 116,
+  "gapShare": 0.259,
+  "singleCellHoles": 27
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 8960,
+   "uniqueStreetKm": 314.1,
+   "takeoverCredits": 17920
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7840,
+   "uniqueStreetKm": 274.8,
+   "takeoverCredits": 15680
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6720,
+   "uniqueStreetKm": 235.6,
+   "takeoverCredits": 13440
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5600,
+   "uniqueStreetKm": 196.3,
+   "takeoverCredits": 11200
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4480,
+   "uniqueStreetKm": 157.1,
+   "takeoverCredits": 8960
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "55% threshold (part of its mapped streets are doubtful)",
+  "percent": 55,
+  "requiredCells": 6160
+ },
+ "maskBytes": 135496,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-faridpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B68847835082367",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

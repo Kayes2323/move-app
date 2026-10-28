@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jamalpur-madarganj",
+ "areaName": "Madarganj",
+ "maskVersion": "territory-mask/1:bd-upa-jamalpur-madarganj:f9de31b18f96",
+ "contentHash": "f9de31b18f964c8acc376f3bf3ae8d37d07407624d9aae2aef12b01436446583",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 196836,
+  "eligibleCells": 23105,
+  "areaKm2": 236.6,
+  "eligibleShareOfOwned": 11.7,
+  "uniqueStreetKm": 801.1
+ },
+ "roads": {
+  "waysInArea": 4867,
+  "includedKm": 922.1,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 628.6,
+   "minor": 293.5
+  },
+  "densityKmPerKm2": 3.9
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 7134,
+  "outsideLargestCells": 4572,
+  "doubtfulCells": 10479,
+  "confidentShare": 0.546,
+  "reachOutsideLargestCells": 559,
+  "reachConfidentShare": 0.677,
+  "reachLargestShare": 0.976,
+  "reachRegions": 34,
+  "regions": 193,
+  "largestRegionCells": 18533,
+  "largestShare": 0.802,
+  "builtUpCells": 15,
+  "builtUpWithoutRoad": 4,
+  "gapShare": 0.267,
+  "singleCellHoles": 180
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18484,
+   "uniqueStreetKm": 640.8,
+   "takeoverCredits": 36968
+  },
+  {
+   "percent": 70,
+   "requiredCells": 16174,
+   "uniqueStreetKm": 560.8,
+   "takeoverCredits": 32348
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13863,
+   "uniqueStreetKm": 480.6,
+   "takeoverCredits": 27726
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11553,
+   "uniqueStreetKm": 400.5,
+   "takeoverCredits": 23106
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9242,
+   "uniqueStreetKm": 320.4,
+   "takeoverCredits": 18484
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 9,242 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 232841,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jamalpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B83620057326875",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

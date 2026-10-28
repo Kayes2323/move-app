@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-meherpur-mujib-nagar",
+ "areaName": "Mujib Nagar",
+ "maskVersion": "territory-mask/1:bd-upa-meherpur-mujib-nagar:9019a6f27570",
+ "contentHash": "9019a6f27570bf2fc19ef80cb098cd6d1552104b518db824759a9d5d442f03ed",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 95318,
+  "eligibleCells": 5122,
+  "areaKm2": 116.78,
+  "eligibleShareOfOwned": 5.4,
+  "uniqueStreetKm": 179.3
+ },
+ "roads": {
+  "waysInArea": 828,
+  "includedKm": 198.3,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 194.1,
+   "minor": 4.2
+  },
+  "densityKmPerKm2": 1.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 111,
+  "outsideLargestCells": 1914,
+  "doubtfulCells": 1959,
+  "confidentShare": 0.618,
+  "reachOutsideLargestCells": 889,
+  "reachConfidentShare": 0.805,
+  "reachLargestShare": 0.826,
+  "reachRegions": 17,
+  "regions": 49,
+  "largestRegionCells": 3208,
+  "largestShare": 0.626,
+  "builtUpCells": 0,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 14
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4098,
+   "uniqueStreetKm": 143.4,
+   "takeoverCredits": 8196
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3586,
+   "uniqueStreetKm": 125.5,
+   "takeoverCredits": 7172
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3074,
+   "uniqueStreetKm": 107.6,
+   "takeoverCredits": 6148
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2561,
+   "uniqueStreetKm": 89.6,
+   "takeoverCredits": 5122
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2049,
+   "uniqueStreetKm": 71.7,
+   "takeoverCredits": 4098
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "75% threshold (part of its mapped streets are doubtful)",
+  "percent": 75,
+  "requiredCells": 3842
+ },
+ "maskBytes": 55280,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-meherpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B97958802920528",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

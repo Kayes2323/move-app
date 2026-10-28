@@ -76,10 +76,10 @@
   }
  ],
  "recommendation": {
-  "status": "OPEN_CANDIDATE",
-  "reason": "50% threshold (the area is large)",
-  "percent": 50,
-  "requiredCells": 7985
+  "status": "COMING_SOON",
+  "reason": "49% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
  },
  "maskBytes": 168601,
  "type": "UPAZILA",

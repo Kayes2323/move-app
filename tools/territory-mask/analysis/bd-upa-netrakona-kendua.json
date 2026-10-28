@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-netrakona-kendua",
+ "areaName": "Kendua",
+ "maskVersion": "territory-mask/1:bd-upa-netrakona-kendua:5fa65af59706",
+ "contentHash": "5fa65af597067c7721a33459e5a85970814e89276312453c96460ab7c58a0dbe",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 253640,
+  "eligibleCells": 22764,
+  "areaKm2": 305.9,
+  "eligibleShareOfOwned": 9,
+  "uniqueStreetKm": 790.6
+ },
+ "roads": {
+  "waysInArea": 3508,
+  "includedKm": 888.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 768.6,
+   "minor": 120
+  },
+  "densityKmPerKm2": 2.9
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 2941,
+  "outsideLargestCells": 6306,
+  "doubtfulCells": 8287,
+  "confidentShare": 0.636,
+  "reachOutsideLargestCells": 338,
+  "reachConfidentShare": 0.863,
+  "reachLargestShare": 0.985,
+  "reachRegions": 24,
+  "regions": 185,
+  "largestRegionCells": 16458,
+  "largestShare": 0.723,
+  "builtUpCells": 1558,
+  "builtUpWithoutRoad": 674,
+  "gapShare": 0.433,
+  "singleCellHoles": 86
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18212,
+   "uniqueStreetKm": 632.5,
+   "takeoverCredits": 36424
+  },
+  {
+   "percent": 70,
+   "requiredCells": 15935,
+   "uniqueStreetKm": 553.4,
+   "takeoverCredits": 31870
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13659,
+   "uniqueStreetKm": 474.4,
+   "takeoverCredits": 27318
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11382,
+   "uniqueStreetKm": 395.3,
+   "takeoverCredits": 22764
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9106,
+   "uniqueStreetKm": 316.2,
+   "takeoverCredits": 18212
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "43% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 238065,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-netrakona",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B31571719417761",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

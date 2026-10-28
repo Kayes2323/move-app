@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sylhet-companiganj",
+ "areaName": "Companiganj",
+ "maskVersion": "territory-mask/1:bd-upa-sylhet-companiganj:0f6fb7800285",
+ "contentHash": "0f6fb780028527a2c5bcaf1735c1a371ee9565bd1ea7e1431e7a26f952004757",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 217697,
+  "eligibleCells": 19526,
+  "areaKm2": 260.87,
+  "eligibleShareOfOwned": 9,
+  "uniqueStreetKm": 675.9
+ },
+ "roads": {
+  "waysInArea": 3105,
+  "includedKm": 770.3,
+  "byClassKm": {
+   "trunk": 19.1,
+   "main": 546.5,
+   "minor": 204.7
+  },
+  "densityKmPerKm2": 3
+ },
+ "quality": {
+  "trunkOnlyCells": 472,
+  "minorOnlyCells": 5119,
+  "outsideLargestCells": 12765,
+  "doubtfulCells": 15216,
+  "confidentShare": 0.221,
+  "reachOutsideLargestCells": 400,
+  "reachConfidentShare": 0.701,
+  "reachLargestShare": 0.98,
+  "reachRegions": 26,
+  "regions": 147,
+  "largestRegionCells": 6761,
+  "largestShare": 0.346,
+  "builtUpCells": 184,
+  "builtUpWithoutRoad": 33,
+  "gapShare": 0.179,
+  "singleCellHoles": 90
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 15621,
+   "uniqueStreetKm": 540.7,
+   "takeoverCredits": 31242
+  },
+  {
+   "percent": 70,
+   "requiredCells": 13669,
+   "uniqueStreetKm": 473.2,
+   "takeoverCredits": 27338
+  },
+  {
+   "percent": 60,
+   "requiredCells": 11716,
+   "uniqueStreetKm": 405.6,
+   "takeoverCredits": 23432
+  },
+  {
+   "percent": 50,
+   "requiredCells": 9763,
+   "uniqueStreetKm": 338,
+   "takeoverCredits": 19526
+  },
+  {
+   "percent": 40,
+   "requiredCells": 7811,
+   "uniqueStreetKm": 270.4,
+   "takeoverCredits": 15622
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "40% threshold (the area is large)",
+  "percent": 40,
+  "requiredCells": 7811
+ },
+ "maskBytes": 207300,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sylhet",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B34344695185666",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

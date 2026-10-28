@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-bayejid-bostami",
+ "areaName": "Bayejid Bostami",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-bayejid-bostami:6dfac8eef3b9",
+ "contentHash": "6dfac8eef3b9e194d17f5d244016604916f95176ca7c55e9a529f3358d25f8c7",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 34733,
+  "eligibleCells": 7380,
+  "areaKm2": 43.35,
+  "eligibleShareOfOwned": 21.2,
+  "uniqueStreetKm": 260.7
+ },
+ "roads": {
+  "waysInArea": 3465,
+  "includedKm": 320.8,
+  "byClassKm": {
+   "trunk": 16.9,
+   "main": 271.4,
+   "minor": 32.4
+  },
+  "densityKmPerKm2": 7.4
+ },
+ "quality": {
+  "trunkOnlyCells": 241,
+  "minorOnlyCells": 716,
+  "outsideLargestCells": 266,
+  "doubtfulCells": 1161,
+  "confidentShare": 0.843,
+  "reachOutsideLargestCells": 55,
+  "reachConfidentShare": 0.866,
+  "reachLargestShare": 0.993,
+  "reachRegions": 13,
+  "regions": 55,
+  "largestRegionCells": 7114,
+  "largestShare": 0.964,
+  "builtUpCells": 674,
+  "builtUpWithoutRoad": 113,
+  "gapShare": 0.168,
+  "singleCellHoles": 186
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 5904,
+   "uniqueStreetKm": 208.6,
+   "takeoverCredits": 11808
+  },
+  {
+   "percent": 70,
+   "requiredCells": 5166,
+   "uniqueStreetKm": 182.5,
+   "takeoverCredits": 10332
+  },
+  {
+   "percent": 60,
+   "requiredCells": 4428,
+   "uniqueStreetKm": 156.4,
+   "takeoverCredits": 8856
+  },
+  {
+   "percent": 50,
+   "requiredCells": 3690,
+   "uniqueStreetKm": 130.4,
+   "takeoverCredits": 7380
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2952,
+   "uniqueStreetKm": 104.3,
+   "takeoverCredits": 5904
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 5904
+ },
+ "maskBytes": 67603,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B75251324769772",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

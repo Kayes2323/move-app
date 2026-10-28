@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-manikganj-shibalaya",
+ "areaName": "Shibalaya",
+ "maskVersion": "territory-mask/1:bd-upa-manikganj-shibalaya:d446399eb19f",
+ "contentHash": "d446399eb19ffeda7b079b95c5aa37ef6214dd765907a2a894525fd1f7b1525e",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 164701,
+  "eligibleCells": 5800,
+  "areaKm2": 201.31,
+  "eligibleShareOfOwned": 3.5,
+  "uniqueStreetKm": 202.8
+ },
+ "roads": {
+  "waysInArea": 1154,
+  "includedKm": 231.5,
+  "byClassKm": {
+   "trunk": 25.8,
+   "main": 195.8,
+   "minor": 9.9
+  },
+  "densityKmPerKm2": 1.2
+ },
+ "quality": {
+  "trunkOnlyCells": 516,
+  "minorOnlyCells": 228,
+  "outsideLargestCells": 4473,
+  "doubtfulCells": 4775,
+  "confidentShare": 0.177,
+  "reachOutsideLargestCells": 783,
+  "reachConfidentShare": 0.764,
+  "reachLargestShare": 0.865,
+  "reachRegions": 13,
+  "regions": 61,
+  "largestRegionCells": 1327,
+  "largestShare": 0.229,
+  "builtUpCells": 158,
+  "builtUpWithoutRoad": 93,
+  "gapShare": 0.589,
+  "singleCellHoles": 30
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4640,
+   "uniqueStreetKm": 162.2,
+   "takeoverCredits": 9280
+  },
+  {
+   "percent": 70,
+   "requiredCells": 4060,
+   "uniqueStreetKm": 141.9,
+   "takeoverCredits": 8120
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3480,
+   "uniqueStreetKm": 121.7,
+   "takeoverCredits": 6960
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2900,
+   "uniqueStreetKm": 101.4,
+   "takeoverCredits": 5800
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2320,
+   "uniqueStreetKm": 81.1,
+   "takeoverCredits": 4640
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "59% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 61058,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-manikganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B74745553133953",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

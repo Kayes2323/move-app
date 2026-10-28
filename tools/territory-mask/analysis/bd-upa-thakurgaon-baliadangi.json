@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-thakurgaon-baliadangi",
+ "areaName": "Baliadangi",
+ "maskVersion": "territory-mask/1:bd-upa-thakurgaon-baliadangi:23943ec25695",
+ "contentHash": "23943ec25695116a1f806b65b9dc9f7463e0c45219816b1cdc15a721fec30261",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 241351,
+  "eligibleCells": 11421,
+  "areaKm2": 284.31,
+  "eligibleShareOfOwned": 4.7,
+  "uniqueStreetKm": 392
+ },
+ "roads": {
+  "waysInArea": 1312,
+  "includedKm": 445.4,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 379.3,
+   "minor": 66.1
+  },
+  "densityKmPerKm2": 1.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1630,
+  "outsideLargestCells": 4580,
+  "doubtfulCells": 5832,
+  "confidentShare": 0.489,
+  "reachOutsideLargestCells": 378,
+  "reachConfidentShare": 0.827,
+  "reachLargestShare": 0.967,
+  "reachRegions": 11,
+  "regions": 122,
+  "largestRegionCells": 6841,
+  "largestShare": 0.599,
+  "builtUpCells": 1286,
+  "builtUpWithoutRoad": 597,
+  "gapShare": 0.464,
+  "singleCellHoles": 16
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 9137,
+   "uniqueStreetKm": 313.6,
+   "takeoverCredits": 18274
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7995,
+   "uniqueStreetKm": 274.4,
+   "takeoverCredits": 15990
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6853,
+   "uniqueStreetKm": 235.2,
+   "takeoverCredits": 13706
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5711,
+   "uniqueStreetKm": 196,
+   "takeoverCredits": 11422
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4569,
+   "uniqueStreetKm": 156.8,
+   "takeoverCredits": 9138
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "46% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 131177,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-thakurgaon",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B48916414184469",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

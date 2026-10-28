@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-tangail-gopalpur",
+ "areaName": "Gopalpur",
+ "maskVersion": "territory-mask/1:bd-upa-tangail-gopalpur:e58e7689e541",
+ "contentHash": "e58e7689e54188e6ec2b64e5763199b5d97547957c02ad95cb279124900e6498",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 158176,
+  "eligibleCells": 3649,
+  "areaKm2": 191.1,
+  "eligibleShareOfOwned": 2.3,
+  "uniqueStreetKm": 126.8
+ },
+ "roads": {
+  "waysInArea": 251,
+  "includedKm": 138.7,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 137.1,
+   "minor": 1.6
+  },
+  "densityKmPerKm2": 0.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 35,
+  "outsideLargestCells": 2730,
+  "doubtfulCells": 2738,
+  "confidentShare": 0.25,
+  "reachOutsideLargestCells": 388,
+  "reachConfidentShare": 0.884,
+  "reachLargestShare": 0.894,
+  "reachRegions": 12,
+  "regions": 54,
+  "largestRegionCells": 919,
+  "largestShare": 0.252,
+  "builtUpCells": 0,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 2
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 2920,
+   "uniqueStreetKm": 101.5,
+   "takeoverCredits": 5840
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2555,
+   "uniqueStreetKm": 88.8,
+   "takeoverCredits": 5110
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2190,
+   "uniqueStreetKm": 76.1,
+   "takeoverCredits": 4380
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1825,
+   "uniqueStreetKm": 63.4,
+   "takeoverCredits": 3650
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1460,
+   "uniqueStreetKm": 50.7,
+   "takeoverCredits": 2920
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 2920
+ },
+ "maskBytes": 43968,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-tangail",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B71793030218448",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

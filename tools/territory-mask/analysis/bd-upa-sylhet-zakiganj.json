@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sylhet-zakiganj",
+ "areaName": "Zakiganj",
+ "maskVersion": "territory-mask/1:bd-upa-sylhet-zakiganj:3cfc6d8d6096",
+ "contentHash": "3cfc6d8d60968219469e3bfe60515be2c143023e726c8d2b2551b491be76a4d2",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 220401,
+  "eligibleCells": 22556,
+  "areaKm2": 264.74,
+  "eligibleShareOfOwned": 10.2,
+  "uniqueStreetKm": 781.7
+ },
+ "roads": {
+  "waysInArea": 3942,
+  "includedKm": 883.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 701.5,
+   "minor": 182.1
+  },
+  "densityKmPerKm2": 3.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 4587,
+  "outsideLargestCells": 15764,
+  "doubtfulCells": 17160,
+  "confidentShare": 0.239,
+  "reachOutsideLargestCells": 451,
+  "reachConfidentShare": 0.785,
+  "reachLargestShare": 0.98,
+  "reachRegions": 23,
+  "regions": 185,
+  "largestRegionCells": 6792,
+  "largestShare": 0.301,
+  "builtUpCells": 13,
+  "builtUpWithoutRoad": 8,
+  "gapShare": 0.615,
+  "singleCellHoles": 79
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18045,
+   "uniqueStreetKm": 625.4,
+   "takeoverCredits": 36090
+  },
+  {
+   "percent": 70,
+   "requiredCells": 15790,
+   "uniqueStreetKm": 547.2,
+   "takeoverCredits": 31580
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13534,
+   "uniqueStreetKm": 469.1,
+   "takeoverCredits": 27068
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11278,
+   "uniqueStreetKm": 390.9,
+   "takeoverCredits": 22556
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9023,
+   "uniqueStreetKm": 312.7,
+   "takeoverCredits": 18046
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 9,023 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 228702,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sylhet",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B92630668918235",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

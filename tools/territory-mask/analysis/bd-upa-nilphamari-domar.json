@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-nilphamari-domar",
+ "areaName": "Domar",
+ "maskVersion": "territory-mask/1:bd-upa-nilphamari-domar:fce673dedbbe",
+ "contentHash": "fce673dedbbebd427cb22748f3d8388e98a027f315a36329436fb5d3d8d130f3",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 213496,
+  "eligibleCells": 24221,
+  "areaKm2": 251.19,
+  "eligibleShareOfOwned": 11.3,
+  "uniqueStreetKm": 830.8
+ },
+ "roads": {
+  "waysInArea": 4595,
+  "includedKm": 936.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 864.1,
+   "minor": 72.4
+  },
+  "densityKmPerKm2": 3.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1726,
+  "outsideLargestCells": 3972,
+  "doubtfulCells": 5439,
+  "confidentShare": 0.775,
+  "reachOutsideLargestCells": 153,
+  "reachConfidentShare": 0.925,
+  "reachLargestShare": 0.994,
+  "reachRegions": 23,
+  "regions": 199,
+  "largestRegionCells": 20249,
+  "largestShare": 0.836,
+  "builtUpCells": 2012,
+  "builtUpWithoutRoad": 708,
+  "gapShare": 0.352,
+  "singleCellHoles": 121
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 19377,
+   "uniqueStreetKm": 664.6,
+   "takeoverCredits": 38754
+  },
+  {
+   "percent": 70,
+   "requiredCells": 16955,
+   "uniqueStreetKm": 581.6,
+   "takeoverCredits": 33910
+  },
+  {
+   "percent": 60,
+   "requiredCells": 14533,
+   "uniqueStreetKm": 498.5,
+   "takeoverCredits": 29066
+  },
+  {
+   "percent": 50,
+   "requiredCells": 12111,
+   "uniqueStreetKm": 415.4,
+   "takeoverCredits": 24222
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9689,
+   "uniqueStreetKm": 332.3,
+   "takeoverCredits": 19378
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "35% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 245806,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-nilphamari",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B45421324298866",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

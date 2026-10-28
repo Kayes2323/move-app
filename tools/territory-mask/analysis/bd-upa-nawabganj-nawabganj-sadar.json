@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-nawabganj-nawabganj-sadar",
+ "areaName": "Nawabganj Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-nawabganj-nawabganj-sadar:7d6a25955a12",
+ "contentHash": "7d6a25955a128d386cdd43abea905fac8de386371fb2fe1bddf070679ebc59ef",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 360070,
+  "eligibleCells": 8775,
+  "areaKm2": 435.04,
+  "eligibleShareOfOwned": 2.4,
+  "uniqueStreetKm": 305
+ },
+ "roads": {
+  "waysInArea": 994,
+  "includedKm": 343.4,
+  "byClassKm": {
+   "trunk": 13.8,
+   "main": 326.4,
+   "minor": 3.2
+  },
+  "densityKmPerKm2": 0.8
+ },
+ "quality": {
+  "trunkOnlyCells": 337,
+  "minorOnlyCells": 82,
+  "outsideLargestCells": 4403,
+  "doubtfulCells": 4783,
+  "confidentShare": 0.455,
+  "reachOutsideLargestCells": 315,
+  "reachConfidentShare": 0.916,
+  "reachLargestShare": 0.964,
+  "reachRegions": 6,
+  "regions": 84,
+  "largestRegionCells": 4372,
+  "largestShare": 0.498,
+  "builtUpCells": 13,
+  "builtUpWithoutRoad": 3,
+  "gapShare": 0.231,
+  "singleCellHoles": 16
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 7020,
+   "uniqueStreetKm": 244,
+   "takeoverCredits": 14040
+  },
+  {
+   "percent": 70,
+   "requiredCells": 6143,
+   "uniqueStreetKm": 213.5,
+   "takeoverCredits": 12286
+  },
+  {
+   "percent": 60,
+   "requiredCells": 5265,
+   "uniqueStreetKm": 183,
+   "takeoverCredits": 10530
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4388,
+   "uniqueStreetKm": 152.5,
+   "takeoverCredits": 8776
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3510,
+   "uniqueStreetKm": 122,
+   "takeoverCredits": 7020
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 7020
+ },
+ "maskBytes": 102218,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-nawabganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B78695242801039",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

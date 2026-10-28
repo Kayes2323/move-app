@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jamalpur-jamalpur-sadar",
+ "areaName": "Jamalpur Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-jamalpur-jamalpur-sadar:70625e383601",
+ "contentHash": "70625e38360120e9c5ff0bf6b001bc452a48c52465ff5a32529c896d71f4b9aa",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 414767,
+  "eligibleCells": 21292,
+  "areaKm2": 498.88,
+  "eligibleShareOfOwned": 5.1,
+  "uniqueStreetKm": 738.4
+ },
+ "roads": {
+  "waysInArea": 2518,
+  "includedKm": 830.7,
+  "byClassKm": {
+   "trunk": 18.2,
+   "main": 762.8,
+   "minor": 49.7
+  },
+  "densityKmPerKm2": 1.7
+ },
+ "quality": {
+  "trunkOnlyCells": 448,
+  "minorOnlyCells": 1197,
+  "outsideLargestCells": 9308,
+  "doubtfulCells": 10213,
+  "confidentShare": 0.52,
+  "reachOutsideLargestCells": 1759,
+  "reachConfidentShare": 0.842,
+  "reachLargestShare": 0.917,
+  "reachRegions": 29,
+  "regions": 185,
+  "largestRegionCells": 11984,
+  "largestShare": 0.563,
+  "builtUpCells": 650,
+  "builtUpWithoutRoad": 146,
+  "gapShare": 0.225,
+  "singleCellHoles": 41
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 17034,
+   "uniqueStreetKm": 590.8,
+   "takeoverCredits": 34068
+  },
+  {
+   "percent": 70,
+   "requiredCells": 14905,
+   "uniqueStreetKm": 516.9,
+   "takeoverCredits": 29810
+  },
+  {
+   "percent": 60,
+   "requiredCells": 12776,
+   "uniqueStreetKm": 443.1,
+   "takeoverCredits": 25552
+  },
+  {
+   "percent": 50,
+   "requiredCells": 10646,
+   "uniqueStreetKm": 369.2,
+   "takeoverCredits": 21292
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8517,
+   "uniqueStreetKm": 295.4,
+   "takeoverCredits": 17034
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 8,517 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 231528,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jamalpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B56108573685352",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-cox-s-bazar-cox-s-bazar-sadar",
+ "areaName": "Cox's Bazar Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-cox-s-bazar-cox-s-bazar-sadar:4788051ae80e",
+ "contentHash": "4788051ae80e87451523a3c37e9c05a0bc20129b2fb127862c3414afde487abc",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 166750,
+  "eligibleCells": 21169,
+  "areaKm2": 210.84,
+  "eligibleShareOfOwned": 12.7,
+  "uniqueStreetKm": 752.7
+ },
+ "roads": {
+  "waysInArea": 4360,
+  "includedKm": 875.4,
+  "byClassKm": {
+   "trunk": 31.2,
+   "main": 687.1,
+   "minor": 157.1
+  },
+  "densityKmPerKm2": 4.2
+ },
+ "quality": {
+  "trunkOnlyCells": 583,
+  "minorOnlyCells": 3756,
+  "outsideLargestCells": 11557,
+  "doubtfulCells": 13527,
+  "confidentShare": 0.361,
+  "reachOutsideLargestCells": 10802,
+  "reachConfidentShare": 0.386,
+  "reachLargestShare": 0.49,
+  "reachRegions": 22,
+  "regions": 103,
+  "largestRegionCells": 9612,
+  "largestShare": 0.454,
+  "builtUpCells": 884,
+  "builtUpWithoutRoad": 196,
+  "gapShare": 0.222,
+  "singleCellHoles": 174
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 16936,
+   "uniqueStreetKm": 602.2,
+   "takeoverCredits": 33872
+  },
+  {
+   "percent": 70,
+   "requiredCells": 14819,
+   "uniqueStreetKm": 526.9,
+   "takeoverCredits": 29638
+  },
+  {
+   "percent": 60,
+   "requiredCells": 12702,
+   "uniqueStreetKm": 451.7,
+   "takeoverCredits": 25404
+  },
+  {
+   "percent": 50,
+   "requiredCells": 10585,
+   "uniqueStreetKm": 376.4,
+   "takeoverCredits": 21170
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8468,
+   "uniqueStreetKm": 301.1,
+   "takeoverCredits": 16936
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 49% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 210856,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-cox-s-bazar",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B44088891115489",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-netrakona-purbadhala",
+ "areaName": "Purbadhala",
+ "maskVersion": "territory-mask/1:bd-upa-netrakona-purbadhala:fc867dced868",
+ "contentHash": "fc867dced8688f803d5459f83e5651318681674b2d2b75eb9f0d7bcb0f906e4f",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 265902,
+  "eligibleCells": 16951,
+  "areaKm2": 319.45,
+  "eligibleShareOfOwned": 6.4,
+  "uniqueStreetKm": 587.5
+ },
+ "roads": {
+  "waysInArea": 3290,
+  "includedKm": 659.4,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 600.7,
+   "minor": 58.8
+  },
+  "densityKmPerKm2": 2.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1388,
+  "outsideLargestCells": 15216,
+  "doubtfulCells": 15485,
+  "confidentShare": 0.086,
+  "reachOutsideLargestCells": 738,
+  "reachConfidentShare": 0.883,
+  "reachLargestShare": 0.956,
+  "reachRegions": 37,
+  "regions": 226,
+  "largestRegionCells": 1735,
+  "largestShare": 0.102,
+  "builtUpCells": 257,
+  "builtUpWithoutRoad": 112,
+  "gapShare": 0.436,
+  "singleCellHoles": 47
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 13561,
+   "uniqueStreetKm": 470,
+   "takeoverCredits": 27122
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11866,
+   "uniqueStreetKm": 411.3,
+   "takeoverCredits": 23732
+  },
+  {
+   "percent": 60,
+   "requiredCells": 10171,
+   "uniqueStreetKm": 352.5,
+   "takeoverCredits": 20342
+  },
+  {
+   "percent": 50,
+   "requiredCells": 8476,
+   "uniqueStreetKm": 293.8,
+   "takeoverCredits": 16952
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6781,
+   "uniqueStreetKm": 235,
+   "takeoverCredits": 13562
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "44% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 185160,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-netrakona",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B54942136795919",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-comilla-brahman-para",
+ "areaName": "Brahman Para",
+ "maskVersion": "territory-mask/1:bd-upa-comilla-brahman-para:5f43492f3b92",
+ "contentHash": "5f43492f3b92315481bdda9be1cac26d592d58ff6555d0265154e537f949505d",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 108600,
+  "eligibleCells": 4332,
+  "areaKm2": 133.11,
+  "eligibleShareOfOwned": 4,
+  "uniqueStreetKm": 151.7
+ },
+ "roads": {
+  "waysInArea": 1085,
+  "includedKm": 165.1,
+  "byClassKm": {
+   "trunk": 11.4,
+   "main": 149.6,
+   "minor": 4.1
+  },
+  "densityKmPerKm2": 1.2
+ },
+ "quality": {
+  "trunkOnlyCells": 281,
+  "minorOnlyCells": 109,
+  "outsideLargestCells": 3281,
+  "doubtfulCells": 3391,
+  "confidentShare": 0.217,
+  "reachOutsideLargestCells": 1210,
+  "reachConfidentShare": 0.647,
+  "reachLargestShare": 0.721,
+  "reachRegions": 32,
+  "regions": 85,
+  "largestRegionCells": 1051,
+  "largestShare": 0.243,
+  "builtUpCells": 76,
+  "builtUpWithoutRoad": 48,
+  "gapShare": 0.632,
+  "singleCellHoles": 6
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 3466,
+   "uniqueStreetKm": 121.3,
+   "takeoverCredits": 6932
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3033,
+   "uniqueStreetKm": 106.2,
+   "takeoverCredits": 6066
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2600,
+   "uniqueStreetKm": 91,
+   "takeoverCredits": 5200
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2166,
+   "uniqueStreetKm": 75.8,
+   "takeoverCredits": 4332
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1733,
+   "uniqueStreetKm": 60.7,
+   "takeoverCredits": 3466
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "63% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 48608,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-comilla",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B87015491124884",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

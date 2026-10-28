@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-narail-lohagara",
+ "areaName": "Lohagara",
+ "maskVersion": "territory-mask/1:bd-upa-narail-lohagara:4f6a5ae16a0e",
+ "contentHash": "4f6a5ae16a0ea14160778dbeebc44139f12f2ab93e0bfb663e729649906ccce8",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 243377,
+  "eligibleCells": 16139,
+  "areaKm2": 300.31,
+  "eligibleShareOfOwned": 6.6,
+  "uniqueStreetKm": 566.9
+ },
+ "roads": {
+  "waysInArea": 2340,
+  "includedKm": 634.3,
+  "byClassKm": {
+   "trunk": 9.8,
+   "main": 578,
+   "minor": 46.6
+  },
+  "densityKmPerKm2": 2.1
+ },
+ "quality": {
+  "trunkOnlyCells": 249,
+  "minorOnlyCells": 1149,
+  "outsideLargestCells": 7479,
+  "doubtfulCells": 8245,
+  "confidentShare": 0.489,
+  "reachOutsideLargestCells": 1570,
+  "reachConfidentShare": 0.821,
+  "reachLargestShare": 0.903,
+  "reachRegions": 32,
+  "regions": 129,
+  "largestRegionCells": 8660,
+  "largestShare": 0.537,
+  "builtUpCells": 638,
+  "builtUpWithoutRoad": 161,
+  "gapShare": 0.252,
+  "singleCellHoles": 43
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12912,
+   "uniqueStreetKm": 453.6,
+   "takeoverCredits": 25824
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11298,
+   "uniqueStreetKm": 396.9,
+   "takeoverCredits": 22596
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9684,
+   "uniqueStreetKm": 340.2,
+   "takeoverCredits": 19368
+  },
+  {
+   "percent": 50,
+   "requiredCells": 8070,
+   "uniqueStreetKm": 283.5,
+   "takeoverCredits": 16140
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6456,
+   "uniqueStreetKm": 226.8,
+   "takeoverCredits": 12912
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "45% threshold (the area is large)",
+  "percent": 45,
+  "requiredCells": 7263
+ },
+ "maskBytes": 171908,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-narail",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B42901183691580",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

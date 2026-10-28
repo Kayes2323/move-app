@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-netrakona-madan",
+ "areaName": "Madan",
+ "maskVersion": "territory-mask/1:bd-upa-netrakona-madan:6f7002984096",
+ "contentHash": "6f7002984096111d38e0a2deb545a4b0aba66366a397ca4b30467b8459d21f5b",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 191820,
+  "eligibleCells": 13393,
+  "areaKm2": 231.35,
+  "eligibleShareOfOwned": 7,
+  "uniqueStreetKm": 465.1
+ },
+ "roads": {
+  "waysInArea": 1678,
+  "includedKm": 522.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 351.7,
+   "minor": 171
+  },
+  "densityKmPerKm2": 2.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 4271,
+  "outsideLargestCells": 5819,
+  "doubtfulCells": 7992,
+  "confidentShare": 0.403,
+  "reachOutsideLargestCells": 1737,
+  "reachConfidentShare": 0.615,
+  "reachLargestShare": 0.87,
+  "reachRegions": 42,
+  "regions": 151,
+  "largestRegionCells": 7574,
+  "largestShare": 0.566,
+  "builtUpCells": 750,
+  "builtUpWithoutRoad": 384,
+  "gapShare": 0.512,
+  "singleCellHoles": 69
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 10715,
+   "uniqueStreetKm": 372.1,
+   "takeoverCredits": 21430
+  },
+  {
+   "percent": 70,
+   "requiredCells": 9376,
+   "uniqueStreetKm": 325.6,
+   "takeoverCredits": 18752
+  },
+  {
+   "percent": 60,
+   "requiredCells": 8036,
+   "uniqueStreetKm": 279.1,
+   "takeoverCredits": 16072
+  },
+  {
+   "percent": 50,
+   "requiredCells": 6697,
+   "uniqueStreetKm": 232.6,
+   "takeoverCredits": 13394
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5358,
+   "uniqueStreetKm": 186.1,
+   "takeoverCredits": 10716
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "51% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 137897,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-netrakona",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B11405319731642",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-pirojpur-kawkhali",
+ "areaName": "Kawkhali",
+ "maskVersion": "territory-mask/1:bd-upa-pirojpur-kawkhali:93b4d3f6b987",
+ "contentHash": "93b4d3f6b9874e2635d34498b33dd053454ba8e68c249d215eae7ab20fff6419",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 64766,
+  "eligibleCells": 6221,
+  "areaKm2": 80.64,
+  "eligibleShareOfOwned": 9.6,
+  "uniqueStreetKm": 219.5
+ },
+ "roads": {
+  "waysInArea": 581,
+  "includedKm": 248.2,
+  "byClassKm": {
+   "trunk": 3.1,
+   "main": 234.8,
+   "minor": 10.3
+  },
+  "densityKmPerKm2": 3.1
+ },
+ "quality": {
+  "trunkOnlyCells": 73,
+  "minorOnlyCells": 244,
+  "outsideLargestCells": 1567,
+  "doubtfulCells": 1833,
+  "confidentShare": 0.705,
+  "reachOutsideLargestCells": 1346,
+  "reachConfidentShare": 0.739,
+  "reachLargestShare": 0.784,
+  "reachRegions": 12,
+  "regions": 55,
+  "largestRegionCells": 4654,
+  "largestShare": 0.748,
+  "builtUpCells": 124,
+  "builtUpWithoutRoad": 14,
+  "gapShare": 0.113,
+  "singleCellHoles": 21
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4977,
+   "uniqueStreetKm": 175.6,
+   "takeoverCredits": 9954
+  },
+  {
+   "percent": 70,
+   "requiredCells": 4355,
+   "uniqueStreetKm": 153.7,
+   "takeoverCredits": 8710
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3733,
+   "uniqueStreetKm": 131.7,
+   "takeoverCredits": 7466
+  },
+  {
+   "percent": 50,
+   "requiredCells": 3111,
+   "uniqueStreetKm": 109.8,
+   "takeoverCredits": 6222
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2489,
+   "uniqueStreetKm": 87.8,
+   "takeoverCredits": 4978
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "65% threshold (part of its mapped streets are doubtful)",
+  "percent": 65,
+  "requiredCells": 4044
+ },
+ "maskBytes": 63069,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-pirojpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B7582936934927",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

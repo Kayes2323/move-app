@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-dhaka-tejgaon-ind-area",
+ "areaName": "Tejgaon Ind. Area",
+ "maskVersion": "territory-mask/1:bd-upa-dhaka-tejgaon-ind-area:a56a89e28deb",
+ "contentHash": "a56a89e28deb8e04bba3e616c085eb200f5de0a8fa3c856ff01838deafe5f86f",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 2700,
+  "eligibleCells": 1150,
+  "areaKm2": 3.3,
+  "eligibleShareOfOwned": 42.6,
+  "uniqueStreetKm": 40.2
+ },
+ "roads": {
+  "waysInArea": 1587,
+  "includedKm": 59.1,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 52.4,
+   "minor": 6.6
+  },
+  "densityKmPerKm2": 17.9
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 145,
+  "outsideLargestCells": 28,
+  "doubtfulCells": 171,
+  "confidentShare": 0.851,
+  "reachOutsideLargestCells": 0,
+  "reachConfidentShare": 0.874,
+  "reachLargestShare": 1,
+  "reachRegions": 1,
+  "regions": 9,
+  "largestRegionCells": 1122,
+  "largestShare": 0.976,
+  "builtUpCells": 42,
+  "builtUpWithoutRoad": 3,
+  "gapShare": 0.071,
+  "singleCellHoles": 40
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 920,
+   "uniqueStreetKm": 32.2,
+   "takeoverCredits": 1840
+  },
+  {
+   "percent": 70,
+   "requiredCells": 805,
+   "uniqueStreetKm": 28.2,
+   "takeoverCredits": 1610
+  },
+  {
+   "percent": 60,
+   "requiredCells": 690,
+   "uniqueStreetKm": 24.1,
+   "takeoverCredits": 1380
+  },
+  {
+   "percent": 50,
+   "requiredCells": 575,
+   "uniqueStreetKm": 20.1,
+   "takeoverCredits": 1150
+  },
+  {
+   "percent": 40,
+   "requiredCells": 460,
+   "uniqueStreetKm": 16.1,
+   "takeoverCredits": 920
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 920
+ },
+ "maskBytes": 11596,
+ "type": "LOCAL_AREA",
+ "parentId": "bd-dis-dhaka",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B57500985162038",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

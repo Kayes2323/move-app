@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sunamganj-dharampasha",
+ "areaName": "Dharampasha",
+ "maskVersion": "territory-mask/1:bd-upa-sunamganj-dharampasha:01529d375240",
+ "contentHash": "01529d375240c3f4f08902eea3fde9d546f5eee8db0558edbbe5c0fe10a5d7d9",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 419733,
+  "eligibleCells": 44004,
+  "areaKm2": 503.54,
+  "eligibleShareOfOwned": 10.5,
+  "uniqueStreetKm": 1524.1
+ },
+ "roads": {
+  "waysInArea": 7204,
+  "includedKm": 1813.7,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 1071,
+   "minor": 742.7
+  },
+  "densityKmPerKm2": 3.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 17126,
+  "outsideLargestCells": 10955,
+  "doubtfulCells": 24962,
+  "confidentShare": 0.433,
+  "reachOutsideLargestCells": 564,
+  "reachConfidentShare": 0.603,
+  "reachLargestShare": 0.987,
+  "reachRegions": 36,
+  "regions": 284,
+  "largestRegionCells": 33049,
+  "largestShare": 0.751,
+  "builtUpCells": 125,
+  "builtUpWithoutRoad": 16,
+  "gapShare": 0.128,
+  "singleCellHoles": 468
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 35204,
+   "uniqueStreetKm": 1219.3,
+   "takeoverCredits": 70408
+  },
+  {
+   "percent": 70,
+   "requiredCells": 30803,
+   "uniqueStreetKm": 1066.9,
+   "takeoverCredits": 61606
+  },
+  {
+   "percent": 60,
+   "requiredCells": 26403,
+   "uniqueStreetKm": 914.5,
+   "takeoverCredits": 52806
+  },
+  {
+   "percent": 50,
+   "requiredCells": 22002,
+   "uniqueStreetKm": 762.1,
+   "takeoverCredits": 44004
+  },
+  {
+   "percent": 40,
+   "requiredCells": 17602,
+   "uniqueStreetKm": 609.7,
+   "takeoverCredits": 35204
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 17,602 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 429245,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sunamganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B99906709627914",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

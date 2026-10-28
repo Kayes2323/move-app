@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-anowara",
+ "areaName": "Anowara",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-anowara:c977241ff729",
+ "contentHash": "c977241ff729e86b57df7ec0829da9e3d4746871cfe11a861e149acb12d83d19",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 117447,
+  "eligibleCells": 14541,
+  "areaKm2": 147.08,
+  "eligibleShareOfOwned": 12.4,
+  "uniqueStreetKm": 514.6
+ },
+ "roads": {
+  "waysInArea": 2421,
+  "includedKm": 578.9,
+  "byClassKm": {
+   "trunk": 5,
+   "main": 506.3,
+   "minor": 67.6
+  },
+  "densityKmPerKm2": 3.9
+ },
+ "quality": {
+  "trunkOnlyCells": 77,
+  "minorOnlyCells": 1573,
+  "outsideLargestCells": 1140,
+  "doubtfulCells": 2415,
+  "confidentShare": 0.834,
+  "reachOutsideLargestCells": 352,
+  "reachConfidentShare": 0.875,
+  "reachLargestShare": 0.976,
+  "reachRegions": 20,
+  "regions": 76,
+  "largestRegionCells": 13401,
+  "largestShare": 0.922,
+  "builtUpCells": 959,
+  "builtUpWithoutRoad": 466,
+  "gapShare": 0.486,
+  "singleCellHoles": 74
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 11633,
+   "uniqueStreetKm": 411.7,
+   "takeoverCredits": 23266
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10179,
+   "uniqueStreetKm": 360.2,
+   "takeoverCredits": 20358
+  },
+  {
+   "percent": 60,
+   "requiredCells": 8725,
+   "uniqueStreetKm": 308.8,
+   "takeoverCredits": 17450
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7271,
+   "uniqueStreetKm": 257.3,
+   "takeoverCredits": 14542
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5817,
+   "uniqueStreetKm": 205.9,
+   "takeoverCredits": 11634
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "49% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 144834,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B66497559634365",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

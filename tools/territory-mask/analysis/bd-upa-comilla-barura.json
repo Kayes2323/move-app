@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-comilla-barura",
+ "areaName": "Barura",
+ "maskVersion": "territory-mask/1:bd-upa-comilla-barura:5477156f3ad4",
+ "contentHash": "5477156f3ad4c0ff43e8b17a890c4567a87e34840063ccab1380af60dac1758b",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 197110,
+  "eligibleCells": 16364,
+  "areaKm2": 242.71,
+  "eligibleShareOfOwned": 8.3,
+  "uniqueStreetKm": 574.2
+ },
+ "roads": {
+  "waysInArea": 2857,
+  "includedKm": 622.1,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 607.4,
+   "minor": 14.7
+  },
+  "densityKmPerKm2": 2.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 372,
+  "outsideLargestCells": 6942,
+  "doubtfulCells": 7244,
+  "confidentShare": 0.557,
+  "reachOutsideLargestCells": 761,
+  "reachConfidentShare": 0.931,
+  "reachLargestShare": 0.953,
+  "reachRegions": 31,
+  "regions": 140,
+  "largestRegionCells": 9422,
+  "largestShare": 0.576,
+  "builtUpCells": 57,
+  "builtUpWithoutRoad": 25,
+  "gapShare": 0.439,
+  "singleCellHoles": 18
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 13092,
+   "uniqueStreetKm": 459.4,
+   "takeoverCredits": 26184
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11455,
+   "uniqueStreetKm": 402,
+   "takeoverCredits": 22910
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9819,
+   "uniqueStreetKm": 344.6,
+   "takeoverCredits": 19638
+  },
+  {
+   "percent": 50,
+   "requiredCells": 8182,
+   "uniqueStreetKm": 287.1,
+   "takeoverCredits": 16364
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6546,
+   "uniqueStreetKm": 229.7,
+   "takeoverCredits": 13092
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "44% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 169761,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-comilla",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B91077345667431",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chandpur-kachua",
+ "areaName": "Kachua",
+ "maskVersion": "territory-mask/1:bd-upa-chandpur-kachua:e312ee793356",
+ "contentHash": "e312ee793356e1045988f45557381ad36cf8a8158f3b478aa8200c7bda687052",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 184292,
+  "eligibleCells": 16258,
+  "areaKm2": 226.87,
+  "eligibleShareOfOwned": 8.8,
+  "uniqueStreetKm": 570.4
+ },
+ "roads": {
+  "waysInArea": 3642,
+  "includedKm": 618.3,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 609.4,
+   "minor": 8.9
+  },
+  "densityKmPerKm2": 2.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 212,
+  "outsideLargestCells": 5058,
+  "doubtfulCells": 5238,
+  "confidentShare": 0.678,
+  "reachOutsideLargestCells": 344,
+  "reachConfidentShare": 0.967,
+  "reachLargestShare": 0.979,
+  "reachRegions": 26,
+  "regions": 144,
+  "largestRegionCells": 11200,
+  "largestShare": 0.689,
+  "builtUpCells": 89,
+  "builtUpWithoutRoad": 38,
+  "gapShare": 0.427,
+  "singleCellHoles": 39
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 13007,
+   "uniqueStreetKm": 456.4,
+   "takeoverCredits": 26014
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11381,
+   "uniqueStreetKm": 399.3,
+   "takeoverCredits": 22762
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9755,
+   "uniqueStreetKm": 342.3,
+   "takeoverCredits": 19510
+  },
+  {
+   "percent": 50,
+   "requiredCells": 8129,
+   "uniqueStreetKm": 285.2,
+   "takeoverCredits": 16258
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6504,
+   "uniqueStreetKm": 228.2,
+   "takeoverCredits": 13008
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "43% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 167537,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chandpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B26000063371605",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

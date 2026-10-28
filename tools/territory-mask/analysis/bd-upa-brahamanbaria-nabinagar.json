@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-brahamanbaria-nabinagar",
+ "areaName": "Nabinagar",
+ "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-nabinagar:ea7c76989d50",
+ "contentHash": "ea7c76989d503ae57a12314260fb2e1f4252a5ecf69c9abc746e1c7577392d67",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 299304,
+  "eligibleCells": 12945,
+  "areaKm2": 365.62,
+  "eligibleShareOfOwned": 4.3,
+  "uniqueStreetKm": 452.4
+ },
+ "roads": {
+  "waysInArea": 1815,
+  "includedKm": 494.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 483,
+   "minor": 11.5
+  },
+  "densityKmPerKm2": 1.4
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 297,
+  "outsideLargestCells": 8479,
+  "doubtfulCells": 8487,
+  "confidentShare": 0.344,
+  "reachOutsideLargestCells": 2084,
+  "reachConfidentShare": 0.825,
+  "reachLargestShare": 0.839,
+  "reachRegions": 44,
+  "regions": 162,
+  "largestRegionCells": 4466,
+  "largestShare": 0.345,
+  "builtUpCells": 148,
+  "builtUpWithoutRoad": 48,
+  "gapShare": 0.324,
+  "singleCellHoles": 35
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 10356,
+   "uniqueStreetKm": 361.9,
+   "takeoverCredits": 20712
+  },
+  {
+   "percent": 70,
+   "requiredCells": 9062,
+   "uniqueStreetKm": 316.7,
+   "takeoverCredits": 18124
+  },
+  {
+   "percent": 60,
+   "requiredCells": 7767,
+   "uniqueStreetKm": 271.5,
+   "takeoverCredits": 15534
+  },
+  {
+   "percent": 50,
+   "requiredCells": 6473,
+   "uniqueStreetKm": 226.2,
+   "takeoverCredits": 12946
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5178,
+   "uniqueStreetKm": 181,
+   "takeoverCredits": 10356
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "32% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 139396,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-brahamanbaria",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B46982243115028",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

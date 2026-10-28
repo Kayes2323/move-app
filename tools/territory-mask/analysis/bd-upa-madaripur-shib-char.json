@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-madaripur-shib-char",
+ "areaName": "Shib Char",
+ "maskVersion": "territory-mask/1:bd-upa-madaripur-shib-char:d39259e51ac6",
+ "contentHash": "d39259e51ac6ffb8799517020f5df1d3c4f33e7cd2e399775c680dcd6f1e19b7",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 271684,
+  "eligibleCells": 15424,
+  "areaKm2": 334.36,
+  "eligibleShareOfOwned": 5.7,
+  "uniqueStreetKm": 541.1
+ },
+ "roads": {
+  "waysInArea": 2146,
+  "includedKm": 613.1,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 573.3,
+   "minor": 39.8
+  },
+  "densityKmPerKm2": 1.8
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 983,
+  "outsideLargestCells": 4317,
+  "doubtfulCells": 4782,
+  "confidentShare": 0.69,
+  "reachOutsideLargestCells": 337,
+  "reachConfidentShare": 0.924,
+  "reachLargestShare": 0.978,
+  "reachRegions": 22,
+  "regions": 106,
+  "largestRegionCells": 11107,
+  "largestShare": 0.72,
+  "builtUpCells": 41,
+  "builtUpWithoutRoad": 11,
+  "gapShare": 0.268,
+  "singleCellHoles": 63
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12340,
+   "uniqueStreetKm": 432.9,
+   "takeoverCredits": 24680
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10797,
+   "uniqueStreetKm": 378.8,
+   "takeoverCredits": 21594
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9255,
+   "uniqueStreetKm": 324.7,
+   "takeoverCredits": 18510
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7712,
+   "uniqueStreetKm": 270.5,
+   "takeoverCredits": 15424
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6170,
+   "uniqueStreetKm": 216.5,
+   "takeoverCredits": 12340
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "50% threshold (the area is large)",
+  "percent": 50,
+  "requiredCells": 7712
+ },
+ "maskBytes": 166397,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-madaripur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B86703057545377",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

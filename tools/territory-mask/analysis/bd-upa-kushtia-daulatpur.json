@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-kushtia-daulatpur",
+ "areaName": "Daulatpur",
+ "maskVersion": "territory-mask/1:bd-upa-kushtia-daulatpur:565d1cd5a732",
+ "contentHash": "565d1cd5a7320248934797ed1347111977c7fc352422aea3fc6b7c687d5bcaf9",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 382098,
+  "eligibleCells": 15975,
+  "areaKm2": 465.55,
+  "eligibleShareOfOwned": 4.2,
+  "uniqueStreetKm": 557.6
+ },
+ "roads": {
+  "waysInArea": 1464,
+  "includedKm": 616.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 604,
+   "minor": 12.5
+  },
+  "densityKmPerKm2": 1.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 322,
+  "outsideLargestCells": 9704,
+  "doubtfulCells": 9782,
+  "confidentShare": 0.388,
+  "reachOutsideLargestCells": 1217,
+  "reachConfidentShare": 0.909,
+  "reachLargestShare": 0.924,
+  "reachRegions": 24,
+  "regions": 152,
+  "largestRegionCells": 6271,
+  "largestShare": 0.393,
+  "builtUpCells": 130,
+  "builtUpWithoutRoad": 64,
+  "gapShare": 0.492,
+  "singleCellHoles": 15
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12780,
+   "uniqueStreetKm": 446.1,
+   "takeoverCredits": 25560
+  },
+  {
+   "percent": 70,
+   "requiredCells": 11183,
+   "uniqueStreetKm": 390.3,
+   "takeoverCredits": 22366
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9585,
+   "uniqueStreetKm": 334.6,
+   "takeoverCredits": 19170
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7988,
+   "uniqueStreetKm": 278.8,
+   "takeoverCredits": 15976
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6390,
+   "uniqueStreetKm": 223,
+   "takeoverCredits": 12780
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "49% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 175878,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-kushtia",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B53912976326946",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

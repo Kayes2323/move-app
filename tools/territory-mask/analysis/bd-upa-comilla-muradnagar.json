@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-comilla-muradnagar",
+ "areaName": "Muradnagar",
+ "maskVersion": "territory-mask/1:bd-upa-comilla-muradnagar:be5da354b02a",
+ "contentHash": "be5da354b02abadc2d3a72cd935d06015e560bc7a7dc6a6ca478e7427061993c",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 281256,
+  "eligibleCells": 24799,
+  "areaKm2": 344.71,
+  "eligibleShareOfOwned": 8.8,
+  "uniqueStreetKm": 868.2
+ },
+ "roads": {
+  "waysInArea": 3704,
+  "includedKm": 958.7,
+  "byClassKm": {
+   "trunk": 6,
+   "main": 898.6,
+   "minor": 54.2
+  },
+  "densityKmPerKm2": 2.8
+ },
+ "quality": {
+  "trunkOnlyCells": 131,
+  "minorOnlyCells": 1361,
+  "outsideLargestCells": 7490,
+  "doubtfulCells": 8483,
+  "confidentShare": 0.658,
+  "reachOutsideLargestCells": 796,
+  "reachConfidentShare": 0.911,
+  "reachLargestShare": 0.968,
+  "reachRegions": 43,
+  "regions": 197,
+  "largestRegionCells": 17309,
+  "largestShare": 0.698,
+  "builtUpCells": 3547,
+  "builtUpWithoutRoad": 1627,
+  "gapShare": 0.459,
+  "singleCellHoles": 70
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 19840,
+   "uniqueStreetKm": 694.6,
+   "takeoverCredits": 39680
+  },
+  {
+   "percent": 70,
+   "requiredCells": 17360,
+   "uniqueStreetKm": 607.7,
+   "takeoverCredits": 34720
+  },
+  {
+   "percent": 60,
+   "requiredCells": 14880,
+   "uniqueStreetKm": 520.9,
+   "takeoverCredits": 29760
+  },
+  {
+   "percent": 50,
+   "requiredCells": 12400,
+   "uniqueStreetKm": 434.1,
+   "takeoverCredits": 24800
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9920,
+   "uniqueStreetKm": 347.3,
+   "takeoverCredits": 19840
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "46% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 265920,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-comilla",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B46038543043233",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

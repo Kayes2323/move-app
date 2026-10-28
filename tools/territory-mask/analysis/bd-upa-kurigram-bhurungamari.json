@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-kurigram-bhurungamari",
+ "areaName": "Bhurungamari",
+ "maskVersion": "territory-mask/1:bd-upa-kurigram-bhurungamari:26ab20168202",
+ "contentHash": "26ab2016820242792c47969a641b22e1d3459e07f16ff1c08c3e1fbf77cb63d2",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 202512,
+  "eligibleCells": 23078,
+  "areaKm2": 238.42,
+  "eligibleShareOfOwned": 11.4,
+  "uniqueStreetKm": 791.8
+ },
+ "roads": {
+  "waysInArea": 5517,
+  "includedKm": 915.4,
+  "byClassKm": {
+   "trunk": 19.9,
+   "main": 688.5,
+   "minor": 207
+  },
+  "densityKmPerKm2": 3.8
+ },
+ "quality": {
+  "trunkOnlyCells": 505,
+  "minorOnlyCells": 4722,
+  "outsideLargestCells": 9978,
+  "doubtfulCells": 13410,
+  "confidentShare": 0.419,
+  "reachOutsideLargestCells": 5044,
+  "reachConfidentShare": 0.585,
+  "reachLargestShare": 0.781,
+  "reachRegions": 59,
+  "regions": 225,
+  "largestRegionCells": 13100,
+  "largestShare": 0.568,
+  "builtUpCells": 511,
+  "builtUpWithoutRoad": 118,
+  "gapShare": 0.231,
+  "singleCellHoles": 302
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18463,
+   "uniqueStreetKm": 633.5,
+   "takeoverCredits": 36926
+  },
+  {
+   "percent": 70,
+   "requiredCells": 16155,
+   "uniqueStreetKm": 554.3,
+   "takeoverCredits": 32310
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13847,
+   "uniqueStreetKm": 475.1,
+   "takeoverCredits": 27694
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11539,
+   "uniqueStreetKm": 395.9,
+   "takeoverCredits": 23078
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9232,
+   "uniqueStreetKm": 316.8,
+   "takeoverCredits": 18464
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 9,232 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 238781,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-kurigram",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B87531326935884",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

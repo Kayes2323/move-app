@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-noakhali-chatkhil",
+ "areaName": "Chatkhil",
+ "maskVersion": "territory-mask/1:bd-upa-noakhali-chatkhil:02bb57c48d7e",
+ "contentHash": "02bb57c48d7ebb5e8314efc8805765acdbde3f0b447e6e3e175d17522d76ced2",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 111296,
+  "eligibleCells": 7644,
+  "areaKm2": 137.64,
+  "eligibleShareOfOwned": 6.9,
+  "uniqueStreetKm": 268.8
+ },
+ "roads": {
+  "waysInArea": 1074,
+  "includedKm": 289.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 287.5,
+   "minor": 2
+  },
+  "densityKmPerKm2": 2.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 45,
+  "outsideLargestCells": 1557,
+  "doubtfulCells": 1593,
+  "confidentShare": 0.792,
+  "reachOutsideLargestCells": 224,
+  "reachConfidentShare": 0.965,
+  "reachLargestShare": 0.971,
+  "reachRegions": 16,
+  "regions": 48,
+  "largestRegionCells": 6087,
+  "largestShare": 0.796,
+  "builtUpCells": 86,
+  "builtUpWithoutRoad": 36,
+  "gapShare": 0.419,
+  "singleCellHoles": 9
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 6116,
+   "uniqueStreetKm": 215.1,
+   "takeoverCredits": 12232
+  },
+  {
+   "percent": 70,
+   "requiredCells": 5351,
+   "uniqueStreetKm": 188.2,
+   "takeoverCredits": 10702
+  },
+  {
+   "percent": 60,
+   "requiredCells": 4587,
+   "uniqueStreetKm": 161.3,
+   "takeoverCredits": 9174
+  },
+  {
+   "percent": 50,
+   "requiredCells": 3822,
+   "uniqueStreetKm": 134.4,
+   "takeoverCredits": 7644
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3058,
+   "uniqueStreetKm": 107.5,
+   "takeoverCredits": 6116
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "42% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 77694,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-noakhali",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B29892543857449",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

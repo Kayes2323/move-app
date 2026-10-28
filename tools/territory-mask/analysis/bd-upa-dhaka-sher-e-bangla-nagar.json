@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-dhaka-sher-e-bangla-nagar",
+ "areaName": "Sher-e-bangla Nagar",
+ "maskVersion": "territory-mask/1:bd-upa-dhaka-sher-e-bangla-nagar:dc36f073ba8f",
+ "contentHash": "dc36f073ba8f95efb1c3afec40e0eda508bb37cb6a8eedc95206ef13645db4cd",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 3626,
+  "eligibleCells": 1716,
+  "areaKm2": 4.44,
+  "eligibleShareOfOwned": 47.3,
+  "uniqueStreetKm": 60
+ },
+ "roads": {
+  "waysInArea": 1989,
+  "includedKm": 87.3,
+  "byClassKm": {
+   "trunk": 5.3,
+   "main": 59.9,
+   "minor": 22.1
+  },
+  "densityKmPerKm2": 19.7
+ },
+ "quality": {
+  "trunkOnlyCells": 54,
+  "minorOnlyCells": 484,
+  "outsideLargestCells": 4,
+  "doubtfulCells": 539,
+  "confidentShare": 0.686,
+  "reachOutsideLargestCells": 0,
+  "reachConfidentShare": 0.686,
+  "reachLargestShare": 1,
+  "reachRegions": 1,
+  "regions": 3,
+  "largestRegionCells": 1712,
+  "largestShare": 0.998,
+  "builtUpCells": 75,
+  "builtUpWithoutRoad": 7,
+  "gapShare": 0.093,
+  "singleCellHoles": 71
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 1373,
+   "uniqueStreetKm": 48,
+   "takeoverCredits": 2746
+  },
+  {
+   "percent": 70,
+   "requiredCells": 1202,
+   "uniqueStreetKm": 42,
+   "takeoverCredits": 2404
+  },
+  {
+   "percent": 60,
+   "requiredCells": 1030,
+   "uniqueStreetKm": 36,
+   "takeoverCredits": 2060
+  },
+  {
+   "percent": 50,
+   "requiredCells": 858,
+   "uniqueStreetKm": 30,
+   "takeoverCredits": 1716
+  },
+  {
+   "percent": 40,
+   "requiredCells": 687,
+   "uniqueStreetKm": 24,
+   "takeoverCredits": 1374
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "60% threshold (part of its mapped streets are doubtful)",
+  "percent": 60,
+  "requiredCells": 1030
+ },
+ "maskBytes": 14420,
+ "type": "LOCAL_AREA",
+ "parentId": "bd-dis-dhaka",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B71144810702424",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

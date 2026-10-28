@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jamalpur-melandaha",
+ "areaName": "Melandaha",
+ "maskVersion": "territory-mask/1:bd-upa-jamalpur-melandaha:89d7eacd99bd",
+ "contentHash": "89d7eacd99bd3b29159a13834dfd44c65d0d46772f6d7a0df52f2b0eda0290bc",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 219575,
+  "eligibleCells": 23136,
+  "areaKm2": 263.59,
+  "eligibleShareOfOwned": 10.5,
+  "uniqueStreetKm": 801.6
+ },
+ "roads": {
+  "waysInArea": 5867,
+  "includedKm": 917.2,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 782.8,
+   "minor": 134.4
+  },
+  "densityKmPerKm2": 3.5
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 3214,
+  "outsideLargestCells": 4795,
+  "doubtfulCells": 7426,
+  "confidentShare": 0.679,
+  "reachOutsideLargestCells": 269,
+  "reachConfidentShare": 0.851,
+  "reachLargestShare": 0.988,
+  "reachRegions": 25,
+  "regions": 166,
+  "largestRegionCells": 18341,
+  "largestShare": 0.793,
+  "builtUpCells": 7,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 173
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18509,
+   "uniqueStreetKm": 641.3,
+   "takeoverCredits": 37018
+  },
+  {
+   "percent": 70,
+   "requiredCells": 16196,
+   "uniqueStreetKm": 561.1,
+   "takeoverCredits": 32392
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13882,
+   "uniqueStreetKm": 481,
+   "takeoverCredits": 27764
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11568,
+   "uniqueStreetKm": 400.8,
+   "takeoverCredits": 23136
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9255,
+   "uniqueStreetKm": 320.7,
+   "takeoverCredits": 18510
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 9,255 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 246377,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jamalpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B58797813051725",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

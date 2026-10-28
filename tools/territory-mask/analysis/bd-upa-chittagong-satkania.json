@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-satkania",
+ "areaName": "Satkania",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-satkania:882864c849eb",
+ "contentHash": "882864c849eb8c770c24bc2be57739b0e98d4929bd4d2d63bc1a04546e2334c7",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 219371,
+  "eligibleCells": 15534,
+  "areaKm2": 275.03,
+  "eligibleShareOfOwned": 7.1,
+  "uniqueStreetKm": 550
+ },
+ "roads": {
+  "waysInArea": 2634,
+  "includedKm": 610.4,
+  "byClassKm": {
+   "trunk": 24.2,
+   "main": 511.8,
+   "minor": 74.4
+  },
+  "densityKmPerKm2": 2.2
+ },
+ "quality": {
+  "trunkOnlyCells": 587,
+  "minorOnlyCells": 1834,
+  "outsideLargestCells": 2896,
+  "doubtfulCells": 4864,
+  "confidentShare": 0.687,
+  "reachOutsideLargestCells": 1581,
+  "reachConfidentShare": 0.759,
+  "reachLargestShare": 0.898,
+  "reachRegions": 46,
+  "regions": 144,
+  "largestRegionCells": 12638,
+  "largestShare": 0.814,
+  "builtUpCells": 812,
+  "builtUpWithoutRoad": 605,
+  "gapShare": 0.745,
+  "singleCellHoles": 41
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12428,
+   "uniqueStreetKm": 440.1,
+   "takeoverCredits": 24856
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10874,
+   "uniqueStreetKm": 385,
+   "takeoverCredits": 21748
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9321,
+   "uniqueStreetKm": 330,
+   "takeoverCredits": 18642
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7767,
+   "uniqueStreetKm": 275,
+   "takeoverCredits": 15534
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6214,
+   "uniqueStreetKm": 220,
+   "takeoverCredits": 12428
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "75% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 162163,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B15331282943417",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

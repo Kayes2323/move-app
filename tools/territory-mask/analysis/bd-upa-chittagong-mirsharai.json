@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-mirsharai",
+ "areaName": "Mirsharai",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-mirsharai:cccbd83e8a33",
+ "contentHash": "cccbd83e8a333525baf1d3cefa0c084db7a510330684e7c7b3f0878b5bac879e",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 371853,
+  "eligibleCells": 33120,
+  "areaKm2": 461.44,
+  "eligibleShareOfOwned": 8.9,
+  "uniqueStreetKm": 1166.7
+ },
+ "roads": {
+  "waysInArea": 5662,
+  "includedKm": 1340.4,
+  "byClassKm": {
+   "trunk": 66.1,
+   "main": 1183.9,
+   "minor": 90.4
+  },
+  "densityKmPerKm2": 2.9
+ },
+ "quality": {
+  "trunkOnlyCells": 1126,
+  "minorOnlyCells": 2181,
+  "outsideLargestCells": 2740,
+  "doubtfulCells": 5739,
+  "confidentShare": 0.827,
+  "reachOutsideLargestCells": 908,
+  "reachConfidentShare": 0.875,
+  "reachLargestShare": 0.973,
+  "reachRegions": 23,
+  "regions": 145,
+  "largestRegionCells": 30380,
+  "largestShare": 0.917,
+  "builtUpCells": 454,
+  "builtUpWithoutRoad": 179,
+  "gapShare": 0.394,
+  "singleCellHoles": 234
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 26496,
+   "uniqueStreetKm": 933.4,
+   "takeoverCredits": 52992
+  },
+  {
+   "percent": 70,
+   "requiredCells": 23184,
+   "uniqueStreetKm": 816.7,
+   "takeoverCredits": 46368
+  },
+  {
+   "percent": 60,
+   "requiredCells": 19872,
+   "uniqueStreetKm": 700,
+   "takeoverCredits": 39744
+  },
+  {
+   "percent": 50,
+   "requiredCells": 16560,
+   "uniqueStreetKm": 583.4,
+   "takeoverCredits": 33120
+  },
+  {
+   "percent": 40,
+   "requiredCells": 13248,
+   "uniqueStreetKm": 466.7,
+   "takeoverCredits": 26496
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "39% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 344124,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B69190373788059",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

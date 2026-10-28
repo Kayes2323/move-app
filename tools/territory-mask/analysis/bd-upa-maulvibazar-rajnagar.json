@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-maulvibazar-rajnagar",
+ "areaName": "Rajnagar",
+ "maskVersion": "territory-mask/1:bd-upa-maulvibazar-rajnagar:9d3825f8a37a",
+ "contentHash": "9d3825f8a37ac01b8d747c866cd0794c0f4c269a35fe8e3d36a2510ad1c6eaa6",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 277753,
+  "eligibleCells": 9966,
+  "areaKm2": 335.68,
+  "eligibleShareOfOwned": 3.6,
+  "uniqueStreetKm": 346.5
+ },
+ "roads": {
+  "waysInArea": 1818,
+  "includedKm": 385.3,
+  "byClassKm": {
+   "trunk": 22.1,
+   "main": 340.8,
+   "minor": 22.4
+  },
+  "densityKmPerKm2": 1.1
+ },
+ "quality": {
+  "trunkOnlyCells": 547,
+  "minorOnlyCells": 556,
+  "outsideLargestCells": 5272,
+  "doubtfulCells": 5570,
+  "confidentShare": 0.441,
+  "reachOutsideLargestCells": 1940,
+  "reachConfidentShare": 0.727,
+  "reachLargestShare": 0.805,
+  "reachRegions": 18,
+  "regions": 96,
+  "largestRegionCells": 4694,
+  "largestShare": 0.471,
+  "builtUpCells": 13,
+  "builtUpWithoutRoad": 10,
+  "gapShare": 0.769,
+  "singleCellHoles": 31
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 7973,
+   "uniqueStreetKm": 277.2,
+   "takeoverCredits": 15946
+  },
+  {
+   "percent": 70,
+   "requiredCells": 6977,
+   "uniqueStreetKm": 242.5,
+   "takeoverCredits": 13954
+  },
+  {
+   "percent": 60,
+   "requiredCells": 5980,
+   "uniqueStreetKm": 207.9,
+   "takeoverCredits": 11960
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4983,
+   "uniqueStreetKm": 173.2,
+   "takeoverCredits": 9966
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3987,
+   "uniqueStreetKm": 138.6,
+   "takeoverCredits": 7974
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "65% threshold (part of its mapped streets are doubtful)",
+  "percent": 65,
+  "requiredCells": 6478
+ },
+ "maskBytes": 105091,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-maulvibazar",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B11792824344189",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

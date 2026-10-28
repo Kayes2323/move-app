@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-rangpur-taraganj",
+ "areaName": "Taraganj",
+ "maskVersion": "territory-mask/1:bd-upa-rangpur-taraganj:189e66330247",
+ "contentHash": "189e66330247be4191cbbcbb9f54b1b4596fb33e8bf67322dc5a2b3c777aae21",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 111746,
+  "eligibleCells": 5387,
+  "areaKm2": 132.35,
+  "eligibleShareOfOwned": 4.8,
+  "uniqueStreetKm": 185.4
+ },
+ "roads": {
+  "waysInArea": 850,
+  "includedKm": 203.1,
+  "byClassKm": {
+   "trunk": 13.8,
+   "main": 170.7,
+   "minor": 18.6
+  },
+  "densityKmPerKm2": 1.5
+ },
+ "quality": {
+  "trunkOnlyCells": 384,
+  "minorOnlyCells": 483,
+  "outsideLargestCells": 3547,
+  "doubtfulCells": 3998,
+  "confidentShare": 0.258,
+  "reachOutsideLargestCells": 292,
+  "reachConfidentShare": 0.788,
+  "reachLargestShare": 0.946,
+  "reachRegions": 21,
+  "regions": 84,
+  "largestRegionCells": 1840,
+  "largestShare": 0.342,
+  "builtUpCells": 1,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 8
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4310,
+   "uniqueStreetKm": 148.3,
+   "takeoverCredits": 8620
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3771,
+   "uniqueStreetKm": 129.8,
+   "takeoverCredits": 7542
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3233,
+   "uniqueStreetKm": 111.3,
+   "takeoverCredits": 6466
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2694,
+   "uniqueStreetKm": 92.7,
+   "takeoverCredits": 5388
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2155,
+   "uniqueStreetKm": 74.2,
+   "takeoverCredits": 4310
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "70% threshold (part of its mapped streets are doubtful)",
+  "percent": 70,
+  "requiredCells": 3771
+ },
+ "maskBytes": 60872,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-rangpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B41041723149943",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

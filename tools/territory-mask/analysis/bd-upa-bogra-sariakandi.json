@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-bogra-sariakandi",
+ "areaName": "Sariakandi",
+ "maskVersion": "territory-mask/1:bd-upa-bogra-sariakandi:c51bf5fdaaf7",
+ "contentHash": "c51bf5fdaaf7481c6bfe6adcb9612dfcc8e78f9475dafb613c9c72e0b2666cff",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 339352,
+  "eligibleCells": 11046,
+  "areaKm2": 407.85,
+  "eligibleShareOfOwned": 3.3,
+  "uniqueStreetKm": 382.9
+ },
+ "roads": {
+  "waysInArea": 4963,
+  "includedKm": 446.9,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 226.3,
+   "minor": 220.6
+  },
+  "densityKmPerKm2": 1.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 5232,
+  "outsideLargestCells": 7433,
+  "doubtfulCells": 9382,
+  "confidentShare": 0.151,
+  "reachOutsideLargestCells": 6067,
+  "reachConfidentShare": 0.203,
+  "reachLargestShare": 0.451,
+  "reachRegions": 26,
+  "regions": 112,
+  "largestRegionCells": 3613,
+  "largestShare": 0.327,
+  "builtUpCells": 62,
+  "builtUpWithoutRoad": 14,
+  "gapShare": 0.226,
+  "singleCellHoles": 79
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 8837,
+   "uniqueStreetKm": 306.4,
+   "takeoverCredits": 17674
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7733,
+   "uniqueStreetKm": 268.1,
+   "takeoverCredits": 15466
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6628,
+   "uniqueStreetKm": 229.8,
+   "takeoverCredits": 13256
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5523,
+   "uniqueStreetKm": 191.5,
+   "takeoverCredits": 11046
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4419,
+   "uniqueStreetKm": 153.2,
+   "takeoverCredits": 8838
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 45% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 107532,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-bogra",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B56899132484318",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

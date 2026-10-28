@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-cox-s-bazar-teknaf",
+ "areaName": "Teknaf",
+ "maskVersion": "territory-mask/1:bd-upa-cox-s-bazar-teknaf:6509c601e375",
+ "contentHash": "6509c601e375687f38aa6618dd8066abcb3825da857e2e081897be2dec26c88e",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 250222,
+  "eligibleCells": 22754,
+  "areaKm2": 319.08,
+  "eligibleShareOfOwned": 9.1,
+  "uniqueStreetKm": 812.5
+ },
+ "roads": {
+  "waysInArea": 4792,
+  "includedKm": 945.9,
+  "byClassKm": {
+   "trunk": 36.8,
+   "main": 684.2,
+   "minor": 224.9
+  },
+  "densityKmPerKm2": 3
+ },
+ "quality": {
+  "trunkOnlyCells": 879,
+  "minorOnlyCells": 5158,
+  "outsideLargestCells": 10951,
+  "doubtfulCells": 15172,
+  "confidentShare": 0.333,
+  "reachOutsideLargestCells": 794,
+  "reachConfidentShare": 0.712,
+  "reachLargestShare": 0.965,
+  "reachRegions": 18,
+  "regions": 103,
+  "largestRegionCells": 11803,
+  "largestShare": 0.519,
+  "builtUpCells": 1494,
+  "builtUpWithoutRoad": 211,
+  "gapShare": 0.141,
+  "singleCellHoles": 197
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18204,
+   "uniqueStreetKm": 650.1,
+   "takeoverCredits": 36408
+  },
+  {
+   "percent": 70,
+   "requiredCells": 15928,
+   "uniqueStreetKm": 568.8,
+   "takeoverCredits": 31856
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13653,
+   "uniqueStreetKm": 487.5,
+   "takeoverCredits": 27306
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11377,
+   "uniqueStreetKm": 406.3,
+   "takeoverCredits": 22754
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9102,
+   "uniqueStreetKm": 325,
+   "takeoverCredits": 18204
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 9,102 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 231502,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-cox-s-bazar",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B37552741338938",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

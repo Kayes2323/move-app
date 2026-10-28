@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jamalpur-islampur",
+ "areaName": "Islampur",
+ "maskVersion": "territory-mask/1:bd-upa-jamalpur-islampur:cbc5c72bd474",
+ "contentHash": "cbc5c72bd4742fc326d56ecfa95c3f20120e71e7c0f6437d3b765682c01e74b1",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 279249,
+  "eligibleCells": 22387,
+  "areaKm2": 334.66,
+  "eligibleShareOfOwned": 8,
+  "uniqueStreetKm": 775
+ },
+ "roads": {
+  "waysInArea": 5273,
+  "includedKm": 904.7,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 596.8,
+   "minor": 307.9
+  },
+  "densityKmPerKm2": 2.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 7382,
+  "outsideLargestCells": 13921,
+  "doubtfulCells": 16200,
+  "confidentShare": 0.276,
+  "reachOutsideLargestCells": 11475,
+  "reachConfidentShare": 0.357,
+  "reachLargestShare": 0.487,
+  "reachRegions": 55,
+  "regions": 220,
+  "largestRegionCells": 8466,
+  "largestShare": 0.378,
+  "builtUpCells": 44,
+  "builtUpWithoutRoad": 4,
+  "gapShare": 0.091,
+  "singleCellHoles": 136
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 17910,
+   "uniqueStreetKm": 620,
+   "takeoverCredits": 35820
+  },
+  {
+   "percent": 70,
+   "requiredCells": 15671,
+   "uniqueStreetKm": 542.5,
+   "takeoverCredits": 31342
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13433,
+   "uniqueStreetKm": 465,
+   "takeoverCredits": 26866
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11194,
+   "uniqueStreetKm": 387.5,
+   "takeoverCredits": 22388
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8955,
+   "uniqueStreetKm": 310,
+   "takeoverCredits": 17910
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 49% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 235468,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jamalpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B8648993873034",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

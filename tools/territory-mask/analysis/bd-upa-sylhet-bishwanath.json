@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sylhet-bishwanath",
+ "areaName": "Bishwanath",
+ "maskVersion": "territory-mask/1:bd-upa-sylhet-bishwanath:6d6be8e34a74",
+ "contentHash": "6d6be8e34a74c65ee69753cb986b1c03ffb7d58214feabdcf71559731cd55892",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 175361,
+  "eligibleCells": 20097,
+  "areaKm2": 210.94,
+  "eligibleShareOfOwned": 11.5,
+  "uniqueStreetKm": 697
+ },
+ "roads": {
+  "waysInArea": 4005,
+  "includedKm": 784.3,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 725.4,
+   "minor": 58.9
+  },
+  "densityKmPerKm2": 3.7
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1467,
+  "outsideLargestCells": 1931,
+  "doubtfulCells": 3045,
+  "confidentShare": 0.848,
+  "reachOutsideLargestCells": 537,
+  "reachConfidentShare": 0.904,
+  "reachLargestShare": 0.973,
+  "reachRegions": 45,
+  "regions": 166,
+  "largestRegionCells": 18166,
+  "largestShare": 0.904,
+  "builtUpCells": 106,
+  "builtUpWithoutRoad": 34,
+  "gapShare": 0.321,
+  "singleCellHoles": 76
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 16078,
+   "uniqueStreetKm": 557.6,
+   "takeoverCredits": 32156
+  },
+  {
+   "percent": 70,
+   "requiredCells": 14068,
+   "uniqueStreetKm": 487.9,
+   "takeoverCredits": 28136
+  },
+  {
+   "percent": 60,
+   "requiredCells": 12059,
+   "uniqueStreetKm": 418.2,
+   "takeoverCredits": 24118
+  },
+  {
+   "percent": 50,
+   "requiredCells": 10049,
+   "uniqueStreetKm": 348.5,
+   "takeoverCredits": 20098
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8039,
+   "uniqueStreetKm": 278.8,
+   "takeoverCredits": 16078
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "32% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 198180,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sylhet",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B7917442502790",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

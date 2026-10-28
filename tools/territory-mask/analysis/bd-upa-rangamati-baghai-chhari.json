@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-rangamati-baghai-chhari",
+ "areaName": "Baghai Chhari",
+ "maskVersion": "territory-mask/1:bd-upa-rangamati-baghai-chhari:c8e02bd05d85",
+ "contentHash": "c8e02bd05d85c60c28348f210c63d2d620c17c79d8ea240357eb353884d093af",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 1319193,
+  "eligibleCells": 5346,
+  "areaKm2": 1624.04,
+  "eligibleShareOfOwned": 0.4,
+  "uniqueStreetKm": 187.6
+ },
+ "roads": {
+  "waysInArea": 705,
+  "includedKm": 210,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 197.2,
+   "minor": 12.8
+  },
+  "densityKmPerKm2": 0.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 326,
+  "outsideLargestCells": 4616,
+  "doubtfulCells": 4616,
+  "confidentShare": 0.137,
+  "reachOutsideLargestCells": 2310,
+  "reachConfidentShare": 0.565,
+  "reachLargestShare": 0.568,
+  "reachRegions": 31,
+  "regions": 94,
+  "largestRegionCells": 730,
+  "largestShare": 0.137,
+  "builtUpCells": 0,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 3
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4277,
+   "uniqueStreetKm": 150.1,
+   "takeoverCredits": 8554
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3743,
+   "uniqueStreetKm": 131.3,
+   "takeoverCredits": 7486
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3208,
+   "uniqueStreetKm": 112.6,
+   "takeoverCredits": 6416
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2673,
+   "uniqueStreetKm": 93.8,
+   "takeoverCredits": 5346
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2139,
+   "uniqueStreetKm": 75.1,
+   "takeoverCredits": 4278
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 57% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 60098,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-rangamati",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B27929495018112",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

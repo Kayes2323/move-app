@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-noakhali-companiganj",
+ "areaName": "Companiganj",
+ "maskVersion": "territory-mask/1:bd-upa-noakhali-companiganj:ada0b945a394",
+ "contentHash": "ada0b945a39478bce09b32970f5b448995c48e4573829d17106d1d118dd0b548",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 233532,
+  "eligibleCells": 25712,
+  "areaKm2": 289.98,
+  "eligibleShareOfOwned": 11,
+  "uniqueStreetKm": 906
+ },
+ "roads": {
+  "waysInArea": 6759,
+  "includedKm": 1013.3,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 732,
+   "minor": 281.3
+  },
+  "densityKmPerKm2": 3.5
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 6726,
+  "outsideLargestCells": 11358,
+  "doubtfulCells": 12647,
+  "confidentShare": 0.508,
+  "reachOutsideLargestCells": 10226,
+  "reachConfidentShare": 0.543,
+  "reachLargestShare": 0.602,
+  "reachRegions": 67,
+  "regions": 215,
+  "largestRegionCells": 14354,
+  "largestShare": 0.558,
+  "builtUpCells": 24,
+  "builtUpWithoutRoad": 9,
+  "gapShare": 0.375,
+  "singleCellHoles": 139
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 20570,
+   "uniqueStreetKm": 724.8,
+   "takeoverCredits": 41140
+  },
+  {
+   "percent": 70,
+   "requiredCells": 17999,
+   "uniqueStreetKm": 634.2,
+   "takeoverCredits": 35998
+  },
+  {
+   "percent": 60,
+   "requiredCells": 15428,
+   "uniqueStreetKm": 543.7,
+   "takeoverCredits": 30856
+  },
+  {
+   "percent": 50,
+   "requiredCells": 12856,
+   "uniqueStreetKm": 453,
+   "takeoverCredits": 25712
+  },
+  {
+   "percent": 40,
+   "requiredCells": 10285,
+   "uniqueStreetKm": 362.4,
+   "takeoverCredits": 20570
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 10,285 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 237429,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-noakhali",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B56228986539746",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

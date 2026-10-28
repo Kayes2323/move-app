@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sirajganj-belkuchi",
+ "areaName": "Belkuchi",
+ "maskVersion": "territory-mask/1:bd-upa-sirajganj-belkuchi:7aad3ada5be0",
+ "contentHash": "7aad3ada5be02e968d419d372a6e5a8a218286f5d15e5d475634ff9e306b35c1",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 135616,
+  "eligibleCells": 8770,
+  "areaKm2": 164.56,
+  "eligibleShareOfOwned": 6.5,
+  "uniqueStreetKm": 305.5
+ },
+ "roads": {
+  "waysInArea": 1033,
+  "includedKm": 343.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 333.9,
+   "minor": 9.6
+  },
+  "densityKmPerKm2": 2.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 237,
+  "outsideLargestCells": 6619,
+  "doubtfulCells": 6629,
+  "confidentShare": 0.244,
+  "reachOutsideLargestCells": 3088,
+  "reachConfidentShare": 0.636,
+  "reachLargestShare": 0.648,
+  "reachRegions": 23,
+  "regions": 90,
+  "largestRegionCells": 2151,
+  "largestShare": 0.245,
+  "builtUpCells": 1075,
+  "builtUpWithoutRoad": 486,
+  "gapShare": 0.452,
+  "singleCellHoles": 14
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 7016,
+   "uniqueStreetKm": 244.4,
+   "takeoverCredits": 14032
+  },
+  {
+   "percent": 70,
+   "requiredCells": 6139,
+   "uniqueStreetKm": 213.8,
+   "takeoverCredits": 12278
+  },
+  {
+   "percent": 60,
+   "requiredCells": 5262,
+   "uniqueStreetKm": 183.3,
+   "takeoverCredits": 10524
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4385,
+   "uniqueStreetKm": 152.7,
+   "takeoverCredits": 8770
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3508,
+   "uniqueStreetKm": 122.2,
+   "takeoverCredits": 7016
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "45% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 94381,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sirajganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B61751715276638",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

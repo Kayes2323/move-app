@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-magura-mohammadpur",
+ "areaName": "Mohammadpur",
+ "maskVersion": "territory-mask/1:bd-upa-magura-mohammadpur:8f757a29f77c",
+ "contentHash": "8f757a29f77c40c9f71ef6deb4e4e941a31a95a297d58993ed76370f9b86eb8d",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 188325,
+  "eligibleCells": 7915,
+  "areaKm2": 231.71,
+  "eligibleShareOfOwned": 4.2,
+  "uniqueStreetKm": 277.6
+ },
+ "roads": {
+  "waysInArea": 800,
+  "includedKm": 302.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 300,
+   "minor": 2.5
+  },
+  "densityKmPerKm2": 1.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 64,
+  "outsideLargestCells": 2135,
+  "doubtfulCells": 2155,
+  "confidentShare": 0.728,
+  "reachOutsideLargestCells": 648,
+  "reachConfidentShare": 0.913,
+  "reachLargestShare": 0.918,
+  "reachRegions": 17,
+  "regions": 46,
+  "largestRegionCells": 5780,
+  "largestShare": 0.73,
+  "builtUpCells": 78,
+  "builtUpWithoutRoad": 24,
+  "gapShare": 0.308,
+  "singleCellHoles": 5
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 6332,
+   "uniqueStreetKm": 222.1,
+   "takeoverCredits": 12664
+  },
+  {
+   "percent": 70,
+   "requiredCells": 5541,
+   "uniqueStreetKm": 194.4,
+   "takeoverCredits": 11082
+  },
+  {
+   "percent": 60,
+   "requiredCells": 4749,
+   "uniqueStreetKm": 166.6,
+   "takeoverCredits": 9498
+  },
+  {
+   "percent": 50,
+   "requiredCells": 3958,
+   "uniqueStreetKm": 138.8,
+   "takeoverCredits": 7916
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3166,
+   "uniqueStreetKm": 111.1,
+   "takeoverCredits": 6332
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "31% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 86134,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-magura",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B50148309792291",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

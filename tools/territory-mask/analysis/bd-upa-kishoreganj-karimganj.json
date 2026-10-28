@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-kishoreganj-karimganj",
+ "areaName": "Karimganj",
+ "maskVersion": "territory-mask/1:bd-upa-kishoreganj-karimganj:deaf35451093",
+ "contentHash": "deaf354510939440f55024b3eab8676732532ca304935c1b272b48f97738ffca",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 168216,
+  "eligibleCells": 2949,
+  "areaKm2": 203.61,
+  "eligibleShareOfOwned": 1.8,
+  "uniqueStreetKm": 102.6
+ },
+ "roads": {
+  "waysInArea": 404,
+  "includedKm": 113.4,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 110.9,
+   "minor": 2.4
+  },
+  "densityKmPerKm2": 0.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 62,
+  "outsideLargestCells": 2541,
+  "doubtfulCells": 2575,
+  "confidentShare": 0.127,
+  "reachOutsideLargestCells": 1373,
+  "reachConfidentShare": 0.522,
+  "reachLargestShare": 0.534,
+  "reachRegions": 16,
+  "regions": 62,
+  "largestRegionCells": 408,
+  "largestShare": 0.138,
+  "builtUpCells": 35,
+  "builtUpWithoutRoad": 4,
+  "gapShare": 0.114,
+  "singleCellHoles": 2
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 2360,
+   "uniqueStreetKm": 82.1,
+   "takeoverCredits": 4720
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2065,
+   "uniqueStreetKm": 71.8,
+   "takeoverCredits": 4130
+  },
+  {
+   "percent": 60,
+   "requiredCells": 1770,
+   "uniqueStreetKm": 61.6,
+   "takeoverCredits": 3540
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1475,
+   "uniqueStreetKm": 51.3,
+   "takeoverCredits": 2950
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1180,
+   "uniqueStreetKm": 41.1,
+   "takeoverCredits": 2360
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 53% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 34588,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-kishoreganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B80392478978834",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

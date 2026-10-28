@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-brahamanbaria-brahmanbaria-sadar",
+ "areaName": "Brahmanbaria Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-brahamanbaria-brahmanbaria-sadar:719966b83a73",
+ "contentHash": "719966b83a73197371bc048182092a72075b3c822017f57a98b9d53a72724e6e",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 180901,
+  "eligibleCells": 15572,
+  "areaKm2": 220.69,
+  "eligibleShareOfOwned": 8.6,
+  "uniqueStreetKm": 543.9
+ },
+ "roads": {
+  "waysInArea": 2378,
+  "includedKm": 612.1,
+  "byClassKm": {
+   "trunk": 32.2,
+   "main": 547.7,
+   "minor": 32.3
+  },
+  "densityKmPerKm2": 2.8
+ },
+ "quality": {
+  "trunkOnlyCells": 770,
+  "minorOnlyCells": 792,
+  "outsideLargestCells": 3216,
+  "doubtfulCells": 4476,
+  "confidentShare": 0.713,
+  "reachOutsideLargestCells": 543,
+  "reachConfidentShare": 0.874,
+  "reachLargestShare": 0.965,
+  "reachRegions": 17,
+  "regions": 95,
+  "largestRegionCells": 12356,
+  "largestShare": 0.793,
+  "builtUpCells": 94,
+  "builtUpWithoutRoad": 2,
+  "gapShare": 0.021,
+  "singleCellHoles": 181
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12458,
+   "uniqueStreetKm": 435.1,
+   "takeoverCredits": 24916
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10901,
+   "uniqueStreetKm": 380.7,
+   "takeoverCredits": 21802
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9344,
+   "uniqueStreetKm": 326.4,
+   "takeoverCredits": 18688
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7786,
+   "uniqueStreetKm": 271.9,
+   "takeoverCredits": 15572
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6229,
+   "uniqueStreetKm": 217.6,
+   "takeoverCredits": 12458
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "50% threshold (the area is large)",
+  "percent": 50,
+  "requiredCells": 7786
+ },
+ "maskBytes": 159770,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-brahamanbaria",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B14183911871917",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

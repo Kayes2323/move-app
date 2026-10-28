@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-gopalganj-tungi-para",
+ "areaName": "Tungi Para",
+ "maskVersion": "territory-mask/1:bd-upa-gopalganj-tungi-para:6c1a84f2d586",
+ "contentHash": "6c1a84f2d586e76ea7370ab635c7e4a2f467c20b6c0a3b205b2345b239b0e3f7",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 102528,
+  "eligibleCells": 4061,
+  "areaKm2": 127.03,
+  "eligibleShareOfOwned": 4,
+  "uniqueStreetKm": 142.9
+ },
+ "roads": {
+  "waysInArea": 557,
+  "includedKm": 169.2,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 168.2,
+   "minor": 1
+  },
+  "densityKmPerKm2": 1.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 21,
+  "outsideLargestCells": 1318,
+  "doubtfulCells": 1337,
+  "confidentShare": 0.671,
+  "reachOutsideLargestCells": 298,
+  "reachConfidentShare": 0.921,
+  "reachLargestShare": 0.927,
+  "reachRegions": 15,
+  "regions": 48,
+  "largestRegionCells": 2743,
+  "largestShare": 0.675,
+  "builtUpCells": 0,
+  "builtUpWithoutRoad": 0,
+  "gapShare": 0,
+  "singleCellHoles": 2
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 3249,
+   "uniqueStreetKm": 114.4,
+   "takeoverCredits": 6498
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2843,
+   "uniqueStreetKm": 100.1,
+   "takeoverCredits": 5686
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2437,
+   "uniqueStreetKm": 85.8,
+   "takeoverCredits": 4874
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2031,
+   "uniqueStreetKm": 71.5,
+   "takeoverCredits": 4062
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1625,
+   "uniqueStreetKm": 57.2,
+   "takeoverCredits": 3250
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 3249
+ },
+ "maskBytes": 48182,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-gopalganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B95964430529833",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

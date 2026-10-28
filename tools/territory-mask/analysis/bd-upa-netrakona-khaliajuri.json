@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-netrakona-khaliajuri",
+ "areaName": "Khaliajuri",
+ "maskVersion": "territory-mask/1:bd-upa-netrakona-khaliajuri:4299d7e45271",
+ "contentHash": "4299d7e452719c42c6f71c19cf442ffad21006eb616880d8703a0c2a4f965ee1",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 242019,
+  "eligibleCells": 11108,
+  "areaKm2": 291.69,
+  "eligibleShareOfOwned": 4.6,
+  "uniqueStreetKm": 385.6
+ },
+ "roads": {
+  "waysInArea": 1946,
+  "includedKm": 446.1,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 323.6,
+   "minor": 122.5
+  },
+  "densityKmPerKm2": 1.5
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 2911,
+  "outsideLargestCells": 9633,
+  "doubtfulCells": 9856,
+  "confidentShare": 0.113,
+  "reachOutsideLargestCells": 5936,
+  "reachConfidentShare": 0.35,
+  "reachLargestShare": 0.466,
+  "reachRegions": 46,
+  "regions": 160,
+  "largestRegionCells": 1475,
+  "largestShare": 0.133,
+  "builtUpCells": 161,
+  "builtUpWithoutRoad": 77,
+  "gapShare": 0.478,
+  "singleCellHoles": 82
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 8887,
+   "uniqueStreetKm": 308.5,
+   "takeoverCredits": 17774
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7776,
+   "uniqueStreetKm": 270,
+   "takeoverCredits": 15552
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6665,
+   "uniqueStreetKm": 231.4,
+   "takeoverCredits": 13330
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5554,
+   "uniqueStreetKm": 192.8,
+   "takeoverCredits": 11108
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4444,
+   "uniqueStreetKm": 154.3,
+   "takeoverCredits": 8888
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "48% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 117142,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-netrakona",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B19619959781410",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

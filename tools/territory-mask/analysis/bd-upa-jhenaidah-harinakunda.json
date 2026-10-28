@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jhenaidah-harinakunda",
+ "areaName": "Harinakunda",
+ "maskVersion": "territory-mask/1:bd-upa-jhenaidah-harinakunda:e74070ba6b37",
+ "contentHash": "e74070ba6b37dbb0e578d0442a94377c586fdf16b9a7156a8cf2d432a052071f",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 187533,
+  "eligibleCells": 4132,
+  "areaKm2": 229.81,
+  "eligibleShareOfOwned": 2.2,
+  "uniqueStreetKm": 144.6
+ },
+ "roads": {
+  "waysInArea": 617,
+  "includedKm": 158.7,
+  "byClassKm": {
+   "trunk": 1,
+   "main": 155.3,
+   "minor": 2.4
+  },
+  "densityKmPerKm2": 0.7
+ },
+ "quality": {
+  "trunkOnlyCells": 30,
+  "minorOnlyCells": 64,
+  "outsideLargestCells": 3489,
+  "doubtfulCells": 3489,
+  "confidentShare": 0.156,
+  "reachOutsideLargestCells": 184,
+  "reachConfidentShare": 0.94,
+  "reachLargestShare": 0.955,
+  "reachRegions": 10,
+  "regions": 51,
+  "largestRegionCells": 643,
+  "largestShare": 0.156,
+  "builtUpCells": 75,
+  "builtUpWithoutRoad": 47,
+  "gapShare": 0.627,
+  "singleCellHoles": 4
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 3306,
+   "uniqueStreetKm": 115.7,
+   "takeoverCredits": 6612
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2893,
+   "uniqueStreetKm": 101.3,
+   "takeoverCredits": 5786
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2480,
+   "uniqueStreetKm": 86.8,
+   "takeoverCredits": 4960
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2066,
+   "uniqueStreetKm": 72.3,
+   "takeoverCredits": 4132
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1653,
+   "uniqueStreetKm": 57.9,
+   "takeoverCredits": 3306
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "63% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 40588,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jhenaidah",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B20021225888412",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

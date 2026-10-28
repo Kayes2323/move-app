@@ -9,6 +9,7 @@ import { applyActivityToUser, legacyRun } from "./tracking/sync";
 import { TrackingEngine } from "./tracking/engine";
 import { MemoryStore } from "./tracking/store";
 import type { LocalActivity } from "./tracking/types";
+import { OPEN_CATALOG } from "./territory/catalog";
 import { OPEN_AREA_IDS } from "./territory/open";
 import { TERRITORIES } from "./territory/conquest/registry";
 import { ROUTES } from "../data/routes";
@@ -102,8 +103,9 @@ test("the engine keeps only the context of the chosen mode, and refuses a mode w
   await assert.rejects(mk().start({ ...base, mode: "TERRITORY", journey: null, territory: null }), /Territory/);
 });
 
-test("the open-area list used by light screens equals the registry", () => {
-  assert.deepEqual([...OPEN_AREA_IDS].sort(), TERRITORIES.map((t) => t.id).sort());
+test("the open-area list used by light screens equals the catalog, and every bundled definition is open", () => {
+  assert.deepEqual([...OPEN_AREA_IDS].sort(), Object.keys(OPEN_CATALOG).sort());
+  for (const t of TERRITORIES) assert.ok(OPEN_AREA_IDS.includes(t.id), `${t.id} is bundled but not open`);
 });
 
 test("every route's geometry is self-consistent and found by the name a Journey stores", () => {

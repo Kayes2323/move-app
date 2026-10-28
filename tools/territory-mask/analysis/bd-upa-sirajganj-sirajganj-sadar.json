@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sirajganj-sirajganj-sadar",
+ "areaName": "Sirajganj Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-sirajganj-sirajganj-sadar:e94c6595d98f",
+ "contentHash": "e94c6595d98fc0c09ac353480a40e1688330cb57982586e1542fab68a7530fe9",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 261079,
+  "eligibleCells": 9343,
+  "areaKm2": 315.85,
+  "eligibleShareOfOwned": 3.6,
+  "uniqueStreetKm": 325
+ },
+ "roads": {
+  "waysInArea": 1537,
+  "includedKm": 390.3,
+  "byClassKm": {
+   "trunk": 19.3,
+   "main": 337.2,
+   "minor": 33.8
+  },
+  "densityKmPerKm2": 1.2
+ },
+ "quality": {
+  "trunkOnlyCells": 66,
+  "minorOnlyCells": 798,
+  "outsideLargestCells": 5719,
+  "doubtfulCells": 5899,
+  "confidentShare": 0.369,
+  "reachOutsideLargestCells": 971,
+  "reachConfidentShare": 0.815,
+  "reachLargestShare": 0.896,
+  "reachRegions": 28,
+  "regions": 106,
+  "largestRegionCells": 3624,
+  "largestShare": 0.388,
+  "builtUpCells": 272,
+  "builtUpWithoutRoad": 140,
+  "gapShare": 0.515,
+  "singleCellHoles": 78
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 7475,
+   "uniqueStreetKm": 260,
+   "takeoverCredits": 14950
+  },
+  {
+   "percent": 70,
+   "requiredCells": 6541,
+   "uniqueStreetKm": 227.5,
+   "takeoverCredits": 13082
+  },
+  {
+   "percent": 60,
+   "requiredCells": 5606,
+   "uniqueStreetKm": 195,
+   "takeoverCredits": 11212
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4672,
+   "uniqueStreetKm": 162.5,
+   "takeoverCredits": 9344
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3738,
+   "uniqueStreetKm": 130,
+   "takeoverCredits": 7476
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "52% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 92159,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sirajganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B98549548680688",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

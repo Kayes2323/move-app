@@ -75,3 +75,33 @@ The **takeover** requirement stays exactly 2 x the area's own requirement, in ne
 * **Capacitor/static builds** bundle everything in `public/`: each open area adds its mask file. The total is reported below and in the delivery message.
 * **Boundary vintage**: ADM3 2015/2020; areas split since then are part of their parent here.
 * Mask version changes are safe: progress is stored as cell ids, recomputed against the current mask. Cells that stop being eligible stop counting; nothing is rewritten.
+
+## 7. Results (real data, planet-260928; full table in `docs/territory-areas/areas.md`)
+
+All 545 playable areas were built from the national extract (1,085,248 walkable highway ways and 13.4 M building centres in Bangladesh; MD5 verified). 544 have a boundary; Shyamoli (Dhaka city thana) has none in the boundary data and stays NOT_OPEN. **No mask failed validation and none leaks into a neighbour.** The pipeline was checked against the pilot twice: the same code path reproduces the committed Mohammadpur mask byte for byte, and the national extract gives 3,883 eligible cells for it against the committed 3,880 (the national file cuts ways at district boxes slightly differently; the committed pilot mask is kept as the truth).
+
+| Division | OPEN | COMING_SOON | NOT_OPEN | Areas |
+| --- | ---: | ---: | ---: | ---: |
+| Barisal | 26 | 10 | 4 | 40 |
+| Chittagong | 52 | 44 | 15 | 111 |
+| Dhaka | 105 | 16 | 9 | 130 |
+| Khulna | 39 | 19 | 6 | 64 |
+| Mymensingh | 19 | 10 | 5 | 34 |
+| Rajshani | 51 | 18 | 1 | 70 |
+| Rangpur | 21 | 15 | 22 | 58 |
+| Sylhet | 16 | 8 | 14 | 38 |
+| **Total** | **329** | **140** | **76** | **545** |
+
+* **Hajiganj (priority)**: OPEN at **50%**. 15,736 eligible cells (552 km of unique street, 194 km2), mask valid, 0 leakage; 97% of its streets are in one network once a 105 m unmapped link is allowed; only 306 cells depend on service roads/tracks. Conquest needs 7,868 cells (about 276 km of different street), takeover 15,736 credits. It is a large rural upazila: this is a long project, by design.
+* **Chandpur Sadar**: stays **COMING_SOON** on real data: 12,620 eligible cells, but 47% of its 219 built-up cells have no mapped street nearby (the pilot has 0%). OpenStreetMap is missing too much of the town for a fair conquest.
+* **Mohammadpur**: unchanged, 80%, 3,104 cells.
+* Thresholds of the 329 open areas: 80%: 139, 75%: 32, 70%: 30, 65%: 26, 60%: 24, 55%: 30, 50%: 16, 45%: 11, 40%: 21; no conquest asks for more than 7,997 cells (the cap is 8,000).
+* Closed: 76 NOT_OPEN, almost all "too large for one conquest" (even 40% would need more than 8,000 different cells: big towns and big rural upazilas), and 140 COMING_SOON: OSM mapping gaps around built-up ground (the main reason) or streets split into fragments even when short unmapped links are allowed (hill and char areas).
+* Open areas add 27 MB of mask JSON to `public/` (about 5.8 MB gzipped on the web; the Capacitor package stores them compressed). They are fetched one at a time, only for the user's active area.
+
+## 8. Known limits of these results
+
+* OSM completeness is unknown beyond the built-up signal; rural villages have few dense building cells, so 224 of the open areas have too few built-up cells for the mapping-gap check to say anything (they pass it by default, not by evidence).
+* Gated, military and airport ground (Cantonment, Biman Bandar) is only excluded where OSM tags it (`access=private/no`, `foot=no`).
+* Nothing here was walked: real GPS validation of any area but the pilot is still to do.
+* The policy numbers (8,000-cell cap, 40% floor, 30% mapping-gap gate, 105 m link, 5-point margin) are my proposals; `tools/territory-mask/recommend.ts` re-judges every area in seconds if any is changed.

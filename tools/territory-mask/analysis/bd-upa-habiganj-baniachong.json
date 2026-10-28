@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-habiganj-baniachong",
+ "areaName": "Baniachong",
+ "maskVersion": "territory-mask/1:bd-upa-habiganj-baniachong:595dc2f91089",
+ "contentHash": "595dc2f91089a2441026d84c8ecad1bb41fb1cc61a2de472ad79b567c3bcff15",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 412253,
+  "eligibleCells": 12983,
+  "areaKm2": 498.42,
+  "eligibleShareOfOwned": 3.1,
+  "uniqueStreetKm": 451.4
+ },
+ "roads": {
+  "waysInArea": 2102,
+  "includedKm": 505.2,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 440.6,
+   "minor": 64.6
+  },
+  "densityKmPerKm2": 1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1571,
+  "outsideLargestCells": 10878,
+  "doubtfulCells": 11531,
+  "confidentShare": 0.112,
+  "reachOutsideLargestCells": 1157,
+  "reachConfidentShare": 0.807,
+  "reachLargestShare": 0.911,
+  "reachRegions": 37,
+  "regions": 155,
+  "largestRegionCells": 2105,
+  "largestShare": 0.162,
+  "builtUpCells": 423,
+  "builtUpWithoutRoad": 174,
+  "gapShare": 0.411,
+  "singleCellHoles": 34
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 10387,
+   "uniqueStreetKm": 361.2,
+   "takeoverCredits": 20774
+  },
+  {
+   "percent": 70,
+   "requiredCells": 9089,
+   "uniqueStreetKm": 316,
+   "takeoverCredits": 18178
+  },
+  {
+   "percent": 60,
+   "requiredCells": 7790,
+   "uniqueStreetKm": 270.9,
+   "takeoverCredits": 15580
+  },
+  {
+   "percent": 50,
+   "requiredCells": 6492,
+   "uniqueStreetKm": 225.7,
+   "takeoverCredits": 12984
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5194,
+   "uniqueStreetKm": 180.6,
+   "takeoverCredits": 10388
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "41% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 140410,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-habiganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B40412060728075",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

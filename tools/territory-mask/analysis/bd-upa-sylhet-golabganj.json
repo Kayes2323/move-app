@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sylhet-golabganj",
+ "areaName": "Golabganj",
+ "maskVersion": "territory-mask/1:bd-upa-sylhet-golabganj:79e1e0ebe2a4",
+ "contentHash": "79e1e0ebe2a4a55bca8caebe7366004aa16a6a532e9bad0e8d80c9f64e5f833d",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 230340,
+  "eligibleCells": 26587,
+  "areaKm2": 277.2,
+  "eligibleShareOfOwned": 11.5,
+  "uniqueStreetKm": 922.3
+ },
+ "roads": {
+  "waysInArea": 4274,
+  "includedKm": 1057.4,
+  "byClassKm": {
+   "trunk": 1.6,
+   "main": 963.5,
+   "minor": 92.3
+  },
+  "densityKmPerKm2": 3.8
+ },
+ "quality": {
+  "trunkOnlyCells": 35,
+  "minorOnlyCells": 2263,
+  "outsideLargestCells": 7918,
+  "doubtfulCells": 8849,
+  "confidentShare": 0.667,
+  "reachOutsideLargestCells": 4465,
+  "reachConfidentShare": 0.785,
+  "reachLargestShare": 0.832,
+  "reachRegions": 24,
+  "regions": 149,
+  "largestRegionCells": 18669,
+  "largestShare": 0.702,
+  "builtUpCells": 89,
+  "builtUpWithoutRoad": 29,
+  "gapShare": 0.326,
+  "singleCellHoles": 114
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 21270,
+   "uniqueStreetKm": 737.9,
+   "takeoverCredits": 42540
+  },
+  {
+   "percent": 70,
+   "requiredCells": 18611,
+   "uniqueStreetKm": 645.6,
+   "takeoverCredits": 37222
+  },
+  {
+   "percent": 60,
+   "requiredCells": 15953,
+   "uniqueStreetKm": 553.4,
+   "takeoverCredits": 31906
+  },
+  {
+   "percent": 50,
+   "requiredCells": 13294,
+   "uniqueStreetKm": 461.2,
+   "takeoverCredits": 26588
+  },
+  {
+   "percent": 40,
+   "requiredCells": 10635,
+   "uniqueStreetKm": 368.9,
+   "takeoverCredits": 21270
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "33% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 267430,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sylhet",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B69213858716566",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

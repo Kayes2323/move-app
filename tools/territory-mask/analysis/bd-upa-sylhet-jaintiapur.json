@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sylhet-jaintiapur",
+ "areaName": "Jaintiapur",
+ "maskVersion": "territory-mask/1:bd-upa-sylhet-jaintiapur:27c2ec678d45",
+ "contentHash": "27c2ec678d45402b0603eb2847f1b703a1e60a68079d13f04fd757a92012e933",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 228454,
+  "eligibleCells": 23144,
+  "areaKm2": 273.85,
+  "eligibleShareOfOwned": 10.1,
+  "uniqueStreetKm": 801.3
+ },
+ "roads": {
+  "waysInArea": 5712,
+  "includedKm": 913,
+  "byClassKm": {
+   "trunk": 33.3,
+   "main": 659,
+   "minor": 220.8
+  },
+  "densityKmPerKm2": 3.3
+ },
+ "quality": {
+  "trunkOnlyCells": 759,
+  "minorOnlyCells": 5536,
+  "outsideLargestCells": 16869,
+  "doubtfulCells": 18034,
+  "confidentShare": 0.221,
+  "reachOutsideLargestCells": 6014,
+  "reachConfidentShare": 0.546,
+  "reachLargestShare": 0.74,
+  "reachRegions": 33,
+  "regions": 190,
+  "largestRegionCells": 6275,
+  "largestShare": 0.271,
+  "builtUpCells": 28,
+  "builtUpWithoutRoad": 11,
+  "gapShare": 0.393,
+  "singleCellHoles": 101
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 18516,
+   "uniqueStreetKm": 641.1,
+   "takeoverCredits": 37032
+  },
+  {
+   "percent": 70,
+   "requiredCells": 16201,
+   "uniqueStreetKm": 560.9,
+   "takeoverCredits": 32402
+  },
+  {
+   "percent": 60,
+   "requiredCells": 13887,
+   "uniqueStreetKm": 480.8,
+   "takeoverCredits": 27774
+  },
+  {
+   "percent": 50,
+   "requiredCells": 11572,
+   "uniqueStreetKm": 400.7,
+   "takeoverCredits": 23144
+  },
+  {
+   "percent": 40,
+   "requiredCells": 9258,
+   "uniqueStreetKm": 320.5,
+   "takeoverCredits": 18516
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 9,258 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 252001,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sylhet",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B19736672664555",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

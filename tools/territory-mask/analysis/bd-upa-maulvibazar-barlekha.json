@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-maulvibazar-barlekha",
+ "areaName": "Barlekha",
+ "maskVersion": "territory-mask/1:bd-upa-maulvibazar-barlekha:f5c5fa576d28",
+ "contentHash": "f5c5fa576d285cb22644a0b90efa95a6afdb768ab08951e92ba1b22830a33acc",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 321416,
+  "eligibleCells": 5540,
+  "areaKm2": 387.41,
+  "eligibleShareOfOwned": 1.7,
+  "uniqueStreetKm": 192.3
+ },
+ "roads": {
+  "waysInArea": 1850,
+  "includedKm": 215.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 208.6,
+   "minor": 6.9
+  },
+  "densityKmPerKm2": 0.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 164,
+  "outsideLargestCells": 4261,
+  "doubtfulCells": 4352,
+  "confidentShare": 0.214,
+  "reachOutsideLargestCells": 972,
+  "reachConfidentShare": 0.805,
+  "reachLargestShare": 0.825,
+  "reachRegions": 19,
+  "regions": 90,
+  "largestRegionCells": 1279,
+  "largestShare": 0.231,
+  "builtUpCells": 72,
+  "builtUpWithoutRoad": 45,
+  "gapShare": 0.625,
+  "singleCellHoles": 15
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4432,
+   "uniqueStreetKm": 153.9,
+   "takeoverCredits": 8864
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3878,
+   "uniqueStreetKm": 134.6,
+   "takeoverCredits": 7756
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3324,
+   "uniqueStreetKm": 115.4,
+   "takeoverCredits": 6648
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2770,
+   "uniqueStreetKm": 96.2,
+   "takeoverCredits": 5540
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2216,
+   "uniqueStreetKm": 76.9,
+   "takeoverCredits": 4432
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "63% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 61207,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-maulvibazar",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B82170766050132",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

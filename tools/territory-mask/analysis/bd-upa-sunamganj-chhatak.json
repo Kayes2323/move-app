@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-sunamganj-chhatak",
+ "areaName": "Chhatak",
+ "maskVersion": "territory-mask/1:bd-upa-sunamganj-chhatak:1a23da4d72e2",
+ "contentHash": "1a23da4d72e29ed6e88a60fd71916a9f263ae6d2cdf51fac04910d95e4b076bf",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 362688,
+  "eligibleCells": 37507,
+  "areaKm2": 435.3,
+  "eligibleShareOfOwned": 10.3,
+  "uniqueStreetKm": 1299.4
+ },
+ "roads": {
+  "waysInArea": 9633,
+  "includedKm": 1523.5,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 1298.4,
+   "minor": 225.1
+  },
+  "densityKmPerKm2": 3.5
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 5440,
+  "outsideLargestCells": 13854,
+  "doubtfulCells": 16298,
+  "confidentShare": 0.565,
+  "reachOutsideLargestCells": 3280,
+  "reachConfidentShare": 0.792,
+  "reachLargestShare": 0.913,
+  "reachRegions": 77,
+  "regions": 294,
+  "largestRegionCells": 23653,
+  "largestShare": 0.631,
+  "builtUpCells": 168,
+  "builtUpWithoutRoad": 35,
+  "gapShare": 0.208,
+  "singleCellHoles": 549
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 30006,
+   "uniqueStreetKm": 1039.5,
+   "takeoverCredits": 60012
+  },
+  {
+   "percent": 70,
+   "requiredCells": 26255,
+   "uniqueStreetKm": 909.6,
+   "takeoverCredits": 52510
+  },
+  {
+   "percent": 60,
+   "requiredCells": 22505,
+   "uniqueStreetKm": 779.7,
+   "takeoverCredits": 45010
+  },
+  {
+   "percent": 50,
+   "requiredCells": 18754,
+   "uniqueStreetKm": 649.7,
+   "takeoverCredits": 37508
+  },
+  {
+   "percent": 40,
+   "requiredCells": 15003,
+   "uniqueStreetKm": 519.8,
+   "takeoverCredits": 30006
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 15,003 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 355791,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-sunamganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B94988032496724",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

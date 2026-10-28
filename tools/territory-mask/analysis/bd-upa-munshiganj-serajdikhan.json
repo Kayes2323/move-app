@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-munshiganj-serajdikhan",
+ "areaName": "Serajdikhan",
+ "maskVersion": "territory-mask/1:bd-upa-munshiganj-serajdikhan:cfbc63f1d0a7",
+ "contentHash": "cfbc63f1d0a71574cc2fb5eb1cceae8f71979af3b57d019201e22b6f3e2da8d9",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 142448,
+  "eligibleCells": 10056,
+  "areaKm2": 174.75,
+  "eligibleShareOfOwned": 7.1,
+  "uniqueStreetKm": 352.2
+ },
+ "roads": {
+  "waysInArea": 2474,
+  "includedKm": 393.3,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 377.5,
+   "minor": 15.8
+  },
+  "densityKmPerKm2": 2.3
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 381,
+  "outsideLargestCells": 4975,
+  "doubtfulCells": 5174,
+  "confidentShare": 0.485,
+  "reachOutsideLargestCells": 796,
+  "reachConfidentShare": 0.883,
+  "reachLargestShare": 0.921,
+  "reachRegions": 10,
+  "regions": 77,
+  "largestRegionCells": 5081,
+  "largestShare": 0.505,
+  "builtUpCells": 137,
+  "builtUpWithoutRoad": 57,
+  "gapShare": 0.416,
+  "singleCellHoles": 30
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 8045,
+   "uniqueStreetKm": 281.8,
+   "takeoverCredits": 16090
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7040,
+   "uniqueStreetKm": 246.6,
+   "takeoverCredits": 14080
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6034,
+   "uniqueStreetKm": 211.3,
+   "takeoverCredits": 12068
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5028,
+   "uniqueStreetKm": 176.1,
+   "takeoverCredits": 10056
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4023,
+   "uniqueStreetKm": 140.9,
+   "takeoverCredits": 8046
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "42% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 104775,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-munshiganj",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B42865599243727",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

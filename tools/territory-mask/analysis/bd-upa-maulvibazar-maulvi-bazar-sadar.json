@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-maulvibazar-maulvi-bazar-sadar",
+ "areaName": "Maulvi Bazar Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-maulvibazar-maulvi-bazar-sadar:0e60682aee66",
+ "contentHash": "0e60682aee662ec01b6baedbfce6609280198c7aed8e0e97ad6388161b6bebab",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 290544,
+  "eligibleCells": 14622,
+  "areaKm2": 351.32,
+  "eligibleShareOfOwned": 5,
+  "uniqueStreetKm": 508.5
+ },
+ "roads": {
+  "waysInArea": 1890,
+  "includedKm": 565.7,
+  "byClassKm": {
+   "trunk": 44.3,
+   "main": 498.2,
+   "minor": 23.2
+  },
+  "densityKmPerKm2": 1.6
+ },
+ "quality": {
+  "trunkOnlyCells": 1099,
+  "minorOnlyCells": 584,
+  "outsideLargestCells": 8738,
+  "doubtfulCells": 9317,
+  "confidentShare": 0.363,
+  "reachOutsideLargestCells": 343,
+  "reachConfidentShare": 0.865,
+  "reachLargestShare": 0.977,
+  "reachRegions": 7,
+  "regions": 101,
+  "largestRegionCells": 5884,
+  "largestShare": 0.402,
+  "builtUpCells": 14,
+  "builtUpWithoutRoad": 5,
+  "gapShare": 0.357,
+  "singleCellHoles": 57
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 11698,
+   "uniqueStreetKm": 406.8,
+   "takeoverCredits": 23396
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10236,
+   "uniqueStreetKm": 355.9,
+   "takeoverCredits": 20472
+  },
+  {
+   "percent": 60,
+   "requiredCells": 8774,
+   "uniqueStreetKm": 305.1,
+   "takeoverCredits": 17548
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7311,
+   "uniqueStreetKm": 254.2,
+   "takeoverCredits": 14622
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5849,
+   "uniqueStreetKm": 203.4,
+   "takeoverCredits": 11698
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "50% threshold (the area is large)",
+  "percent": 50,
+  "requiredCells": 7311
+ },
+ "maskBytes": 144751,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-maulvibazar",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B59699637370048",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

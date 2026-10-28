@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-lohagara",
+ "areaName": "Lohagara",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-lohagara:82aa44ce11b6",
+ "contentHash": "82aa44ce11b61ea2f147fdba64c818c92fd0365fc09b9ee2a153b56141dd7ee7",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 205990,
+  "eligibleCells": 15523,
+  "areaKm2": 258.7,
+  "eligibleShareOfOwned": 7.5,
+  "uniqueStreetKm": 550.1
+ },
+ "roads": {
+  "waysInArea": 1747,
+  "includedKm": 612.8,
+  "byClassKm": {
+   "trunk": 20.4,
+   "main": 531.6,
+   "minor": 60.8
+  },
+  "densityKmPerKm2": 2.4
+ },
+ "quality": {
+  "trunkOnlyCells": 487,
+  "minorOnlyCells": 1483,
+  "outsideLargestCells": 3448,
+  "doubtfulCells": 4842,
+  "confidentShare": 0.688,
+  "reachOutsideLargestCells": 818,
+  "reachConfidentShare": 0.831,
+  "reachLargestShare": 0.947,
+  "reachRegions": 20,
+  "regions": 117,
+  "largestRegionCells": 12075,
+  "largestShare": 0.778,
+  "builtUpCells": 534,
+  "builtUpWithoutRoad": 273,
+  "gapShare": 0.511,
+  "singleCellHoles": 57
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 12419,
+   "uniqueStreetKm": 440.1,
+   "takeoverCredits": 24838
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10867,
+   "uniqueStreetKm": 385.1,
+   "takeoverCredits": 21734
+  },
+  {
+   "percent": 60,
+   "requiredCells": 9314,
+   "uniqueStreetKm": 330.1,
+   "takeoverCredits": 18628
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7762,
+   "uniqueStreetKm": 275.1,
+   "takeoverCredits": 15524
+  },
+  {
+   "percent": 40,
+   "requiredCells": 6210,
+   "uniqueStreetKm": 220.1,
+   "takeoverCredits": 12420
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "51% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 162696,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B32629504836566",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

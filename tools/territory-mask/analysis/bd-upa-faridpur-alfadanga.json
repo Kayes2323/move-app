@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-faridpur-alfadanga",
+ "areaName": "Alfadanga",
+ "maskVersion": "territory-mask/1:bd-upa-faridpur-alfadanga:c36efc7de5b2",
+ "contentHash": "c36efc7de5b2af77ebfcc69a2220a30eb8fe5da5af52a0ed30155f7c4119861d",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 107739,
+  "eligibleCells": 2881,
+  "areaKm2": 132.75,
+  "eligibleShareOfOwned": 2.7,
+  "uniqueStreetKm": 101.1
+ },
+ "roads": {
+  "waysInArea": 624,
+  "includedKm": 112.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 112.5,
+   "minor": 0.1
+  },
+  "densityKmPerKm2": 0.8
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 0,
+  "outsideLargestCells": 1865,
+  "doubtfulCells": 1865,
+  "confidentShare": 0.353,
+  "reachOutsideLargestCells": 398,
+  "reachConfidentShare": 0.862,
+  "reachLargestShare": 0.862,
+  "reachRegions": 13,
+  "regions": 51,
+  "largestRegionCells": 1016,
+  "largestShare": 0.353,
+  "builtUpCells": 8,
+  "builtUpWithoutRoad": 4,
+  "gapShare": 0.5,
+  "singleCellHoles": 0
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 2305,
+   "uniqueStreetKm": 80.9,
+   "takeoverCredits": 4610
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2017,
+   "uniqueStreetKm": 70.8,
+   "takeoverCredits": 4034
+  },
+  {
+   "percent": 60,
+   "requiredCells": 1729,
+   "uniqueStreetKm": 60.7,
+   "takeoverCredits": 3458
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1441,
+   "uniqueStreetKm": 50.6,
+   "takeoverCredits": 2882
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1153,
+   "uniqueStreetKm": 40.5,
+   "takeoverCredits": 2306
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 2305
+ },
+ "maskBytes": 35761,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-faridpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B55670429127605",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-mymensingh-nandail",
+ "areaName": "Nandail",
+ "maskVersion": "territory-mask/1:bd-upa-mymensingh-nandail:b27c1b55226c",
+ "contentHash": "b27c1b55226c7d5e9a523c5188af0cf1f0c9ea5252cbd83b3c114b98dac99434",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 273630,
+  "eligibleCells": 9276,
+  "areaKm2": 330.67,
+  "eligibleShareOfOwned": 3.4,
+  "uniqueStreetKm": 322.5
+ },
+ "roads": {
+  "waysInArea": 1295,
+  "includedKm": 354.4,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 342.8,
+   "minor": 11.6
+  },
+  "densityKmPerKm2": 1.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 267,
+  "outsideLargestCells": 8676,
+  "doubtfulCells": 8722,
+  "confidentShare": 0.06,
+  "reachOutsideLargestCells": 1006,
+  "reachConfidentShare": 0.867,
+  "reachLargestShare": 0.892,
+  "reachRegions": 29,
+  "regions": 147,
+  "largestRegionCells": 600,
+  "largestShare": 0.065,
+  "builtUpCells": 172,
+  "builtUpWithoutRoad": 53,
+  "gapShare": 0.308,
+  "singleCellHoles": 4
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 7421,
+   "uniqueStreetKm": 258,
+   "takeoverCredits": 14842
+  },
+  {
+   "percent": 70,
+   "requiredCells": 6494,
+   "uniqueStreetKm": 225.8,
+   "takeoverCredits": 12988
+  },
+  {
+   "percent": 60,
+   "requiredCells": 5566,
+   "uniqueStreetKm": 193.5,
+   "takeoverCredits": 11132
+  },
+  {
+   "percent": 50,
+   "requiredCells": 4638,
+   "uniqueStreetKm": 161.2,
+   "takeoverCredits": 9276
+  },
+  {
+   "percent": 40,
+   "requiredCells": 3711,
+   "uniqueStreetKm": 129,
+   "takeoverCredits": 7422
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "31% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 105837,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-mymensingh",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B36065227637036",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

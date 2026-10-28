@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-jhenaidah-shailkupa",
+ "areaName": "Shailkupa",
+ "maskVersion": "territory-mask/1:bd-upa-jhenaidah-shailkupa:3735de58a879",
+ "contentHash": "3735de58a87906d178d23590a1182a3190c83f0f4431697ffa54750fafa48683",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 307565,
+  "eligibleCells": 5715,
+  "areaKm2": 376.87,
+  "eligibleShareOfOwned": 1.9,
+  "uniqueStreetKm": 200.1
+ },
+ "roads": {
+  "waysInArea": 522,
+  "includedKm": 221.4,
+  "byClassKm": {
+   "trunk": 16.8,
+   "main": 194.4,
+   "minor": 10.2
+  },
+  "densityKmPerKm2": 0.6
+ },
+ "quality": {
+  "trunkOnlyCells": 423,
+  "minorOnlyCells": 269,
+  "outsideLargestCells": 3206,
+  "doubtfulCells": 3219,
+  "confidentShare": 0.437,
+  "reachOutsideLargestCells": 305,
+  "reachConfidentShare": 0.846,
+  "reachLargestShare": 0.947,
+  "reachRegions": 15,
+  "regions": 61,
+  "largestRegionCells": 2509,
+  "largestShare": 0.439,
+  "builtUpCells": 81,
+  "builtUpWithoutRoad": 71,
+  "gapShare": 0.877,
+  "singleCellHoles": 10
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4572,
+   "uniqueStreetKm": 160,
+   "takeoverCredits": 9144
+  },
+  {
+   "percent": 70,
+   "requiredCells": 4001,
+   "uniqueStreetKm": 140.1,
+   "takeoverCredits": 8002
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3429,
+   "uniqueStreetKm": 120,
+   "takeoverCredits": 6858
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2858,
+   "uniqueStreetKm": 100,
+   "takeoverCredits": 5716
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2286,
+   "uniqueStreetKm": 80,
+   "takeoverCredits": 4572
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "88% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 64998,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-jhenaidah",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B71336622802607",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

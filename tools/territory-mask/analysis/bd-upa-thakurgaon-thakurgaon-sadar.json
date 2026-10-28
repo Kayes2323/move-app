@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-thakurgaon-thakurgaon-sadar",
+ "areaName": "Thakurgaon Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-thakurgaon-thakurgaon-sadar:6f9f6270d99e",
+ "contentHash": "6f9f6270d99ef2e28599600bb79a5a376f0a5926ecb3a4ed7ca0e1a0b50932fe",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 590723,
+  "eligibleCells": 49410,
+  "areaKm2": 696.38,
+  "eligibleShareOfOwned": 8.4,
+  "uniqueStreetKm": 1696.5
+ },
+ "roads": {
+  "waysInArea": 8997,
+  "includedKm": 1902.3,
+  "byClassKm": {
+   "trunk": 30.9,
+   "main": 1715.4,
+   "minor": 156
+  },
+  "densityKmPerKm2": 2.7
+ },
+ "quality": {
+  "trunkOnlyCells": 728,
+  "minorOnlyCells": 3947,
+  "outsideLargestCells": 20205,
+  "doubtfulCells": 23317,
+  "confidentShare": 0.528,
+  "reachOutsideLargestCells": 648,
+  "reachConfidentShare": 0.896,
+  "reachLargestShare": 0.987,
+  "reachRegions": 47,
+  "regions": 409,
+  "largestRegionCells": 29205,
+  "largestShare": 0.591,
+  "builtUpCells": 3232,
+  "builtUpWithoutRoad": 1222,
+  "gapShare": 0.378,
+  "singleCellHoles": 130
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 39528,
+   "uniqueStreetKm": 1357.2,
+   "takeoverCredits": 79056
+  },
+  {
+   "percent": 70,
+   "requiredCells": 34587,
+   "uniqueStreetKm": 1187.5,
+   "takeoverCredits": 69174
+  },
+  {
+   "percent": 60,
+   "requiredCells": 29646,
+   "uniqueStreetKm": 1017.9,
+   "takeoverCredits": 59292
+  },
+  {
+   "percent": 50,
+   "requiredCells": 24705,
+   "uniqueStreetKm": 848.2,
+   "takeoverCredits": 49410
+  },
+  {
+   "percent": 40,
+   "requiredCells": 19764,
+   "uniqueStreetKm": 678.6,
+   "takeoverCredits": 39528
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "38% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 529226,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-thakurgaon",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B92466625108630",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

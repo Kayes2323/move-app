@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-patenga",
+ "areaName": "Patenga",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-patenga:acfb25767cab",
+ "contentHash": "acfb25767cab52ef3a5a3d44eb78104b7bdb546c53635a320c806dda171da34d",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 22677,
+  "eligibleCells": 5125,
+  "areaKm2": 28.37,
+  "eligibleShareOfOwned": 22.6,
+  "uniqueStreetKm": 181.3
+ },
+ "roads": {
+  "waysInArea": 1732,
+  "includedKm": 232.8,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 164.1,
+   "minor": 68.7
+  },
+  "densityKmPerKm2": 8.2
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1580,
+  "outsideLargestCells": 156,
+  "doubtfulCells": 1679,
+  "confidentShare": 0.672,
+  "reachOutsideLargestCells": 20,
+  "reachConfidentShare": 0.691,
+  "reachLargestShare": 0.996,
+  "reachRegions": 3,
+  "regions": 26,
+  "largestRegionCells": 4969,
+  "largestShare": 0.97,
+  "builtUpCells": 442,
+  "builtUpWithoutRoad": 69,
+  "gapShare": 0.156,
+  "singleCellHoles": 116
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 4100,
+   "uniqueStreetKm": 145,
+   "takeoverCredits": 8200
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3588,
+   "uniqueStreetKm": 126.9,
+   "takeoverCredits": 7176
+  },
+  {
+   "percent": 60,
+   "requiredCells": 3075,
+   "uniqueStreetKm": 108.8,
+   "takeoverCredits": 6150
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2563,
+   "uniqueStreetKm": 90.7,
+   "takeoverCredits": 5126
+  },
+  {
+   "percent": 40,
+   "requiredCells": 2050,
+   "uniqueStreetKm": 72.5,
+   "takeoverCredits": 4100
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "60% threshold (part of its mapped streets are doubtful)",
+  "percent": 60,
+  "requiredCells": 3075
+ },
+ "maskBytes": 44132,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B40707250714885",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

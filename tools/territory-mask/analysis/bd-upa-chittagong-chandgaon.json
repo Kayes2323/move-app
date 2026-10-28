@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-chittagong-chandgaon",
+ "areaName": "Chandgaon",
+ "maskVersion": "territory-mask/1:bd-upa-chittagong-chandgaon:dbf8401022bd",
+ "contentHash": "dbf8401022bda987ab80b6c7a5c4378e1d42940bc5b126959c366cd62f389db1",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 16118,
+  "eligibleCells": 4544,
+  "areaKm2": 20.13,
+  "eligibleShareOfOwned": 28.2,
+  "uniqueStreetKm": 160.6
+ },
+ "roads": {
+  "waysInArea": 2027,
+  "includedKm": 205.2,
+  "byClassKm": {
+   "trunk": 16.9,
+   "main": 172.3,
+   "minor": 16
+  },
+  "densityKmPerKm2": 10.2
+ },
+ "quality": {
+  "trunkOnlyCells": 206,
+  "minorOnlyCells": 358,
+  "outsideLargestCells": 637,
+  "doubtfulCells": 1176,
+  "confidentShare": 0.741,
+  "reachOutsideLargestCells": 22,
+  "reachConfidentShare": 0.876,
+  "reachLargestShare": 0.995,
+  "reachRegions": 2,
+  "regions": 32,
+  "largestRegionCells": 3907,
+  "largestShare": 0.86,
+  "builtUpCells": 674,
+  "builtUpWithoutRoad": 103,
+  "gapShare": 0.153,
+  "singleCellHoles": 185
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 3636,
+   "uniqueStreetKm": 128.5,
+   "takeoverCredits": 7272
+  },
+  {
+   "percent": 70,
+   "requiredCells": 3181,
+   "uniqueStreetKm": 112.4,
+   "takeoverCredits": 6362
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2727,
+   "uniqueStreetKm": 96.4,
+   "takeoverCredits": 5454
+  },
+  {
+   "percent": 50,
+   "requiredCells": 2272,
+   "uniqueStreetKm": 80.3,
+   "takeoverCredits": 4544
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1818,
+   "uniqueStreetKm": 64.2,
+   "takeoverCredits": 3636
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "80% threshold, like the pilot",
+  "percent": 80,
+  "requiredCells": 3636
+ },
+ "maskBytes": 37510,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-chittagong",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B37030351476694",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

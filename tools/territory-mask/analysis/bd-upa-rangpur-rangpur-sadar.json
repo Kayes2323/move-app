@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-rangpur-rangpur-sadar",
+ "areaName": "Rangpur Sadar",
+ "maskVersion": "territory-mask/1:bd-upa-rangpur-rangpur-sadar:67bcb0bc5c92",
+ "contentHash": "67bcb0bc5c92f5eaef2af58a1d4ca9ff18aa6937283375b63acb09653a63b7ef",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 272091,
+  "eligibleCells": 36212,
+  "areaKm2": 322.45,
+  "eligibleShareOfOwned": 13.3,
+  "uniqueStreetKm": 1246.6
+ },
+ "roads": {
+  "waysInArea": 4752,
+  "includedKm": 1427.7,
+  "byClassKm": {
+   "trunk": 58.2,
+   "main": 1277.1,
+   "minor": 92.5
+  },
+  "densityKmPerKm2": 4.4
+ },
+ "quality": {
+  "trunkOnlyCells": 820,
+  "minorOnlyCells": 2324,
+  "outsideLargestCells": 4753,
+  "doubtfulCells": 7448,
+  "confidentShare": 0.794,
+  "reachOutsideLargestCells": 389,
+  "reachConfidentShare": 0.903,
+  "reachLargestShare": 0.989,
+  "reachRegions": 37,
+  "regions": 240,
+  "largestRegionCells": 31459,
+  "largestShare": 0.869,
+  "builtUpCells": 97,
+  "builtUpWithoutRoad": 26,
+  "gapShare": 0.268,
+  "singleCellHoles": 240
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 28970,
+   "uniqueStreetKm": 997.3,
+   "takeoverCredits": 57940
+  },
+  {
+   "percent": 70,
+   "requiredCells": 25349,
+   "uniqueStreetKm": 872.6,
+   "takeoverCredits": 50698
+  },
+  {
+   "percent": 60,
+   "requiredCells": 21728,
+   "uniqueStreetKm": 748,
+   "takeoverCredits": 43456
+  },
+  {
+   "percent": 50,
+   "requiredCells": 18106,
+   "uniqueStreetKm": 623.3,
+   "takeoverCredits": 36212
+  },
+  {
+   "percent": 40,
+   "requiredCells": 14485,
+   "uniqueStreetKm": 498.6,
+   "takeoverCredits": 28970
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "even 40% would need 14,485 different cells: too large for one conquest",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 363016,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-rangpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B60964273253151",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

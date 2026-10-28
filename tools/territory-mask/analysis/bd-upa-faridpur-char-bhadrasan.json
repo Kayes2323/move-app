@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-faridpur-char-bhadrasan",
+ "areaName": "Char Bhadrasan",
+ "maskVersion": "territory-mask/1:bd-upa-faridpur-char-bhadrasan:06fb4e78166a",
+ "contentHash": "06fb4e78166afb7c2a769ff2a661a7c6a379b57069ec509b2c91ce1eb7df0ad5",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 124393,
+  "eligibleCells": 3615,
+  "areaKm2": 152.59,
+  "eligibleShareOfOwned": 2.9,
+  "uniqueStreetKm": 126.6
+ },
+ "roads": {
+  "waysInArea": 505,
+  "includedKm": 141.2,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 87.6,
+   "minor": 53.6
+  },
+  "densityKmPerKm2": 0.9
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 1351,
+  "outsideLargestCells": 1894,
+  "doubtfulCells": 1894,
+  "confidentShare": 0.476,
+  "reachOutsideLargestCells": 1412,
+  "reachConfidentShare": 0.609,
+  "reachLargestShare": 0.609,
+  "reachRegions": 10,
+  "regions": 44,
+  "largestRegionCells": 1721,
+  "largestShare": 0.476,
+  "builtUpCells": 102,
+  "builtUpWithoutRoad": 34,
+  "gapShare": 0.333,
+  "singleCellHoles": 0
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 2892,
+   "uniqueStreetKm": 101.3,
+   "takeoverCredits": 5784
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2531,
+   "uniqueStreetKm": 88.6,
+   "takeoverCredits": 5062
+  },
+  {
+   "percent": 60,
+   "requiredCells": 2169,
+   "uniqueStreetKm": 76,
+   "takeoverCredits": 4338
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1808,
+   "uniqueStreetKm": 63.3,
+   "takeoverCredits": 3616
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1446,
+   "uniqueStreetKm": 50.6,
+   "takeoverCredits": 2892
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "33% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 42350,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-faridpur",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B75331922255178",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

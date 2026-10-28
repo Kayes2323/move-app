@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-khagrachhari-mahalchhari",
+ "areaName": "Mahalchhari",
+ "maskVersion": "territory-mask/1:bd-upa-khagrachhari-mahalchhari:af9dc194f94e",
+ "contentHash": "af9dc194f94e8a0220d788593355f80032141cccdfcb3b1e9eb9e97a2b80ff91",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 189622,
+  "eligibleCells": 11420,
+  "areaKm2": 234.88,
+  "eligibleShareOfOwned": 6,
+  "uniqueStreetKm": 401.9
+ },
+ "roads": {
+  "waysInArea": 1090,
+  "includedKm": 461.7,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 182.1,
+   "minor": 279.6
+  },
+  "densityKmPerKm2": 2
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 6842,
+  "outsideLargestCells": 6635,
+  "doubtfulCells": 11060,
+  "confidentShare": 0.032,
+  "reachOutsideLargestCells": 525,
+  "reachConfidentShare": 0.398,
+  "reachLargestShare": 0.954,
+  "reachRegions": 29,
+  "regions": 106,
+  "largestRegionCells": 4785,
+  "largestShare": 0.419,
+  "builtUpCells": 43,
+  "builtUpWithoutRoad": 5,
+  "gapShare": 0.116,
+  "singleCellHoles": 35
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 9136,
+   "uniqueStreetKm": 321.5,
+   "takeoverCredits": 18272
+  },
+  {
+   "percent": 70,
+   "requiredCells": 7994,
+   "uniqueStreetKm": 281.3,
+   "takeoverCredits": 15988
+  },
+  {
+   "percent": 60,
+   "requiredCells": 6852,
+   "uniqueStreetKm": 241.2,
+   "takeoverCredits": 13704
+  },
+  {
+   "percent": 50,
+   "requiredCells": 5710,
+   "uniqueStreetKm": 201,
+   "takeoverCredits": 11420
+  },
+  {
+   "percent": 40,
+   "requiredCells": 4568,
+   "uniqueStreetKm": 160.8,
+   "takeoverCredits": 9136
+  }
+ ],
+ "recommendation": {
+  "status": "NOT_OPEN",
+  "reason": "only 40% of its mapped streets are clearly public and connected",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 135200,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-khagrachhari",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B90687829441345",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

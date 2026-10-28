@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-panchagarh-tentulia",
+ "areaName": "Tentulia",
+ "maskVersion": "territory-mask/1:bd-upa-panchagarh-tentulia:07f194099272",
+ "contentHash": "07f1940992726c7087b98c8366db38de8fb5b9ca51c13568262fe443819a3bad",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 161905,
+  "eligibleCells": 19355,
+  "areaKm2": 189.34,
+  "eligibleShareOfOwned": 12,
+  "uniqueStreetKm": 661.9
+ },
+ "roads": {
+  "waysInArea": 6616,
+  "includedKm": 742.9,
+  "byClassKm": {
+   "trunk": 33,
+   "main": 546.4,
+   "minor": 163.5
+  },
+  "densityKmPerKm2": 3.9
+ },
+ "quality": {
+  "trunkOnlyCells": 815,
+  "minorOnlyCells": 4082,
+  "outsideLargestCells": 7742,
+  "doubtfulCells": 10952,
+  "confidentShare": 0.434,
+  "reachOutsideLargestCells": 275,
+  "reachConfidentShare": 0.734,
+  "reachLargestShare": 0.986,
+  "reachRegions": 15,
+  "regions": 144,
+  "largestRegionCells": 11613,
+  "largestShare": 0.6,
+  "builtUpCells": 228,
+  "builtUpWithoutRoad": 66,
+  "gapShare": 0.289,
+  "singleCellHoles": 91
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 15484,
+   "uniqueStreetKm": 529.5,
+   "takeoverCredits": 30968
+  },
+  {
+   "percent": 70,
+   "requiredCells": 13549,
+   "uniqueStreetKm": 463.3,
+   "takeoverCredits": 27098
+  },
+  {
+   "percent": 60,
+   "requiredCells": 11613,
+   "uniqueStreetKm": 397.1,
+   "takeoverCredits": 23226
+  },
+  {
+   "percent": 50,
+   "requiredCells": 9678,
+   "uniqueStreetKm": 331,
+   "takeoverCredits": 19356
+  },
+  {
+   "percent": 40,
+   "requiredCells": 7742,
+   "uniqueStreetKm": 264.8,
+   "takeoverCredits": 15484
+  }
+ ],
+ "recommendation": {
+  "status": "OPEN_CANDIDATE",
+  "reason": "40% threshold (the area is large)",
+  "percent": 40,
+  "requiredCells": 7742
+ },
+ "maskBytes": 210749,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-panchagarh",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B24539740757234",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

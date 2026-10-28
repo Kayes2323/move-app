@@ -67,6 +67,8 @@ test("policy: thresholds follow the area, and closed areas say why", () => {
   assert.equal(recommend({ ...ok, eligibleCells: 120 }).status, "NOT_OPEN");
   assert.equal(recommend({ ...ok, validationOk: false }).status, "NOT_OPEN");
   assert.equal(recommend({ ...ok, gapShare: 0.7 }).status, "COMING_SOON");
+  assert.equal(recommend({ ...ok, gapShare: 0.47, builtUpCells: 219 }).status, "COMING_SOON", "Chandpur Sadar: the town has mapping gaps");
+  assert.equal(recommend({ ...ok, gapShare: 0.9, builtUpCells: 4 }).status, "OPEN_CANDIDATE", "too few built-up cells to judge");
   assert.equal(recommend({ ...ok, largestShare: 0.3 }).status, "COMING_SOON");
   assert.equal(recommend({ ...ok, confidentShare: 0.4 }).status, "NOT_OPEN");
   assert.equal(floorTo5(84.9), 80);

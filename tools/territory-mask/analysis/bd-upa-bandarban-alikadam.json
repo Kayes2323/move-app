@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-bandarban-alikadam",
+ "areaName": "Alikadam",
+ "maskVersion": "territory-mask/1:bd-upa-bandarban-alikadam:b9f5bf9efe8a",
+ "contentHash": "b9f5bf9efe8a8cfd747a41bd327bebff4db5aa4b00376981beb6d9d1e0d8cd26",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 622645,
+  "eligibleCells": 21169,
+  "areaKm2": 786.24,
+  "eligibleShareOfOwned": 3.4,
+  "uniqueStreetKm": 752.2
+ },
+ "roads": {
+  "waysInArea": 2075,
+  "includedKm": 849.3,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 301.6,
+   "minor": 547.7
+  },
+  "densityKmPerKm2": 1.1
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 13637,
+  "outsideLargestCells": 16178,
+  "doubtfulCells": 16808,
+  "confidentShare": 0.206,
+  "reachOutsideLargestCells": 11746,
+  "reachConfidentShare": 0.32,
+  "reachLargestShare": 0.445,
+  "reachRegions": 148,
+  "regions": 307,
+  "largestRegionCells": 4991,
+  "largestShare": 0.236,
+  "builtUpCells": 94,
+  "builtUpWithoutRoad": 28,
+  "gapShare": 0.298,
+  "singleCellHoles": 38
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 16936,
+   "uniqueStreetKm": 601.8,
+   "takeoverCredits": 33872
+  },
+  {
+   "percent": 70,
+   "requiredCells": 14819,
+   "uniqueStreetKm": 526.6,
+   "takeoverCredits": 29638
+  },
+  {
+   "percent": 60,
+   "requiredCells": 12702,
+   "uniqueStreetKm": 451.4,
+   "takeoverCredits": 25404
+  },
+  {
+   "percent": 50,
+   "requiredCells": 10585,
+   "uniqueStreetKm": 376.1,
+   "takeoverCredits": 21170
+  },
+  {
+   "percent": 40,
+   "requiredCells": 8468,
+   "uniqueStreetKm": 300.9,
+   "takeoverCredits": 16936
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 45% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 238545,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-bandarban",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B70145349624714",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

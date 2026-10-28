@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-comilla-nangalkot",
+ "areaName": "Nangalkot",
+ "maskVersion": "territory-mask/1:bd-upa-comilla-nangalkot:489862b2ec80",
+ "contentHash": "489862b2ec8026eedb721e99e367c5bf93545f32a78a5d90ad46555358280b66",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 191575,
+  "eligibleCells": 14877,
+  "areaKm2": 236.57,
+  "eligibleShareOfOwned": 7.8,
+  "uniqueStreetKm": 522.8
+ },
+ "roads": {
+  "waysInArea": 2416,
+  "includedKm": 569.7,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 561.1,
+   "minor": 8.6
+  },
+  "densityKmPerKm2": 2.4
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 215,
+  "outsideLargestCells": 4897,
+  "doubtfulCells": 5059,
+  "confidentShare": 0.66,
+  "reachOutsideLargestCells": 841,
+  "reachConfidentShare": 0.931,
+  "reachLargestShare": 0.943,
+  "reachRegions": 33,
+  "regions": 117,
+  "largestRegionCells": 9980,
+  "largestShare": 0.671,
+  "builtUpCells": 64,
+  "builtUpWithoutRoad": 30,
+  "gapShare": 0.469,
+  "singleCellHoles": 27
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 11902,
+   "uniqueStreetKm": 418.2,
+   "takeoverCredits": 23804
+  },
+  {
+   "percent": 70,
+   "requiredCells": 10414,
+   "uniqueStreetKm": 366,
+   "takeoverCredits": 20828
+  },
+  {
+   "percent": 60,
+   "requiredCells": 8927,
+   "uniqueStreetKm": 313.7,
+   "takeoverCredits": 17854
+  },
+  {
+   "percent": 50,
+   "requiredCells": 7439,
+   "uniqueStreetKm": 261.4,
+   "takeoverCredits": 14878
+  },
+  {
+   "percent": 40,
+   "requiredCells": 5951,
+   "uniqueStreetKm": 209.1,
+   "takeoverCredits": 11902
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "47% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 155316,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-comilla",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B76725439062785",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}

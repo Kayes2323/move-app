@@ -1,0 +1,111 @@
+{
+ "areaId": "bd-upa-comilla-comilla-sadar-dakshin",
+ "areaName": "Comilla Sadar Dakshin",
+ "maskVersion": "territory-mask/1:bd-upa-comilla-comilla-sadar-dakshin:df4ce94d7c9d",
+ "contentHash": "df4ce94d7c9df3ad525deeffbbc93753f7ebae6001a0b55d34fd7ce9d6bb1c94",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 216314,
+  "eligibleCells": 28012,
+  "areaKm2": 266.36,
+  "eligibleShareOfOwned": 12.9,
+  "uniqueStreetKm": 983
+ },
+ "roads": {
+  "waysInArea": 5287,
+  "includedKm": 1116.6,
+  "byClassKm": {
+   "trunk": 46.5,
+   "main": 1014.9,
+   "minor": 55.2
+  },
+  "densityKmPerKm2": 4.2
+ },
+ "quality": {
+  "trunkOnlyCells": 863,
+  "minorOnlyCells": 1305,
+  "outsideLargestCells": 2033,
+  "doubtfulCells": 4099,
+  "confidentShare": 0.854,
+  "reachOutsideLargestCells": 196,
+  "reachConfidentShare": 0.916,
+  "reachLargestShare": 0.993,
+  "reachRegions": 29,
+  "regions": 136,
+  "largestRegionCells": 25979,
+  "largestShare": 0.927,
+  "builtUpCells": 743,
+  "builtUpWithoutRoad": 239,
+  "gapShare": 0.322,
+  "singleCellHoles": 122
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 22410,
+   "uniqueStreetKm": 786.4,
+   "takeoverCredits": 44820
+  },
+  {
+   "percent": 70,
+   "requiredCells": 19609,
+   "uniqueStreetKm": 688.1,
+   "takeoverCredits": 39218
+  },
+  {
+   "percent": 60,
+   "requiredCells": 16808,
+   "uniqueStreetKm": 589.8,
+   "takeoverCredits": 33616
+  },
+  {
+   "percent": 50,
+   "requiredCells": 14006,
+   "uniqueStreetKm": 491.5,
+   "takeoverCredits": 28012
+  },
+  {
+   "percent": 40,
+   "requiredCells": 11205,
+   "uniqueStreetKm": 393.2,
+   "takeoverCredits": 22410
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "32% of built-up ground has no mapped street nearby: OpenStreetMap needs more mapping first",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 278815,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-comilla",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B83041215814881",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}
