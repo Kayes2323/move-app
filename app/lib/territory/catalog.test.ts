@@ -124,3 +124,17 @@ test("the open list and the area names agree", () => {
   assert.deepEqual([...OPEN_AREA_IDS].sort(), [...ids].sort());
   for (const id of ids) assert.equal(openAreaName(id), OPEN_CATALOG[id].name);
 });
+
+test("every open area states its real size (street km and land area) from its own analysis, and the label says it", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { sizeLabelOf } = await import("./catalog");
+  for (const [id, a] of Object.entries(OPEN_CATALOG)) {
+    const an = JSON.parse(readFileSync(join(process.cwd(), "tools", "territory-mask", "analysis", `${id}.json`), "utf8"));
+    assert.equal(a.streetKm, an.counts.uniqueStreetKm, `${id} street km`);
+    assert.equal(a.areaKm2, an.counts.areaKm2, `${id} area`);
+    assert.match(sizeLabelOf(id), /km of streets · .* km²$/, id);
+  }
+  assert.equal(sizeLabelOf("bd-upa-dhaka-mohammadpur"), "136 km of streets · 7.1 km²".replace("136", "136"), "pilot label");
+  assert.equal(sizeLabelOf("not-an-area"), "");
+});

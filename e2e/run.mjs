@@ -25,9 +25,10 @@ const baseDb = () => ({
   "publicProfiles/u2": { name: "Tania Rahman", photo: "", totalKm: 42.8, streak: 3 },
 });
 
-const initScript = ({ db, user, permission }) => `(() => {
+const initScript = ({ db, user, permission, mapStyle = "street" }) => `(() => {
   if (!localStorage.getItem("__seeded")) {
     localStorage.setItem("__seeded", "1");
+    localStorage.setItem("move.mapStyle", ${JSON.stringify(mapStyle)});
     localStorage.setItem("__mock_db", ${JSON.stringify(JSON.stringify(db))});
     ${user ? `localStorage.setItem("__mock_user", ${JSON.stringify(JSON.stringify(user))});` : ""}
   }
@@ -51,9 +52,9 @@ const initScript = ({ db, user, permission }) => `(() => {
 })();`;
 
 let browser;
-const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline = false } = {}) => {
+const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline = false, mapStyle = "street" } = {}) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 800 } });
-  await ctx.addInitScript(initScript({ db, user, permission }));
+  await ctx.addInitScript(initScript({ db, user, permission, mapStyle }));
   const pg = await ctx.newPage();
   pg.errors = [];
   pg.logs = [];
@@ -1800,6 +1801,76 @@ async function scenarioRoutesImages() {
   await s.ctx.close();
 }
 
+async function scenarioSatellite() {
+  // Satellite is the default map; one switch changes every map; Territory always says how big it is.
+  const SHOTS = process.env.SHOTS_DIR;
+  if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+  const helperCtx = await browser.newContext();
+  const helper = await helperCtx.newPage();
+  const ways = waysIn("bd-dis-dhaka", [23.74, 90.34, 23.77, 90.38]);
+  const walkPts = walkAlong(ways, [23.7587, 90.3589], { lengthM: 300 });
+  const go = async (pg, n) => { for (let i = 0; i < Math.min(n, walkPts.length); i++) { await shift(pg, 2000); await pg.evaluate(([la, ln]) => window.__gps.emit({ lat: la, lng: ln, acc: 6 }), [walkPts[i].lat, walkPts[i].lng]); await pg.waitForTimeout(12); } };
+  const state = (pg) => pg.locator("[data-map-state]").first().getAttribute("data-map-state");
+
+  const a = await fresh({ mapStyle: "satellite" });
+  const tiles = await installTiles(a.ctx, helper, ways);
+  await a.pg.goto(`${BASE}/run?mode=normal`);
+  await a.pg.getByText("Walking").click();
+  await tracking(a.pg);
+  await go(a.pg, 40);
+  check("T1. the live map defaults to satellite: imagery plus road and place-name overlays are requested", await until(async () => ["World_Imagery", "World_Transportation", "World_Boundaries_and_Places"].every((l) => tiles.requests.some((r) => r.layer === l)), 15000), JSON.stringify([...new Set(tiles.requests.map((r) => r.layer))]));
+  check("T2. satellite tiles load and the map says so", await until(async () => (await state(a.pg)) === "ok", 15000));
+  check("T3. the Esri attribution is shown", /Esri/.test(await a.pg.locator(".leaflet-control-attribution").first().innerText()));
+  check("T4. the blue route is still drawn over the imagery", Number(await a.pg.locator("[data-route-points]").first().getAttribute("data-route-points")) > 10);
+  if (SHOTS) await a.pg.screenshot({ path: `${SHOTS}/s1-live-satellite-390x800.png` });
+  const osmBefore = tiles.requests.filter((r) => !r.layer).length;
+  await a.pg.getByRole("group", { name: "Map style" }).getByRole("button", { name: "Map", exact: true }).click();
+  check("T5. switching to Map loads street tiles with the OpenStreetMap attribution", await until(async () => tiles.requests.filter((r) => !r.layer).length > osmBefore, 15000) && await until(async () => /OpenStreetMap/.test(await a.pg.locator(".leaflet-control-attribution").first().innerText()), 10000));
+  check("T6. the choice is remembered", (await a.pg.evaluate(() => localStorage.getItem("move.mapStyle"))) === "street");
+  if (SHOTS) await a.pg.screenshot({ path: `${SHOTS}/s2-live-street-390x800.png` });
+  await a.pg.getByRole("group", { name: "Map style" }).getByRole("button", { name: "Satellite" }).click();
+  await a.ctx.close();
+
+  // the same choice drives the Routes page map
+  const r = await fresh({ mapStyle: "satellite" });
+  const rt = await installTiles(r.ctx, helper, ways);
+  await r.pg.goto(`${BASE}/journey`);
+  await r.pg.locator('section[aria-label="Map"]').scrollIntoViewIfNeeded();
+  check("T7. the Routes map follows the same style (satellite imagery requested)", await until(async () => rt.requests.some((q) => q.layer === "World_Imagery"), 20000));
+  if (SHOTS) await r.pg.screenshot({ path: `${SHOTS}/s3-routes-satellite-390x800.png` });
+  await r.ctx.close();
+
+  // failure is still honest on satellite
+  const f = await fresh({ mapStyle: "satellite" });
+  const ft = await installTiles(f.ctx, helper, ways);
+  ft.fail = true;
+  await f.pg.goto(`${BASE}/run?mode=normal`);
+  await f.pg.getByText("Walking").click();
+  await tracking(f.pg);
+  await go(f.pg, 20);
+  await f.pg.getByRole("alert").filter({ hasText: "The map couldn't load" }).waitFor({ timeout: 25000 });
+  check("T8. when satellite tiles fail the map says so and tracking carries on", bigKm(await text(f.pg)) >= 0);
+  await f.ctx.close();
+
+  // Territory always says how big it is
+  const db = baseDb(); db["users/u1"].territory = stored({ selectedAt: Date.now() - 3600000 });
+  const t = await fresh({ db, mapStyle: "satellite" });
+  await installTiles(t.ctx, helper, ways);
+  await t.pg.goto(`${BASE}/run?mode=territory`);
+  await t.pg.getByText("Walking").click();
+  await tracking(t.pg);
+  await go(t.pg, 6);
+  await t.pg.waitForSelector("text=CONQUERED", { timeout: 20000 });
+  const live = await t.pg.getByTestId("territory-size").innerText();
+  check("T9. the live Territory screen always shows its size in km", /136 km of streets · 7\.1 km²/.test(live), live);
+  if (SHOTS) await t.pg.screenshot({ path: `${SHOTS}/s4-territory-live-satellite-390x800.png` });
+  await t.pg.goto(`${BASE}/territory/current`);
+  const page = await t.pg.getByTestId("territory-size").waitFor({ timeout: 20000 }).then(() => t.pg.getByTestId("territory-size").innerText());
+  check("T10. the Territory page shows it too", /136 km of streets · 7\.1 km²/.test(page), page);
+  await t.ctx.close();
+  await helperCtx.close();
+}
+
 async function scenarioRegression() {
   // signed-out screens redirect
   let s = await fresh({ user: null });
@@ -1889,7 +1960,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

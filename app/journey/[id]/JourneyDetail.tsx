@@ -8,7 +8,9 @@ import { RouteImage } from "../../components/RouteImage";
 import { journeyOffsetKm, journeyOriginName } from "../../lib/activity";
 import { journeyOf } from "../../lib/journey";
 import { progressOn, restartJourney, switchJourney } from "../../lib/journeySwitch";
-import { addStreetTiles } from "../../lib/leafletTiles";
+import { addBaseLayers } from "../../lib/leafletTiles";
+import { useMapStyle } from "../../lib/useMapStyle";
+import { MapStyleToggle } from "../../components/MapStyleToggle";
 import { ARRIVAL_MILESTONES, DISTANCE_MILESTONE_KM } from "../../data/milestones";
 import { resolveMode, useThemePrefs } from "../../lib/theme";
 
@@ -22,7 +24,7 @@ function getCurrentCpIndex(route: Route, completedKm: number, startIdx: number =
   return idx;
 }
 
-function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { route: Route; completedKm: number; startIdx: number; dark: boolean; accent: string; onFail: () => void }) {
+function MapComponent({ route, completedKm, startIdx, dark, accent, mapStyle, onFail }: { route: Route; completedKm: number; startIdx: number; dark: boolean; accent: string; mapStyle: "street" | "satellite"; onFail: () => void }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<unknown>(null);
 
@@ -43,11 +45,11 @@ function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { 
           zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 14,
         });
         mapInstance.current = map;
-        stopTiles = addStreetTiles(L, map, dark, (st) => st === "error" && onFail());
+        stopTiles = addBaseLayers(L, map, mapStyle, dark, (st) => st === "error" && onFail()).remove;
         map.setView([23.5, 90.3], 7);
 
         const activeCheckpoints = route.checkpoints.slice(startIdx);
-        const line = dark ? "#33333D" : "#C7D2FE";
+        const line = mapStyle === "satellite" ? "#FFFFFF" : dark ? "#33333D" : "#C7D2FE";
         const surface = dark ? "#1C1C22" : "#F1F5F9";
         const ring = dark ? "#33333D" : "#D1D5DB";
         const muted = dark ? "#9A9AA6" : "#9CA3AF";
@@ -114,7 +116,7 @@ function MapComponent({ route, completedKm, startIdx, dark, accent, onFail }: { 
         mapInstance.current = null;
       }
     };
-  }, [route, startIdx, completedKm, dark, accent, onFail]);
+  }, [route, startIdx, completedKm, dark, accent, mapStyle, onFail]);
 
   return (
     <>
@@ -148,6 +150,7 @@ export default function JourneyDetail() {
   const [mapFailed, setMapFailed] = useState(false);
   const prefs = useThemePrefs();
   const dark = resolveMode(prefs.mode) === "dark";
+  const mapStyle = useMapStyle();
   const accentHex = { blue: "#4F6EF7", purple: "#7C3AED", green: "#22C55E", orange: "#F59E0B" }[prefs.accent];
   const onMapFail = useCallback(() => setMapFailed(true), []);
   // the map (and its tiles) is only started when the user scrolls near it: the checkpoints above never wait for it
@@ -425,7 +428,10 @@ export default function JourneyDetail() {
 
         {/* MAP: below the checkpoints, mounted only when scrolled near, with a fixed height so nothing moves when it arrives */}
         <section aria-label="Route map" style={{ marginTop: 28 }}>
-          <p className="lab">Route map</p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <p className="lab">Route map</p>
+            <MapStyleToggle style={mapStyle} />
+          </div>
           <div ref={mapBox} style={{ marginTop: 10, height: 380, borderRadius: 20, overflow: "hidden", background: "var(--land)", position: "relative", isolation: "isolate" }}>
             {!mapNear ? null : mapFailed ? (
               <div role="alert" className="stack" style={{ height: "100%", alignItems: "center", justifyContent: "center", gap: 10, textAlign: "center", padding: 24 }}>
@@ -434,7 +440,7 @@ export default function JourneyDetail() {
                 <button className="btn btn-soft" style={{ width: "auto" }} onClick={() => { setMapFailed(false); setMapAttempt((n) => n + 1); }}>Retry map</button>
               </div>
             ) : (
-              <MapComponent key={mapAttempt} route={route} completedKm={completedKm} startIdx={startIdx} dark={dark} accent={accentHex} onFail={onMapFail} />
+              <MapComponent key={mapAttempt} route={route} completedKm={completedKm} startIdx={startIdx} dark={dark} accent={accentHex} mapStyle={mapStyle} onFail={onMapFail} />
             )}
           </div>
         </section>

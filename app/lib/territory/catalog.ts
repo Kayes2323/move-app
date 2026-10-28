@@ -14,6 +14,9 @@ export interface OpenArea {
   percent: number;
   eligibleCells: number;
   requiredCells: number;
+  /** Real length of the different walkable streets inside the area (km, from the OpenStreetMap analysis), and its land area (km²). */
+  streetKm: number | null;
+  areaKm2: number | null;
   maskVersion: string;
   /** Boundary chunk (`/geo/bd/<chunk>.json`) holding the area's display boundary. */
   chunk: string;
@@ -27,3 +30,13 @@ export const isOpenArea = (id: string | null | undefined): boolean => Boolean(id
 export const openAreaOf = (id: string | null | undefined): OpenArea | null => (id && isOpenArea(id) ? OPEN_CATALOG[id] : null);
 /** The conquest threshold of an area in whole percent. Unknown areas get the default; they cannot be played anyway. Integer, so cell counts are exact. */
 export const thresholdPercentOf = (id: string): number => (isOpenArea(id) ? OPEN_CATALOG[id].percent : DEFAULT_THRESHOLD_PERCENT);
+
+/** "135.8 km of streets · 7.1 km²": how big the area is, from the same data its conquest is measured on. Empty if unknown. */
+export function sizeLabelOf(id: string | null | undefined): string {
+  const a = openAreaOf(id);
+  if (!a) return "";
+  const parts: string[] = [];
+  if (a.streetKm) parts.push(`${a.streetKm >= 100 ? Math.round(a.streetKm) : a.streetKm.toFixed(1)} km of streets`);
+  if (a.areaKm2) parts.push(`${a.areaKm2 >= 100 ? Math.round(a.areaKm2) : a.areaKm2.toFixed(1)} km²`);
+  return parts.join(" · ");
+}

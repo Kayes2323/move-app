@@ -16,6 +16,7 @@ import { stateLabel, stateOf, useClosedStatuses } from "../../lib/territory/stat
 import type { GeoArea, Geometry } from "../../lib/territory/types";
 import { loadTerritoryHome, TerritoryOfflineError, type TerritoryHome } from "../../lib/territoryState";
 import { resolveMode, useThemePrefs } from "../../lib/theme";
+import { sizeLabelOf } from "../../lib/territory/catalog";
 import { Celebration } from "../Celebration";
 import { KingCard } from "../KingCard";
 import { TerritoryHeroMap } from "../TerritoryHeroMap";
@@ -210,6 +211,7 @@ export default function TerritoryHub() {
       <div className="terr-title">
         {badge}
         <h1 className="terr-name" style={{ marginTop: 10 }}>{active.name}</h1>
+        {sizeLabelOf(active.id) && <p className="mute" data-testid="territory-size" style={{ fontSize: 13, marginTop: 4 }}>{sizeLabelOf(active.id)}</p>}
         <p className="mute" style={{ fontSize: 13, marginTop: 6, fontWeight: 600 }}>{ctx}</p>
       </div>
     </>

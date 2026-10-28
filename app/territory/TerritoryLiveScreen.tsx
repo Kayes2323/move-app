@@ -4,6 +4,7 @@ import { LiveRouteCard, type LiveRouteCardProps } from "../components/LiveRouteC
 import { applyActivity, campaignProgress, coverageProgress } from "../lib/territory/coverage/coverage";
 import { cellCenter } from "../lib/territory/exploration/cells";
 import type { TerritorySnapshot } from "../lib/territory/coverage/snapshot";
+import { sizeLabelOf } from "../lib/territory/catalog";
 import { contributionPolicy } from "../lib/territory/contribution";
 import { conquestRing, pointInRing, toLngLat } from "../lib/territory/conquest/outline";
 
@@ -70,7 +71,7 @@ export function TerritoryLiveScreen({ snapshot, activity, ...card }: Props) {
   const header = (
     <div style={{ marginTop: 10 }}>
       <div className="bar">
-        <p className="lab" style={{ color: king ? "#D9A520" : "var(--acc-text)" }}>{king ? "👑 " : ""}{def.name}</p>
+        <p className="lab" style={{ color: king ? "#D9A520" : "var(--acc-text)" }}>{king ? "👑 " : ""}{def.name}<span className="mute" data-testid="territory-size" style={{ fontWeight: 600, letterSpacing: 0.3, marginLeft: 8, textTransform: "none" }}>{sizeLabelOf(def.id)}</span></p>
       </div>
       {king ? (
         <>

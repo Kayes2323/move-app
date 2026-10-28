@@ -43,7 +43,7 @@ if (existsSync(dir)) for (const f of readdirSync(dir)) if (f.endsWith(".json")) 
 /* the pilot: its committed mask is the truth */
 const pilotMask = JSON.parse(readFileSync(join(ROOT, "public", "geo", "bd", "masks", `${PILOT}.json`), "utf8")) as { maskVersion: string; meta: { counts: { eligibleCells: number } } };
 
-type Open = { name: string; percent: number; eligibleCells: number; requiredCells: number; maskVersion: string; chunk: string };
+type Open = { name: string; percent: number; eligibleCells: number; requiredCells: number; streetKm: number | null; areaKm2: number | null; maskVersion: string; chunk: string };
 const open: Record<string, Open> = {};
 const closed: Record<string, { s: "C" | "N"; r: string }> = {};
 const rows: { a: Area; status: string; reason: string; eligible: number | null; percent: number | null; required: number | null; km: number | null; km2: number | null }[] = [];
@@ -52,7 +52,7 @@ for (const a of playable.sort((x, y) => x.id.localeCompare(y.id))) {
   const an = analyses.get(a.id);
   if (a.id === PILOT) {
     const e = pilotMask.meta.counts.eligibleCells;
-    open[a.id] = { name: a.name, percent: 80, eligibleCells: e, requiredCells: Math.ceil((e * 80) / 100), maskVersion: pilotMask.maskVersion, chunk: a.boundary!.chunk };
+    open[a.id] = { name: a.name, percent: 80, eligibleCells: e, requiredCells: Math.ceil((e * 80) / 100), streetKm: an?.counts?.uniqueStreetKm ?? null, areaKm2: an?.counts?.areaKm2 ?? null, maskVersion: pilotMask.maskVersion, chunk: a.boundary!.chunk };
     rows.push({ a, status: "OPEN", reason: "pilot", eligible: e, percent: 80, required: open[a.id].requiredCells, km: an?.counts?.uniqueStreetKm ?? null, km2: an?.counts?.areaKm2 ?? null });
     continue;
   }
@@ -65,7 +65,7 @@ for (const a of playable.sort((x, y) => x.id.localeCompare(y.id))) {
   const maskFile = join(TM, "cache", "bd-masks", `${a.id}.json`);
   const published = existsSync(join(ROOT, "public", "geo", "bd", "masks", `${a.id}.json`));
   if (rec.status === "OPEN_CANDIDATE" && an.validation?.ok && an.counts && rec.percent && (publish ? existsSync(maskFile) : published || existsSync(maskFile))) {
-    open[a.id] = { name: a.name, percent: rec.percent, eligibleCells: an.counts.eligibleCells, requiredCells: Math.ceil((an.counts.eligibleCells * rec.percent) / 100), maskVersion: an.maskVersion!, chunk: a.boundary!.chunk };
+    open[a.id] = { name: a.name, percent: rec.percent, eligibleCells: an.counts.eligibleCells, requiredCells: Math.ceil((an.counts.eligibleCells * rec.percent) / 100), streetKm: an.counts.uniqueStreetKm, areaKm2: an.counts.areaKm2, maskVersion: an.maskVersion!, chunk: a.boundary!.chunk };
     rows.push({ a, status: "OPEN", reason: rec.reason, eligible: an.counts.eligibleCells, percent: rec.percent, required: open[a.id].requiredCells, km: an.counts.uniqueStreetKm, km2: an.counts.areaKm2 });
     continue;
   }

@@ -75,6 +75,20 @@ async function drawTile(helper, ways, z, x, y, dark) {
  */
 export async function installTiles(ctx, helper, ways) {
   const state = { fail: false, requests: [] };
+  // Esri satellite imagery and its road / place-name overlays: imagery is drawn as ground-coloured tiles with the real streets, overlays are transparent
+  await ctx.route(/server\.arcgisonline\.com\//, async (route) => {
+    const m = route.request().url().match(/\/(World_Imagery|World_Transportation|World_Boundaries_and_Places)\/MapServer\/tile\/(\d+)\/(\d+)\/(\d+)/);
+    if (!m) return route.fulfill({ status: 404 });
+    const [, layer, z, y, x] = m;
+    state.requests.push({ z: Number(z), x: Number(x), y: Number(y), dark: false, layer });
+    if (state.fail) return route.fulfill({ status: 500, body: "tile server down" });
+    try {
+      const png = layer === "World_Imagery" ? await drawTile(helper, ways, Number(z), Number(x), Number(y), true) : Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+      return await route.fulfill({ status: 200, contentType: "image/png", body: png });
+    } catch {
+      // the test finished while a tile was still being drawn
+    }
+  });
   await ctx.route(/tile\.openstreetmap\.org\//, async (route) => {
     const m = route.request().url().match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
     if (!m) return route.fulfill({ status: 404 });

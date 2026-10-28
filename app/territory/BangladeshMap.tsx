@@ -1,5 +1,6 @@
 "use client";
-import { TILE_ATTRIBUTION, TILE_URL, tileClass } from "../lib/mapTiles";
+import { addBaseLayers } from "../lib/leafletTiles";
+import { useMapStyle } from "../lib/useMapStyle";
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as Leaflet from "leaflet";
@@ -44,7 +45,7 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
   const [tick, setTick] = useState(0);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const tiles = useRef<Leaflet.TileLayer | null>(null);
-  const attributed = useRef(false);
+  const mapStyle = useMapStyle();
   const layer = useRef<Leaflet.LayerGroup | null>(null);
   const libRef = useRef<typeof Leaflet | null>(null);
   // re-lays out the labels for the current zoom (set after each redraw)
@@ -104,24 +105,15 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
     const L = libRef.current;
     const map = mapRef.current;
     if (!L || !map) return;
-    tiles.current?.remove();
-    let errors = 0;
-    const t = L.tileLayer(TILE_URL, { maxZoom: 19, crossOrigin: true, className: tileClass(dark) });
-    t.on("tileerror", () => {
-      errors += 1;
-      if (errors === 6) onProblemRef.current("Map tiles couldn't load, but borders and selection still work.");
-    });
-    t.on("tileload", () => {
-      if (errors) onProblemRef.current(null);
-      errors = 0;
-    });
-    t.addTo(map).bringToBack();
-    tiles.current = t;
-    if (!attributed.current) {
-      attributed.current = true;
-      L.control.attribution({ position: "bottomright", prefix: false }).addAttribution(TILE_ATTRIBUTION).addTo(map);
-    }
-  }, [dark, tick]);
+    let seenOk = false;
+    const base = addBaseLayers(L, map, mapStyle, dark, (st) => {
+      if (st === "ok") {
+        seenOk = true;
+        onProblemRef.current(null);
+      } else if (st === "error" && !seenOk) onProblemRef.current("Map tiles couldn't load, but borders and selection still work.");
+    }, { attributionPosition: "bottomright" });
+    return () => base.remove();
+  }, [dark, mapStyle, tick]);
 
   /* What is drawn: the focused area's outline and its children. */
   useEffect(() => {

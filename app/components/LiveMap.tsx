@@ -4,15 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 import type { LngLat } from "../lib/territory/conquest/geodesy";
 import { conquestRing, distanceToRingM, pointInRing, ringProgress, toLngLat } from "../lib/territory/conquest/outline";
-import { TILE_ATTRIBUTION, TILE_URL, tileClass } from "../lib/mapTiles";
+import { addBaseLayers } from "../lib/leafletTiles";
+import { useMapStyle } from "../lib/useMapStyle";
+import { MapStyleToggle } from "./MapStyleToggle";
 import type { TerritoryDefinition } from "../lib/territory/conquest/registry";
 
 /** Google-Maps-like blue for the path walked and for "you". */
 const BLUE = "#1A73E8";
 const FOLLOW_ZOOM = 17;
-/** How long to wait for the first tile before saying the map could not load. */
-const TILE_TIMEOUT_MS = 12_000;
-const TILE_ERRORS_BEFORE_FAIL = 4;
 
 export type MapGps = "waiting" | "active" | "error";
 export type TileState = "loading" | "ok" | "error";
@@ -54,6 +53,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
   const [following, setFollowing] = useState(true);
   const followRef = useRef(true);
   const [view, setView] = useState<"me" | "territory">("me");
+  const mapStyle = useMapStyle();
   const [tiles, setTiles] = useState<TileState>("loading");
   const [loadedTiles, setLoadedTiles] = useState(0);
   const [attempt, setAttempt] = useState(0);
@@ -74,7 +74,6 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
       if (dead || !host.current) return;
       L.current = lib;
       const m = lib.map(host.current, { zoomControl: false, attributionControl: false, minZoom: 3, maxZoom: 19, preferCanvas: true, zoomSnap: 0.5, center: [0, 0], zoom: 2 });
-      lib.control.attribution({ position: "bottomleft", prefix: false }).addAttribution(TILE_ATTRIBUTION).addTo(m);
       m.on("dragstart", () => setFollowing(false));
       map.current = m;
       const ro = new ResizeObserver(() => m.invalidateSize());
@@ -97,35 +96,18 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
     };
   }, []);
 
-  /* tiles: real map tiles, with honest loading / error state and a retry */
+  /* base map: street or satellite tiles, with an honest loading / error state and a retry */
   useEffect(() => {
     const lib = L.current;
     const m = map.current;
     if (!ready || !lib || !m) return;
-    layers.current.tiles?.remove();
-    let ok = 0;
-    let bad = 0;
-    const layer = lib.tileLayer(TILE_URL, { maxZoom: 19, keepBuffer: 3, updateWhenIdle: false, className: tileClass(dark) });
-    layer.on("tileload", () => {
-      ok += 1;
-      setLoadedTiles(ok);
-      setTiles("ok");
+    setLoadedTiles(0);
+    const layers_ = addBaseLayers(lib, m, mapStyle, dark, (st) => {
+      setTiles(st);
+      if (st === "ok") setLoadedTiles((n) => n + 1);
     });
-    layer.on("tileerror", () => {
-      bad += 1;
-      if (ok === 0 && bad >= TILE_ERRORS_BEFORE_FAIL) setTiles("error");
-    });
-    layer.addTo(m);
-    layer.bringToBack();
-    layers.current.tiles = layer;
-    const timer = setTimeout(() => {
-      if (ok === 0) setTiles("error");
-    }, TILE_TIMEOUT_MS);
-    return () => {
-      clearTimeout(timer);
-      layer.off();
-    };
-  }, [ready, dark, attempt]);
+    return () => layers_.remove();
+  }, [ready, dark, mapStyle, attempt]);
 
   const retry = useCallback(() => {
     setTiles("loading");
@@ -235,12 +217,15 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
 
       <div style={{ position: "absolute", top: 10, left: 10, right: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, zIndex: 500, pointerEvents: "none" }}>
         {where ? <span role="status" style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(10px)", borderRadius: 14, padding: "6px 10px", fontSize: 12, fontWeight: 700, maxWidth: "60%" }}>{where}</span> : <span />}
-        {territory && (
-          <span className="seg" style={{ pointerEvents: "auto" }} role="group" aria-label="Map view">
-            <button aria-pressed={view === "me"} onClick={recenter}>Me</button>
-            <button aria-pressed={view === "territory"} onClick={() => setView("territory")}>{territory.def.name}</button>
-          </span>
-        )}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+          {territory && (
+            <span className="seg" style={{ pointerEvents: "auto" }} role="group" aria-label="Map view">
+              <button aria-pressed={view === "me"} onClick={recenter}>Me</button>
+              <button aria-pressed={view === "territory"} onClick={() => setView("territory")}>{territory.def.name}</button>
+            </span>
+          )}
+          <MapStyleToggle style={mapStyle} />
+        </div>
       </div>
 
       <div style={{ position: "absolute", right: 10, bottom: 28, zIndex: 500, display: "flex", flexDirection: "column", gap: 8 }}>
