@@ -1,6 +1,6 @@
 import { findRoute, journeyOffsetKm, type ActivityKind } from "../activity";
 import { activeMs, evaluateFix } from "./gps";
-import { calcCalories, calcSteps, formatDurationSec } from "./metrics";
+import { activityMetrics, calcSteps, formatDurationSec } from "./metrics";
 import type { ActivityStore } from "./store";
 import type { ActivityMode } from "../activityMode";
 import type { JourneyContext, LocalActivity, TerritoryContext, LocationSourceKind, RawFix, RejectReason, TrackPoint } from "./types";
@@ -270,8 +270,7 @@ export class TrackingEngine {
       a.pendingGap = undefined;
 
       const durationSec = Math.floor(activeMs(a.segments, t) / 1000);
-      const km = Math.round((a.distanceM / 1000) * 100) / 100;
-      const paceMin = km >= 0.01 && durationSec > 0 ? durationSec / 60 / km : 0;
+      const { km, paceMin, calories, steps } = activityMetrics(a.kind, a.weightKg, a.distanceM / 1000, durationSec);
       const route = findRoute(a.journey?.routeName);
       const reached = journeyOffsetKm(route, a.journey?.startIdx) + (a.journey?.completedKmBefore ?? 0) + km;
       a.summary = {
@@ -279,8 +278,8 @@ export class TrackingEngine {
         durationSec,
         duration: formatDurationSec(durationSec),
         pace: Math.round(paceMin * 100) / 100,
-        calories: calcCalories(a.kind, a.weightKg, durationSec),
-        steps: calcSteps(km, a.kind, paceMin),
+        calories,
+        steps: steps ?? calcSteps(km, a.kind, paceMin),
         journeyKm: Math.round((route ? Math.min(reached, route.totalKm) : reached) * 100) / 100,
         date: new Date(t).toISOString(),
       };

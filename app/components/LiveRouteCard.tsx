@@ -1,7 +1,11 @@
 "use client";
+import { useMemo } from "react";
 import type { Route } from "../data/routes";
 import { ACTIVITY_META, formatClock, formatKm, formatPerformance, type ActivityKind } from "../lib/activity";
-import { JourneyRoute } from "./JourneyRoute";
+import { trackSegments } from "../lib/share/trackPath";
+import { resolveMode, useThemePrefs } from "../lib/theme";
+import type { TrackPoint } from "../lib/tracking/types";
+import { LiveMap, type LiveMapTerritory } from "./LiveMap";
 
 export type GpsStatus = "waiting" | "active" | "error";
 
@@ -28,16 +32,20 @@ export interface LiveRouteCardProps {
   onPause: () => void;
   onFinish: () => void;
   onClose: () => void;
-  /** Replaces the journey route with another view of the move (the Territory screen uses this). */
-  visual?: React.ReactNode;
-  /** Shown between the status bar and the visual. */
+  /** The GPS fixes recorded so far; the map draws exactly these (cleaned the same way as the share card), nothing else. */
+  points: readonly TrackPoint[];
+  /** The latest accepted fix: where "you" are. */
+  here?: { lat: number; lng: number; acc?: number } | null;
+  /** Steps and calories so far, from the same formulas that settle the finished activity. null = not available (e.g. steps on a bike). */
+  steps: number | null;
+  calories: number | null;
+  /** A Territory move also shows its boundary and explored ground on the same map. */
+  territory?: LiveMapTerritory;
+  /** Shown between the status bar and the map. */
   header?: React.ReactNode;
 }
 
-const MAP_W = 340;
-const MAP_H = 300;
-
-export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose, visual, header }: LiveRouteCardProps) {
+export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose, points, here, steps, calories, territory, header }: LiveRouteCardProps) {
   const meta = ACTIVITY_META[kind];
   // Quantised so the map only re-renders when the dot would visibly move.
   const progressKm = Math.round((journeyStartKm + distanceKm) * 100) / 100;
@@ -50,11 +58,17 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
         ? { label: "GETTING GPS…", dot: "var(--amber)", color: "var(--amber)", bg: "var(--amberbg)" }
         : { label: "LIVE", dot: meta.cssVar, color: "var(--ink)", bg: "var(--surf)" };
 
-  // the next checkpoint belongs to the Journey view only: a Territory or free move draws its own view and has no route to point at
-  const nextTarget = !visual && route ? nextCheckpoint(route, progressKm) : null;
+  const prefs = useThemePrefs();
+  const dark = resolveMode(prefs.mode) === "dark";
+  const segments = useMemo(() => trackSegments(points), [points]);
+  const last = points.length ? points[points.length - 1] : null;
+  const pos = here ?? last;
+  const point = pos ? { lat: pos.lat, lng: pos.lng } : null;
+  // the next checkpoint belongs to a Journey move only: a Territory or free move has no route to point at
+  const nextTarget = route && !territory ? nextCheckpoint(route, progressKm) : null;
 
   return (
-    <main className="app nonav" style={{ display: "flex", flexDirection: "column", paddingTop: "calc(env(safe-area-inset-top, 0px) + 20px)" }}>
+    <main className="app nonav" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden", paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
       <header className="bar">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/move-mark.png" alt="Move" width={38} height={26} style={{ width: 38, height: "auto", filter: "var(--mark-filter, none)" }} />
@@ -68,20 +82,12 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
         </button>
       </header>
       {header}
-      {note && <p className="mute" style={{ fontSize: 12, textAlign: "center", lineHeight: 1.4, margin: "10px 0 0" }}>{note}</p>}
+      {note && <p className="mute" style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, margin: "6px 0 0" }}>{note}</p>}
 
-      <section aria-label={visual ? "Move view" : "Journey route"} style={{ flex: 1, minHeight: 240, margin: "12px 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden" }}>
-        {visual ? (
-          visual
-        ) : route ? (
-          <div style={{ width: "100%", maxWidth: MAP_W }}>
-            <JourneyRoute route={route} progressKm={progressKm} startKm={routeStartKm} width={MAP_W} height={MAP_H} padL={92} padR={92} padY={14} labels="auto" accent={meta.cssVar} line={3} fontSize={11} pulse ink="var(--ink)" trail="var(--trk)" halo="var(--land)" here="var(--bg)" />
-          </div>
-        ) : (
-          <p className="body mute" style={{ textAlign: "center", maxWidth: 240 }}>Your journey route isn&apos;t available, but your activity is still being tracked.</p>
-        )}
+      <section aria-label="Live map" style={{ flex: "1 1 0", minHeight: 200, margin: "10px 0", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden", isolation: "isolate" }}>
+        <LiveMap point={point} accuracy={pos && "acc" in pos ? pos.acc : null} segments={segments} dark={dark} gps={gps} territory={territory} />
         {gps === "error" && (
-          <div role="alert" style={{ position: "absolute", bottom: 12, left: 12, right: 12, textAlign: "center", background: "var(--dangerbg)", borderRadius: 14, padding: "10px 12px" }}>
+          <div role="alert" style={{ position: "absolute", top: 10, left: 10, right: 10, zIndex: 700, textAlign: "center", background: "var(--dangerbg)", borderRadius: 14, padding: "10px 12px" }}>
             <p style={{ color: "var(--danger)", fontSize: 12 }}>{gpsMessage ?? "Turn on location to track distance."}</p>
             {onOpenSettings && (
               <button className="btn btn-line" style={{ width: "auto", marginTop: 8, minHeight: 44, padding: "0 20px" }} onClick={onOpenSettings}>Open settings</button>
@@ -102,23 +108,39 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
         </div>
       ) : null}
 
-      <section>
+      <section style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}>
         {nextTarget && (
-          <p className="mute" style={{ fontSize: 13, fontWeight: 600 }}>
+          <p className="mute" style={{ fontSize: 12, fontWeight: 600 }}>
             Next · <span style={{ color: "var(--ink)" }}>{nextTarget.name}</span> · {nextTarget.km.toFixed(1)} km
           </p>
         )}
-        <p className="lab" style={{ marginTop: 10 }}>Distance</p>
-        <div className="blk" style={{ fontSize: 88, lineHeight: 0.95, marginTop: 4 }}>
-          {formatKm(distanceKm)}
-          <span style={{ fontFamily: "Archivo, sans-serif", fontWeight: 700, fontSize: 22, color: meta.cssVar, marginLeft: 8, letterSpacing: 0 }}>km</span>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <p className="lab">Distance</p>
+            <div className="blk" data-testid="live-distance" style={{ fontSize: "clamp(48px, min(12dvh, 19vw), 84px)", lineHeight: 0.95, marginTop: 2 }}>
+              {formatKm(distanceKm)}
+              <span style={{ fontFamily: "Archivo, sans-serif", fontWeight: 700, fontSize: 20, color: meta.cssVar, marginLeft: 6, letterSpacing: 0 }}>km</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 4, textAlign: "right", minWidth: 0 }}>
+            <div><p className="lab">Time</p><p className="blk" data-testid="live-time" style={{ fontSize: 24, marginTop: 1, whiteSpace: "nowrap" }}>{formatClock(seconds)}</p></div>
+            <div><p className="lab">{kind === "cycling" ? "Speed" : "Avg pace"}</p><p className="blk" data-testid="live-pace" style={{ fontSize: 24, marginTop: 1, whiteSpace: "nowrap" }}>{formatPerformance(kind, pace)}</p></div>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 32, marginTop: 14 }}>
-          <div><p className="lab">Time</p><p className="blk" style={{ fontSize: 28, marginTop: 2 }}>{formatClock(seconds)}</p></div>
-          <div><p className="lab">{kind === "cycling" ? "Speed" : "Pace"}</p><p className="blk" style={{ fontSize: 28, marginTop: 2 }}>{formatPerformance(kind, pace)}</p></div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+          <div className="card" style={{ padding: "10px 14px", borderRadius: 16 }}>
+            <p className="lab">Steps</p>
+            <p className="blk" data-testid="live-steps" style={{ fontSize: 22, marginTop: 2 }}>{steps === null ? "—" : steps.toLocaleString("en-US")}</p>
+            <p className="mute" style={{ fontSize: 10, marginTop: 1 }}>{steps === null ? "Not counted on a bike" : "Estimated from distance"}</p>
+          </div>
+          <div className="card" style={{ padding: "10px 14px", borderRadius: 16 }}>
+            <p className="lab">Calories</p>
+            <p className="blk" data-testid="live-calories" style={{ fontSize: 22, marginTop: 2 }}>{calories === null ? "—" : calories.toLocaleString("en-US")}<span className="unit">kcal</span></p>
+            <p className="mute" style={{ fontSize: 10, marginTop: 1 }}>Estimated from time and weight</p>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 24 }}>
-          <button aria-label={paused ? "Resume" : "Pause"} className="icon-btn" style={{ width: 58, height: 58, background: "var(--surf2)" }} onClick={onPause}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 14 }}>
+          <button aria-label={paused ? "Resume" : "Pause"} className="icon-btn" style={{ width: 58, height: 58, borderRadius: 29, background: "var(--surf2)", flexShrink: 0 }} onClick={onPause}>
             {paused ? (
               <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
             ) : (

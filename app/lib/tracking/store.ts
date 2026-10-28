@@ -10,7 +10,8 @@ export interface ActivityStore {
   listActivities(): Promise<LocalActivity[]>;
   /** Writes the point and the updated activity atomically, so distance and route can never disagree after a crash. */
   savePoint(activity: LocalActivity, seq: number, point: TrackPoint): Promise<void>;
-  getPoints(id: string): Promise<TrackPoint[]>;
+  /** The recorded points, in order. `from` skips the first `from` of them (a live screen only asks for what it has not drawn yet). */
+  getPoints(id: string, from?: number): Promise<TrackPoint[]>;
   deletePoints(id: string): Promise<void>;
   deleteActivity(id: string): Promise<void>;
 }
@@ -36,8 +37,8 @@ export class MemoryStore implements ActivityStore {
     list[seq] = structuredClone(p);
     this.points.set(a.id, list);
   }
-  async getPoints(id: string) {
-    return structuredClone((this.points.get(id) ?? []).filter(Boolean));
+  async getPoints(id: string, from = 0) {
+    return structuredClone((this.points.get(id) ?? []).slice(from).filter(Boolean));
   }
   async deletePoints(id: string) {
     this.points.delete(id);
@@ -110,9 +111,9 @@ export class IndexedDbStore implements ActivityStore {
     tx.objectStore("points").put({ activityId: a.id, seq, ...p });
     await done(tx);
   }
-  async getPoints(id: string) {
+  async getPoints(id: string, from = 0) {
     const db = await this.open();
-    const range = IDBKeyRange.bound([id, 0], [id, Number.MAX_SAFE_INTEGER]);
+    const range = IDBKeyRange.bound([id, from], [id, Number.MAX_SAFE_INTEGER]);
     const rows = (await request(db.transaction("points").objectStore("points").getAll(range))) as (TrackPoint & { activityId: string; seq: number })[];
     return rows.map(({ activityId: _a, seq: _s, ...p }) => p as TrackPoint);
   }

@@ -154,9 +154,9 @@ test("the Journey's saved fields are read only by Journey code and by a Journey 
 
 test("the live Territory and free-move views never draw a Journey route", () => {
   const run = readFileSync(join(process.cwd(), "app", "run", "page.tsx"), "utf8");
-  // the Journey view is only reached for a JOURNEY move; the other two modes pass route={undefined} and their own visual
-  assert.match(run, /liveMode === "TERRITORY"[\s\S]*route=\{undefined\}[\s\S]*visual=/);
-  assert.match(run, /liveMode === "NORMAL"[\s\S]*route=\{undefined\}[\s\S]*visual=/);
+  // a Journey route (and its next checkpoint) is only reached for a JOURNEY move; the other two modes pass route={undefined}
+  assert.match(run, /liveMode === "TERRITORY"[\s\S]*route=\{undefined\}/);
+  assert.match(run, /liveMode === "NORMAL"\) return <LiveRouteCard[^\n]*route=\{undefined\}/);
   const card = readFileSync(join(process.cwd(), "app", "components", "LiveRouteCard.tsx"), "utf8");
-  assert.match(card, /const nextTarget = !visual && route/);
+  assert.match(card, /const nextTarget = route && !territory/);
 });

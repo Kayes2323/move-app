@@ -72,9 +72,13 @@ export function cleanTrack(track: readonly TrackPoint[] | null | undefined): Tra
  * fully inside. Points are only thinned (Douglas-Peucker, never more than about a pixel): the picture is the route that was really
  * travelled. Returns null when there's no usable track.
  */
-export function drawRoute(track: readonly TrackPoint[] | null | undefined, width: number, height: number, pad: number): DrawnRoute | null {
+/**
+ * The stretches of a recorded track to draw, shared by the live map and the share card so they can never disagree: cleaned fixes
+ * (see `cleanTrack`), split wherever the recording has a gap (pause, lost signal), each stretch with at least two fixes. A gap is never
+ * bridged by a line.
+ */
+export function trackSegments(track: readonly TrackPoint[] | null | undefined): LngLat[][] {
   const pts = cleanTrack(track);
-  if (pts.length < 2) return null;
   const stretches: LngLat[][] = [];
   let cur: LngLat[] = [];
   for (const p of pts) {
@@ -85,7 +89,18 @@ export function drawRoute(track: readonly TrackPoint[] | null | undefined, width
     cur.push({ lng: p.lng, lat: p.lat });
   }
   if (cur.length) stretches.push(cur);
+  return stretches.filter((s) => s.length >= 2);
+}
+
+/**
+ * The recorded GPS track fitted into a box, with `pad` px kept clear on every side so the line, its casing and its end dots stay
+ * fully inside. Points are only thinned (Douglas-Peucker, never more than about a pixel): the picture is the route that was really
+ * travelled. Returns null when there's no usable track.
+ */
+export function drawRoute(track: readonly TrackPoint[] | null | undefined, width: number, height: number, pad: number): DrawnRoute | null {
+  const stretches = trackSegments(track);
   const all = stretches.flat();
+  if (all.length < 2) return null;
 
   // local flat metres around the track's centre: true proportions at this latitude
   const lats = all.map((p) => p.lat);
@@ -111,8 +126,7 @@ export function drawRoute(track: readonly TrackPoint[] | null | undefined, width
 
   // thin by at most ~0.8 px, never below 2 m
   const tolerance = Math.max(2, 0.8 / scale);
-  const parts = stretches.filter((s) => s.length >= 2).map((s) => simplifyTrack(s, tolerance));
-  if (!parts.length) return null;
+  const parts = stretches.map((s) => simplifyTrack(s, tolerance));
   const d = parts.map((s) => s.map((p, i) => { const q = project(p); return `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`; }).join(" ")).join(" ");
   return { d, start: project(all[0]), end: project(all[all.length - 1]) };
 }

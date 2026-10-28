@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cleanTrack, drawRoute } from "./trackPath";
+import { cleanTrack, drawRoute, trackSegments } from "./trackPath";
 import type { TrackPoint } from "../tracking/types";
 
 const pt = (lat: number, lng: number, gap?: boolean, t = 0, acc = 5): TrackPoint => ({ t, lat, lng, acc, alt: null, gap });
@@ -102,4 +102,26 @@ test("the line is only thinned: far fewer points than recorded, but still the re
   const r = drawRoute(track, 312, 150, 16)!;
   assert.ok(coords(r.d).length < track.length, "thinned");
   assert.ok(coords(r.d).length > 8, "but still the real shape");
+});
+
+test("the live map and the share card draw the same stretches: one builder, split at pauses and signal loss, nothing bridged", () => {
+  const base = walk(30);
+  const paused = [...base.slice(0, 15), { ...base[15], gap: true }, ...base.slice(16)];
+  const segs = trackSegments(paused);
+  assert.equal(segs.length, 2, "a pause splits the line in two");
+  assert.equal(segs[0].length + segs[1].length, 30);
+  // the card's path has exactly one sub-path per live stretch
+  assert.equal((drawRoute(paused, 312, 150, 16)!.d.match(/M/g) || []).length, segs.length);
+  assert.deepEqual(trackSegments(base).length, 1);
+  assert.deepEqual(trackSegments([]), []);
+  assert.deepEqual(trackSegments([pt(23.76, 90.36)]), []);
+});
+
+test("jumps, duplicates and bad fixes never reach the live line either", () => {
+  const base = walk(40, 8, 4);
+  const noisy = [...base.slice(0, 20), { ...base[20], lat: base[20].lat + 0.02 }, pt(0, 0), ...base.slice(21), ...base.slice(21, 25)];
+  const segs = trackSegments(noisy);
+  const flat = segs.flat();
+  assert.ok(flat.every((p) => Math.abs(p.lat - 23.76) < 0.01 && p.lat !== 0), "no jump, no (0,0)");
+  assert.ok(flat.length <= 40, "no duplicates");
 });

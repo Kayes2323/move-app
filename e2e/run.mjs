@@ -2,6 +2,9 @@
 // with the Firebase SDK replaced by in-memory stand-ins (E2E=1). See e2e/README.md for what this does NOT cover.
 import { chromium } from "playwright-core";
 import { spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
+import { installTiles, tileOf, walkAlong, waysIn } from "./osmTiles.mjs";
+import { cleanTrack, trackSegments } from "../app/lib/share/trackPath.ts";
 
 const PORT = process.env.E2E_PORT || "3333";
 const BASE = `http://localhost:${PORT}`;
@@ -53,6 +56,8 @@ const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline
   await ctx.addInitScript(initScript({ db, user, permission }));
   const pg = await ctx.newPage();
   pg.errors = [];
+  pg.logs = [];
+  pg.on("console", (m) => { if (["error", "warning"].includes(m.type())) pg.logs.push(m.text().slice(0, 300)); });
   pg.on("pageerror", (e) => pg.errors.push(String(e)));
   pg.dialogs = [];
   pg.on("dialog", (d) => { pg.dialogs.push(d.message()); d.accept(); });
@@ -924,7 +929,7 @@ async function scenarioSeparation() {
     await s.pg.waitForTimeout(300);
     const free = await text(s.pg);
     const fa = (await idb(s.pg)).activities[0];
-    check("N22. a free move is saved as NORMAL with no route and no Territory, and its live view shows none", fa && fa.mode === "NORMAL" && fa.journey === null && !fa.territory && noJourneyText(free) && (await noRouteSvg(s.pg)) === 0 && /Free move/i.test(free), JSON.stringify([fa?.mode, fa?.journey]));
+    check("N22. a free move is saved as NORMAL with no route and no Territory, and its live view shows none", fa && fa.mode === "NORMAL" && fa.journey === null && !fa.territory && noJourneyText(free) && (await noRouteSvg(s.pg)) === 0 && /LIVE\s*·\s*walk/i.test(free), JSON.stringify([fa?.mode, fa?.journey]));
     await walk(s.pg, 30);
     check("N23. normal tracking still works: distance counts", bigKm(await text(s.pg)) > 0.05);
     await s.ctx.close();
@@ -1373,6 +1378,184 @@ async function scenarioLiveTerritory() {
   await far.ctx.close();
 }
 
+async function scenarioLiveMap() {
+  // The live map: real tiles at the real position, the recorded route drawn over them, honest loading/error states, recentre, and the
+  // same numbers on the live screen and in the saved activity. Tiles come from e2e/osmTiles.mjs (real OSM streets at real tile addresses).
+  const SHOTS = process.env.SHOTS_DIR;
+  if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+  const shot = async (pg, name) => { if (SHOTS) await pg.screenshot({ path: `${SHOTS}/${name}.png` }); };
+  const helperCtx = await browser.newContext();
+  const helper = await helperCtx.newPage();
+  const near = { mohammadpur: [23.7587, 90.3589], chandpur: [23.2333, 90.6713] };
+  const box = ([la, lo]) => [la - 0.012, lo - 0.012, la + 0.012, lo + 0.012];
+  const mohWays = waysIn("bd-dis-dhaka", box(near.mohammadpur));
+  const chdWays = waysIn("bd-dis-chandpur", box(near.chandpur));
+  const moh = walkAlong(mohWays, near.mohammadpur, { lengthM: 600 });
+  const chd = walkAlong(chdWays, near.chandpur, { lengthM: 600 });
+  check("M0. test walks follow real OSM streets (hundreds of fixes, real turns)", moh.length > 120 && chd.length > 120, `${moh.length}/${chd.length}`);
+
+  const go = async (pg, pts, n, from = 0) => { for (let i = from; i < Math.min(pts.length, from + n); i++) { await shift(pg, 2000); await pg.evaluate(([la, ln]) => window.__gps.emit({ lat: la, lng: ln, acc: 6 }), [pts[i].lat, pts[i].lng]); await pg.waitForTimeout(15); } };
+  const attr = (pg, name) => pg.locator("[data-map-state]").first().getAttribute(name);
+  const mapState = (pg) => attr(pg, "data-map-state");
+  const startNormal = async (s, pts, label = "Walking", mode = "normal") => { await s.pg.goto(`${BASE}/run?mode=${mode}`); await s.pg.getByText(label).click(); await tracking(s.pg); await go(s.pg, pts, 1); };
+
+  /* --- Mohammadpur, free move --- */
+  const a = await fresh();
+  const tilesA = await installTiles(a.ctx, helper, mohWays.concat(chdWays));
+  await startNormal(a, moh);
+  const okA = await until(async () => (await mapState(a.pg)) === "ok");
+  await until(async () => Number(await attr(a.pg, "data-tiles-loaded")) > 3);
+  check("M1. street tiles load and the map says so (not a flat background)", okA && Number(await attr(a.pg, "data-tiles-loaded")) > 3, `state=${await mapState(a.pg)} tiles=${await attr(a.pg, "data-tiles-loaded")}`);
+  const here = tileOf(moh[0].lat, moh[0].lng, 17);
+  check("M2. the map is centred on the real GPS position (the tile under the user was asked for)", tilesA.requests.some((r) => r.z === 17 && Math.abs(r.x - here.x) <= 1 && Math.abs(r.y - here.y) <= 1), JSON.stringify(here));
+  check("M3. no tile was requested for any other place (no hardcoded centre)", tilesA.requests.filter((r) => r.z >= 15).every((r) => { const t = tileOf(moh[0].lat, moh[0].lng, r.z); return Math.abs(r.x - t.x) <= 6 && Math.abs(r.y - t.y) <= 6; }), JSON.stringify(tilesA.requests.filter((r) => r.z >= 15).slice(0, 4)));
+  await go(a.pg, moh, 110, 1);
+  await a.pg.waitForTimeout(500);
+  const live1 = Number(await attr(a.pg, "data-route-points"));
+  const stored1 = await idb(a.pg);
+  const cleaned1 = trackSegments(stored1.points).flat().length;
+  check("M4. the blue route is drawn from the recorded GPS points (one unbroken line)", live1 > 60 && Number(await attr(a.pg, "data-route-segments")) === 1, `points=${live1}`);
+  check("M5. the live route is exactly the cleaned recorded track (same function as the share card)", live1 === cleaned1, `${live1} vs ${cleaned1}`);
+  const t1 = await text(a.pg);
+  check("M6. a free move shows no Journey route", !/Chandpur|Dhaka →/.test(t1));
+  check("M7. distance, time, pace, steps and calories are on screen", /Distance/i.test(t1) && /Time/i.test(t1) && /Avg pace/i.test(t1) && /Steps/i.test(t1) && /Calories/i.test(t1));
+  await shot(a.pg, "1-normal-walk-390x800");
+
+  // a stray fix with terrible accuracy must not bend the line
+  const before = Number(await attr(a.pg, "data-route-points"));
+  await shift(a.pg, 2000); await a.pg.evaluate(([la, ln]) => window.__gps.emit({ lat: la + 0.02, lng: ln + 0.02, acc: 400 }), [moh[110].lat, moh[110].lng]); await a.pg.waitForTimeout(300);
+  check("M8. a fix with 400 m accuracy is not drawn", Number(await attr(a.pg, "data-route-points")) === before);
+
+  // gestures: dragging stops following; Recenter brings it back; zoom works
+  check("M9. the map follows the user by default", (await attr(a.pg, "data-following")) === "yes");
+  const mapBox = await a.pg.locator("[role=application]").boundingBox();
+  await a.pg.mouse.move(mapBox.x + mapBox.width / 2, mapBox.y + mapBox.height / 2);
+  await a.pg.mouse.down(); await a.pg.mouse.move(mapBox.x + 60, mapBox.y + mapBox.height / 2 + 50, { steps: 8 }); await a.pg.mouse.up();
+  await a.pg.waitForTimeout(200);
+  check("M10. dragging the map stops following (tracking is unaffected)", (await attr(a.pg, "data-following")) === "no");
+  const km0 = bigKm(await text(a.pg));
+  await go(a.pg, moh, 5, 111);
+  check("M11. while the map is dragged away the route keeps growing and distance keeps counting", bigKm(await text(a.pg)) >= km0);
+  await a.pg.getByRole("button", { name: "Recenter on me" }).click();
+  check("M12. Recenter returns to following", (await attr(a.pg, "data-following")) === "yes");
+  const zBefore = Math.max(...tilesA.requests.map((r) => r.z));
+  await a.pg.getByRole("button", { name: "Zoom in" }).click(); await a.pg.getByRole("button", { name: "Zoom in" }).click();
+  await a.pg.waitForTimeout(600);
+  check("M13. zoom in asks for more detailed tiles", Math.max(...tilesA.requests.map((r) => r.z)) > zBefore, `${zBefore} -> ${Math.max(...tilesA.requests.map((r) => r.z))}`);
+
+  // pause / resume: a pause is a break in the line, never a straight segment across it
+  await a.pg.getByRole("button", { name: "Pause" }).click();
+  await a.pg.waitForSelector("text=PAUSED");
+  await shift(a.pg, 60000);
+  await a.pg.getByRole("button", { name: "Resume" }).click();
+  await go(a.pg, moh, 40, 120);
+  await a.pg.waitForTimeout(1500); // the numbers refresh once a second; the test moved the clock by ~80 s in a blink
+  check("M14. after pause and resume the route is two stretches, with no line across the pause", Number(await attr(a.pg, "data-route-segments")) === 2, `segments=${await attr(a.pg, "data-route-segments")}`);
+
+  // the numbers on screen are the numbers that are saved
+  const liveSteps = Number((await a.pg.getByTestId("live-steps").innerText()).replace(/\D/g, ""));
+  const liveCal = Number((await a.pg.getByTestId("live-calories").innerText()).replace(/\D/g, ""));
+  const liveRoutePts = Number(await attr(a.pg, "data-route-points"));
+  const finalPts = (await idb(a.pg)).points;
+  await a.pg.getByRole("button", { name: "Finish activity" }).click();
+  await a.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  const done = (await idb(a.pg)).activities.find((x) => x.status === "finished" || x.summary);
+  const sum = done?.summary ?? {};
+  check("M15. live steps equal the saved steps", Math.abs(liveSteps - sum.steps) <= Math.max(2, sum.steps * 0.01), `${liveSteps} vs ${sum.steps}`);
+  check("M16. live calories equal the saved calories", Math.abs(liveCal - sum.calories) <= 1, `${liveCal} vs ${sum.calories}`);
+  check("M17. the recorded track the activity is saved with is the route that was on the live map", trackSegments(finalPts).flat().length === liveRoutePts && trackSegments(finalPts).length === 2, `${trackSegments(finalPts).flat().length} vs ${liveRoutePts}`);
+  check("M18. no uncaught page errors", a.pg.errors.length === 0, a.pg.errors.join(" | ").slice(0, 200));
+  await a.ctx.close();
+
+  /* --- a different place: Chandpur. Same code, different tiles; nothing near Mohammadpur is asked for --- */
+  const c = await fresh();
+  const tilesC = await installTiles(c.ctx, helper, chdWays);
+  await startNormal(c, chd);
+  await until(async () => (await mapState(c.pg)) === "ok");
+  await go(c.pg, chd, 60, 1);
+  const hereC = tileOf(chd[0].lat, chd[0].lng, 17);
+  check("M19. at another place the map is there instead (not Mohammadpur)", tilesC.requests.some((r) => r.z === 17 && Math.abs(r.x - hereC.x) <= 1 && Math.abs(r.y - hereC.y) <= 1) && !tilesC.requests.some((r) => r.z >= 15 && Math.abs(r.x - tileOf(near.mohammadpur[0], near.mohammadpur[1], r.z).x) < 8), JSON.stringify(hereC));
+  check("M20. the route is drawn there too", Number(await attr(c.pg, "data-route-points")) > 30);
+  await c.ctx.close();
+
+  /* --- tiles unreachable: the map says so, tracking carries on, Try again recovers --- */
+  const f = await fresh();
+  const tilesF = await installTiles(f.ctx, helper, mohWays);
+  tilesF.fail = true;
+  await startNormal(f, moh);
+  await go(f.pg, moh, 30, 1);
+  await f.pg.getByRole("alert").filter({ hasText: "The map couldn't load" }).waitFor({ timeout: 20000 });
+  check("M21. when tiles cannot load the map says so and offers a retry", (await mapState(f.pg)) === "error" && await f.pg.getByRole("button", { name: "Try again" }).isVisible());
+  check("M22. tracking is unaffected by a failed map (distance keeps counting)", bigKm(await text(f.pg)) > 0.02, `${bigKm(await text(f.pg))}`);
+  await shot(f.pg, "5-map-error-390x800");
+  tilesF.fail = false;
+  await f.pg.getByRole("button", { name: "Try again" }).click();
+  check("M23. Try again loads the map once the connection is back", await until(async () => (await mapState(f.pg)) === "ok", 15000));
+  await f.ctx.close();
+
+  /* --- small Android phone: nothing overlaps, everything inside the screen --- */
+  const p = await fresh();
+  await p.pg.setViewportSize({ width: 360, height: 640 });
+  await installTiles(p.ctx, helper, mohWays);
+  await startNormal(p, moh);
+  await go(p.pg, moh, 70, 1);
+  await until(async () => (await mapState(p.pg)) === "ok");
+  const lay = await p.pg.evaluate(() => {
+    const r = (el) => el && el.getBoundingClientRect();
+    const fin = r(document.querySelector('[aria-label="Finish activity"]'));
+    const pau = r(document.querySelector('[aria-label="Pause"]'));
+    const map = r(document.querySelector('section[aria-label="Live map"]'));
+    const dist = r(document.querySelector('[data-testid="live-distance"]'));
+    const steps = r(document.querySelector('[data-testid="live-steps"]'));
+    return { vw: innerWidth, vh: innerHeight, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight, fin, pau, map, dist, steps };
+  });
+  check("M24. 360x640: Pause and Finish are fully on screen", lay.fin.bottom <= lay.vh && lay.pau.bottom <= lay.vh && lay.fin.right <= lay.vw, JSON.stringify({ fin: lay.fin.bottom, pau: lay.pau.bottom, vh: lay.vh }));
+  check("M25. 360x640: the map keeps a usable size and does not overlap the numbers", lay.map.height >= 140 && lay.map.bottom <= lay.dist.top + 1 && lay.steps.bottom <= lay.pau.top + 1, JSON.stringify({ mapH: lay.map.height, mapBottom: lay.map.bottom, distTop: lay.dist.top }));
+  check("M26. 360x640: no horizontal scroll and no page scroll", lay.sw <= lay.vw && lay.sh <= lay.vh + 1, JSON.stringify({ sw: lay.sw, sh: lay.sh }));
+  await shot(p.pg, "4-small-phone-360x640");
+  await p.ctx.close();
+
+  /* --- Journey: the same map, the Journey's own header, no Mohammadpur --- */
+  const j = await fresh();
+  await installTiles(j.ctx, helper, mohWays);
+  await startNormal(j, moh, "Walking", "journey");
+  await go(j.pg, moh, 60, 1);
+  await until(async () => (await mapState(j.pg)) === "ok");
+  const tj = await text(j.pg);
+  check("M27. a Journey move shows the real map and names its route", (await mapState(j.pg)) === "ok" && /Dhaka → Chandpur/.test(tj));
+  await shot(j.pg, "2-journey-390x800");
+  // pause in the middle, then finish: the share card draws the same stretches the live map drew
+  await j.pg.getByRole("button", { name: "Pause" }).click(); await shift(j.pg, 30000); await j.pg.getByRole("button", { name: "Resume" }).click();
+  await go(j.pg, moh, 40, 61);
+  await j.pg.waitForTimeout(400);
+  const liveSegs = Number(await attr(j.pg, "data-route-segments"));
+  await j.pg.getByRole("button", { name: "Finish activity" }).click();
+  await j.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  const cardPaths = await j.pg.locator('svg[aria-label="Route"] path').evaluateAll((els) => els.map((e) => (e.getAttribute("d") || "").split("M").length - 1));
+  check("M27b. the share card draws the same stretches as the live map (two, with the pause between them)", liveSegs === 2 && cardPaths.length > 0 && cardPaths.every((n) => n === 2), JSON.stringify({ liveSegs, cardPaths }));
+  await j.ctx.close();
+
+  /* --- Territory: same map, with the Territory drawn on it and its own numbers --- */
+  const t = await fresh({ db: (() => { const d = baseDb(); d["users/u1"].territory = stored({ selectedAt: Date.now() - 3600000 }); return d; })() });
+  await installTiles(t.ctx, helper, mohWays);
+  await startNormal(t, moh, "Walking", "territory");
+  await t.pg.waitForSelector("text=CONQUERED", { timeout: 20000 });
+  await go(t.pg, moh, 80, 1);
+  await until(async () => (await mapState(t.pg)) === "ok");
+  const tt = await text(t.pg);
+  check("M28. a Territory move shows the real map, the Territory name and its percentage", (await mapState(t.pg)) === "ok" && /Mohammadpur/i.test(tt) && /% CONQUERED/.test(tt) && !/Chandpur/.test(tt));
+  check("M29. the Territory view can be switched to the whole boundary and back", await t.pg.getByRole("group", { name: "Map view" }).isVisible());
+  await t.pg.waitForTimeout(1500);
+  await shot(t.pg, "3-territory-390x800");
+  await t.pg.getByRole("button", { name: /^Mohammadpur$/ }).last().click();
+  await t.pg.waitForTimeout(300);
+  await t.pg.getByRole("button", { name: "Me", exact: true }).click();
+  check("M30. Territory distance and route are separate from the % conquered", Number(await attr(t.pg, "data-route-points")) > 30 && bigKm(await text(t.pg)) > 0.1);
+  check("M31. no uncaught page errors (all modes)", [a, c, f, p, j, t].every((x) => x.pg.errors.length === 0), [a, c, f, p, j, t].flatMap((x) => x.pg.errors).join(" | ").slice(0, 300));
+  await t.ctx.close();
+  await helperCtx.close();
+}
+
 async function scenarioRegression() {
   // signed-out screens redirect
   let s = await fresh({ user: null });
@@ -1462,7 +1645,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

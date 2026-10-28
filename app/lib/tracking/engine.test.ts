@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { TrackingEngine } from "./engine";
 import { MemoryStore } from "./store";
 import { activeMs, evaluateFix, haversineM } from "./gps";
+import { activityMetrics } from "./metrics";
 import type { RawFix } from "./types";
 
 const LAT0 = 23.8103;
@@ -249,4 +250,23 @@ test("a fix produced while paused is rejected even if it arrives after resuming"
   await engine.resume();
   clock.advance(1000);
   assert.equal(await engine.ingest(fix(40, { time: producedWhilePaused + 10_000 })), "stale");
+});
+
+test("the live screen can read the route incrementally, and sees what the final activity is saved with", async () => {
+  const { clock, store, engine, fix, startWalk } = setup();
+  const a = await startWalk();
+  for (let i = 0; i < 12; i++) {
+    clock.advance(2000);
+    await engine.ingest(fix(i * 3));
+  }
+  const all = await store.getPoints(a.id);
+  const tail = await store.getPoints(a.id, 7);
+  assert.equal(tail.length, all.length - 7, "reading from an index returns only the points not read yet");
+  assert.deepEqual(tail, all.slice(7));
+  assert.deepEqual([...all.slice(0, 7), ...tail], all, "what was read before plus what is read now is the whole track");
+  const live = engine.live()!;
+  const done = await engine.finish();
+  const shown = activityMetrics("walking", 70, live.distanceKm, live.durationSec);
+  assert.equal(done.summary?.steps, shown.steps, "the steps on the live screen are the steps the saved activity gets");
+  assert.equal(done.summary?.calories, shown.calories, "the calories on the live screen are the calories the saved activity gets");
 });

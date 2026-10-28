@@ -16,6 +16,8 @@ import { ShareScreen } from "../components/ShareScreen";
 import { findRoute, formatClock, journeyOffsetKm, type ActivityKind } from "../lib/activity";
 import { checkLocationAccess, isNativeApp, type LocationAccess } from "../lib/tracking/location";
 import { useTracking } from "../lib/tracking/useTracking";
+import { useLivePoints } from "../lib/tracking/useLivePoints";
+import { activityMetrics } from "../lib/tracking/metrics";
 
 import type { Journey } from "../lib/journey";
 
@@ -36,18 +38,11 @@ const ACTIVITIES = [
   },
 ];
 
-const MoveHeader = ({ lab, title }: { lab: string; title: string }) => (
-  <div style={{ marginTop: 10 }}>
+const MoveHeader = ({ lab, title, text }: { lab: string; title: string; text?: string }) => (
+  <div style={{ marginTop: 8 }}>
     <p className="lab" style={{ color: "var(--acc-text)" }}>{lab}</p>
-    <p className="h2" style={{ marginTop: 4 }}>{title}</p>
-  </div>
-);
-
-const MoveVisual = ({ icon, title, text }: { icon: string; title: string; text: string }) => (
-  <div role="status" style={{ textAlign: "center", padding: 24 }}>
-    <span aria-hidden="true" style={{ fontSize: 44, lineHeight: 1 }}>{icon}</span>
-    <p className="h2" style={{ marginTop: 10 }}>{title}</p>
-    <p className="body mute" style={{ marginTop: 6, maxWidth: 260, marginInline: "auto" }}>{text}</p>
+    <p className="h2" style={{ marginTop: 2 }}>{title}</p>
+    {text && <p role="status" className="mute" style={{ fontSize: 12, marginTop: 2 }}>{text}</p>}
   </div>
 );
 
@@ -103,18 +98,8 @@ export default function RunPage() {
     };
   }, [territoryMode, uid]);
 
-  // The route so far, read once per new point, for the Territory live view. Tracking is read here; Territory never touches it.
-  const [livePoints, setLivePoints] = useState<{ lat: number; lng: number; t: number; acc: number; gap?: boolean }[]>([]);
-  const liveId = activity?.id;
-  const livePointCount = activity?.pointCount;
-  useEffect(() => {
-    if (!territoryMode || !liveId) return;
-    let cancelled = false;
-    runtime.store.getPoints(liveId).then((p) => !cancelled && setLivePoints(p)).catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [territoryMode, liveId, livePointCount, runtime]);
+  // The route so far, for every kind of move: the live map and the Territory view only read it. Tracking stays the source of truth.
+  const livePoints = useLivePoints(runtime.store, activity?.id, activity?.pointCount);
 
   /* Who is signed in, their journey, and any activity left over from before this screen existed. */
   useEffect(() => {
@@ -291,9 +276,14 @@ export default function RunPage() {
     const routeStartKm = journeyOffsetKm(route, activity.journey?.startIdx);
     const gpsStatus: GpsStatus = gps.status === "active" ? "active" : gps.status === "error" ? "error" : "waiting";
     const gap = activity.pendingGap ? (activity.pendingGap.to - activity.pendingGap.from) / 1000 : null;
+    const metrics = activityMetrics(activity.kind, activity.weightKg, live.distanceKm, live.durationSec);
     const cardProps = {
       kind: activity.kind,
       route,
+      points: livePoints,
+      here: activity.lastPoint ? { lat: activity.lastPoint.lat, lng: activity.lastPoint.lng, acc: activity.lastPoint.acc } : null,
+      steps: metrics.steps,
+      calories: metrics.calories,
       journeyStartKm: routeStartKm + (activity.journey?.completedKmBefore ?? 0),
       routeStartKm,
       distanceKm: live.distanceKm,
@@ -313,11 +303,12 @@ export default function RunPage() {
     // Each context draws its own thing. A Territory move never falls back to a Journey route while it loads or if it can't: it shows
     // Territory, or says Territory isn't available. A free move has no route at all.
     if (liveMode === "TERRITORY") {
-      if (territoryCtx && territoryCtx.def.id === activity.territory?.areaId) return <TerritoryLiveScreen {...cardProps} snapshot={territoryCtx} activity={{ id: activity.id, kind: activity.kind, startedAt: activity.startedAt, userId: uid ?? "" }} points={livePoints} here={activity.lastPoint ? { lat: activity.lastPoint.lat, lng: activity.lastPoint.lng } : undefined} />;
+      if (territoryCtx && territoryCtx.def.id === activity.territory?.areaId) return <TerritoryLiveScreen {...cardProps} snapshot={territoryCtx} activity={{ id: activity.id, kind: activity.kind, startedAt: activity.startedAt, userId: uid ?? "" }} />;
       const name = openAreaName(activity.territory?.areaId) ?? "your Territory";
-      return <LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Territory" title={name} />} visual={<MoveVisual icon="👑" title={name} text={territoryCtx || territoryUnavailable ? "Territory isn't available right now. Your move is still being tracked." : "Loading your Territory…"} />} />;
+      const text = territoryCtx || territoryUnavailable ? "Territory isn't available right now. Your move is still being tracked." : "Loading your Territory…";
+      return <LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Territory" title={name} text={text} />} />;
     }
-    if (liveMode === "NORMAL") return <LiveRouteCard {...cardProps} route={undefined} header={<MoveHeader lab="Free move" title="No route, no Territory" />} visual={<MoveVisual icon="🏃" title="Free move" text="Counts toward your totals and streak." />} />;
+    if (liveMode === "NORMAL") return <LiveRouteCard {...cardProps} route={undefined} />;
     return <LiveRouteCard {...cardProps} header={<MoveHeader lab="Route" title={activity.journey ? `Dhaka → ${activity.journey.routeName}` : "Journey"} />} />;
   }
 
