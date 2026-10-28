@@ -73,9 +73,9 @@ export function claimDecision(uid: string, ownership: Ownership | null, state: C
   const total = mask.meta.counts.eligibleCells;
   if (!ownership) {
     const p = coverageProgress(state, mask, scope);
-    return { ok: p.thresholdMet, kind: "conquest", reign: 1, have: p.exploredCells, need: requiredCells(total), reason: p.thresholdMet ? undefined : "not-enough" };
+    return { ok: p.thresholdMet, kind: "conquest", reign: 1, have: p.exploredCells, need: requiredCells(total, mask.meta.areaId), reason: p.thresholdMet ? undefined : "not-enough" };
   }
-  const base = { kind: "takeover" as const, reign: ownership.reign + 1, need: takeoverCredits(total) };
+  const base = { kind: "takeover" as const, reign: ownership.reign + 1, need: takeoverCredits(total, mask.meta.areaId) };
   if (ownership.ownerUid === uid) return { ...base, ok: false, have: 0, reason: "already-king" };
   if (!state.campaign) return { ...base, ok: false, have: 0, reason: "no-campaign" };
   if (state.campaign.reign !== ownership.reign || state.campaign.startedAt < ownership.reignStartedAt) return { ...base, ok: false, have: 0, reason: "stale-campaign" };

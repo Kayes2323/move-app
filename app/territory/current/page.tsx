@@ -6,11 +6,13 @@ import { BottomNav } from "../../components/BottomNav";
 import { LoadError } from "../../components/LoadError";
 import { Loading } from "../../components/Loading";
 import type { LngLat } from "../../lib/territory/conquest/geodesy";
+import { TERRITORIES } from "../../lib/territory/conquest/registry";
 import { progressAfter } from "../../lib/territory/coverage/coverage";
 import { loadBoundaries, loadTerritoryData } from "../../lib/territory/data";
 import { cellCenter } from "../../lib/territory/exploration/cells";
 import { placeLine, type AreaIndex } from "../../lib/territory/hierarchy";
 import { locateArea } from "../../lib/territory/locate";
+import { stateLabel, stateOf, useClosedStatuses } from "../../lib/territory/status";
 import type { GeoArea, Geometry } from "../../lib/territory/types";
 import { loadTerritoryHome, TerritoryOfflineError, type TerritoryHome } from "../../lib/territoryState";
 import { resolveMode, useThemePrefs } from "../../lib/theme";
@@ -82,6 +84,7 @@ export default function TerritoryHub() {
   const [celebrate, setCelebrate] = useState<{ kind: "conquest" | "takeover"; reign: number; activityId: string | null } | null>(null);
   const prefs = useThemePrefs();
   const dark = resolveMode(prefs.mode) === "dark";
+  const closed = useClosedStatuses();
 
   const refresh = useCallback(async (uid: string): Promise<Loaded> => {
     const [home, geo] = await Promise.all([loadTerritoryHome(uid), loadTerritoryData()]);
@@ -137,9 +140,9 @@ export default function TerritoryHub() {
 
   const active = data?.activeId ? data.index.get(data.activeId) : undefined;
 
-  // the real boundary of the active area (an open Territory carries its own; any other comes from the boundary data)
+  // the real boundary of the active area: the bundled pilot carries its own; every other area comes from the boundary data (all its parts, not just the largest)
   useEffect(() => {
-    if (!data || !active || data.snapshot) return;
+    if (!data || !active || (data.snapshot && TERRITORIES.some((t) => t.id === active.id))) return;
     let dead = false;
     loadBoundaries([active]).then(({ features }) => !dead && features[0] && setGeometry({ id: active.id, geometry: features[0].geometry })).catch(() => undefined);
     return () => {
@@ -176,7 +179,7 @@ export default function TerritoryHub() {
     };
   }, [data]);
 
-  const geometry = data?.snapshot && data.snapshot.def.id === active?.id ? data.snapshot.def.boundary : loadedGeometry && loadedGeometry.id === active?.id ? loadedGeometry.geometry : null;
+  const geometry = data?.snapshot && data.snapshot.def.id === active?.id && TERRITORIES.some((t) => t.id === active?.id) ? data.snapshot.def.boundary : loadedGeometry && loadedGeometry.id === active?.id ? loadedGeometry.geometry : data?.snapshot && data.snapshot.def.id === active?.id ? data.snapshot.def.boundary : null;
   const explored = useMemo(() => (data?.snapshot ? data.snapshot.state.cells.map((c) => cellCenter(c, data.snapshot!.mask.meta.cellZoom)) : []), [data]);
 
   if (failed) return <LoadError message={failed === "offline" ? "You're offline. Territory needs a connection to load." : "Couldn't load your Territory."} onRetry={() => { setFailed(""); setData(null); setAttempt((n) => n + 1); }} />;
@@ -216,13 +219,13 @@ export default function TerritoryHub() {
   if (!data.open || !data.snapshot) {
     return (
       <main className="app terr">
-        <Hero map={heroMap}>{top(<span className="stand stand-mute">Not open yet</span>)}</Hero>
+        <Hero map={heroMap}>{top(<span className="stand stand-mute">{stateLabel(stateOf(active.id, closed))}</span>)}</Hero>
         <section className="terr-body">
           {hasChips && <div className="status-chips" style={{ marginTop: 14 }}>{chips}</div>}
           <div className="card" style={{ marginTop: 16, padding: 20, borderRadius: 24 }}>
             <p className="lab" style={{ color: "var(--acc-text)" }}>Active Territory</p>
             <p className="h2" style={{ marginTop: 8 }}>{active.name} isn&apos;t open for Territory yet</p>
-            <p className="body mute" style={{ marginTop: 8 }}>Territory is mapped street by street. {active.name}&apos;s streets aren&apos;t mapped yet, so moves here don&apos;t count toward it yet. Your other progress is safe.</p>
+            <p className="body mute" style={{ marginTop: 8 }}>Territory is built on real, checked street data. {active.name} isn&apos;t open because {(stateOf(active.id, closed) as { reason?: string }).reason ?? "its streets haven't been checked yet"}. Moves here don&apos;t count toward it until it opens. Your other progress is safe.</p>
           </div>
           <Link href="/territory" className="btn btn-go" style={{ marginTop: 18 }}>Change Territory</Link>
           <Link href="/run?mode=normal" className="btn btn-line" style={{ marginTop: 10 }}>Start a free move</Link>

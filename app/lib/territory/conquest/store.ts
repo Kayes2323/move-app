@@ -11,7 +11,7 @@ export interface StoredTerritory extends TerritoryChoice {
 
 export function newChoice(areaId: string, now: number): StoredTerritory | null {
   const def = getTerritory(areaId);
-  if (!def) return null;
+  if (!def?.target) return null;
   return { areaId, selectedAt: now, targetKm: def.target.targetKm, rulesVersion: CONQUEST_RULES_VERSION, targetVersion: def.target.version };
 }
 

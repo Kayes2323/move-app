@@ -50,6 +50,8 @@ export interface BuildInputs {
   neighbours?: { name: string; polygons: Polygons }[];
   zoom?: number;
   minRoadLengthM?: number;
+  /** Precomputed ownership (a faster way to get exactly what `ownedCells` gives). Batch builds only. */
+  owned?: Set<number>;
 }
 
 export function polygonsOf(geometry: { type: string; coordinates: unknown }): Polygons {
@@ -227,7 +229,7 @@ export interface Analysis {
 export function buildMask(inputs: BuildInputs): { mask: EligibilityMask; analysis: Analysis } {
   const zoom = inputs.zoom ?? DEFAULT_EXPLORATION_CONFIG.cellZoom;
   const minRoad = inputs.minRoadLengthM ?? RULE.minRoadLengthM;
-  const owned = ownedCells(inputs.boundary, zoom);
+  const owned = inputs.owned ?? ownedCells(inputs.boundary, zoom);
   const roads = measureRoads(inputs.roads, zoom);
   const eligible = [...owned].filter((c) => (roads.perCell.get(c) ?? 0) >= minRoad).sort((a, b) => a - b);
 

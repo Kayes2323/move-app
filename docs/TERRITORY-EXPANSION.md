@@ -1,0 +1,77 @@
+# Territory expansion: from one pilot area to all of Bangladesh
+
+Status: **implemented locally, not deployed.** Awaiting review. The numbers for every area are in `docs/territory-areas/areas.md` (generated) and `tools/territory-mask/analysis/<areaId>.json` (one analysis per area).
+
+## 1. Audit (what existed, and what assumed "Mohammadpur only")
+
+Reusable as it was (nothing rebuilt):
+
+| Piece | Where | Verdict |
+| --- | --- | --- |
+| Hierarchy Division > District > Upazila / city thana | `public/geo/bd/index.json` (618 areas), per-district boundary chunks | Correct and complete. 503 `UPAZILA`, 42 `LOCAL_AREA` (Dhaka city thanas, typed so they are never called upazilas), 64 districts, 8 divisions. One city thana (Shyamoli) has no boundary (`boundary-pending`). |
+| Cell model, exploration rules, coverage, ownership, takeover/reclaim, race-safe claim | `app/lib/territory/{exploration,coverage}`, `territoryState.ts` | Area-independent already: keyed by `areaId` and the mask's own cell set. Unchanged. |
+| Active Territory, parking, gaps (no back-fill), switch transaction | `territory/active.ts`, `setActiveTerritory` | Area-independent. Unchanged. |
+| Mask builder | `tools/territory-mask` (`road-length/1`) | Reused unchanged. Mohammadpur's mask is byte-identical (a test proves it). |
+| Chooser, map sheet, Territory hub | `app/territory/*` | Reused; their "open" test was a Mohammadpur-only list. |
+
+Mohammadpur-only assumptions found, and what replaced them:
+
+1. `conquest/registry.ts` statically imported one boundary JSON and `getTerritory` could only return it. **Now**: the pilot stays bundled; every other open area's boundary is fetched on demand from its district chunk (`loadTerritoryDef`). No new bundle weight per area.
+2. `open.ts`, `TerritoryChooser`, `TerritoryMapSheet` each derived "open" from that registry. **Now**: one bundled catalog (`app/data/territory-catalog.json`, open areas only, generated).
+3. `COMPLETION_THRESHOLD = 0.8` was global. **Now**: a per-area whole-percent threshold from the catalog (`requiredCells(eligible, areaId)`); 80 stays the default and Mohammadpur's value, so its required cells are still 3,104.
+4. `firestore.rules` hard-coded `{ 'bd-upa-dhaka-mohammadpur': 3104 }`. **Now**: generated from the catalog, sharded so one request evaluates a small map.
+5. The "not open" screens said only "streets aren't mapped". **Now**: OPEN / COMING_SOON / NOT_OPEN with the real reason (`public/geo/bd/territories.json`, fetched only when a Territory screen needs it).
+6. `def.target` (the superseded distance model's perimeter) was required. **Now** optional: only the pilot has it, and the exploration rules never read it.
+
+Not touched: Journey, tracking, activity modes, Territory ownership/threshold logic other than the per-area percent.
+
+## 2. What counts as a playable Territory
+
+The 503 upazilas and 42 Dhaka city thanas (545 areas; ADM3 in the BBS hierarchy). Divisions and districts are for browsing, search and the map only: a district-sized conquest (hundreds of kilometres of unique street) is not a Territory.
+
+## 3. Data, and what I could and could not reach
+
+* **Boundaries**: geoBoundaries gbOpen BGD ADM3 at the pinned commit (BBS / OCHA ROAP, CC BY 3.0 IGO), full resolution (not the simplified display copy). Vintage 2015/2020: upazilas created since are not in it.
+* **Streets**: OpenStreetMap, planet-260928 (2026-09-28), ODbL 1.0, from the AWS Open Data copy, MD5 verified. This is the only OSM source this environment can reach (Geofabrik, Overpass and mirrors are blocked here), so the national extract is one streaming pass over the dated planet file: `tools/territory-mask/extract-bd.ts`.
+* **Rule**: `road-length/1`, unchanged (a cell is eligible when at least 20 m of walkable OSM way lies inside it).
+* **Not done and cannot be done from here**: real GPS walks, ground truth of which streets exist. The analysis measures the mask against OSM only.
+
+## 4. How an area is judged (all of it computed, none of it guessed)
+
+Per area (`tools/territory-mask/batch.ts`, reproducing the pilot's published analysis exactly: 325 minor-only, 86 trunk-only, 184 outside the main network, 559 doubtful, 85.6% confident):
+
+* ownership and eligible cells, area km2, unique street km;
+* doubtful cells: eligible only via service roads/tracks/paths, only via trunk roads, or outside the largest connected street network;
+* connectivity (regions, largest share), built-up ground without a mapped street nearby (an OSM completeness signal), single-cell holes;
+* validation: no duplicate or invalid cells, nothing outside the area, nothing in a neighbouring area, hash matches.
+
+**Status policy (a proposal, in `batch.ts` `POLICY`; change the numbers and rerun):**
+
+| Rule | Result |
+| --- | --- |
+| mask fails validation | NOT_OPEN |
+| fewer than 300 eligible cells | NOT_OPEN (too few mapped streets) |
+| 50%+ of built-up ground has no mapped street (50+ built-up cells) | COMING_SOON (OSM needs mapping first) |
+| under 60% of mapped streets in one connected network (islands, rivers) | COMING_SOON |
+| otherwise threshold = min(80, confident share - 5, the share that keeps the requirement at or under 6,000 cells), rounded down to 5 | OPEN if 40% or more, else NOT_OPEN (too large for one conquest, or too doubtful) |
+
+6,000 cells is about 210 km of different street, roughly twice the pilot's 3,104 cells (109 km). That cap is a product decision I made to keep a conquest realistic; the data for other caps is in every analysis.
+
+The **takeover** requirement stays exactly 2 x the area's own requirement, in new cell credits, capped at 2 per cell per reign: it is always achievable (2R is at most 2 x eligible).
+
+## 5. Rollout: verified batches
+
+1. Pilot: Mohammadpur reproduced byte for byte from the same code path (test), national pipeline cross-checked against the committed inputs.
+2. One national OSM pass (`extract-bd.ts`), then masks built district by district (`build-batch.ts`), starting with Dhaka division and the Chandpur analysis, then the rest by division.
+3. `catalog.ts --publish` opens only areas that passed every check, and only their masks are copied to `public/` (the rest stay in the git-ignored cache; their analysis is committed).
+4. Nothing is deployed until it is reviewed. Opening in production also needs `firestore.rules` published (generated; claims in an unpublished area are refused, exploration still counts locally).
+
+## 6. Risks and limits (honest)
+
+* **OSM completeness is unknown.** A rural lane that is not on OSM is not in the mask, and the area is slightly easier than it looks; a missing road never makes an area harder, because the threshold is a share of what is mapped.
+* **Client-computed claims are still forgeable** (needs a Cloud Function; unchanged). The rules only keep the numbers consistent.
+* **Firestore rules limits**: a long map literal could hit per-request expression limits. The map is sharded (at most ~40 entries evaluated); validate with the Firebase emulator before publishing.
+* **Multi-part areas** (islands) draw their largest part on the emblem; the maps use the full shape.
+* **Capacitor/static builds** bundle everything in `public/`: each open area adds its mask file. The total is reported below and in the delivery message.
+* **Boundary vintage**: ADM3 2015/2020; areas split since then are part of their parent here.
+* Mask version changes are safe: progress is stored as cell ids, recomputed against the current mask. Cells that stop being eligible stop counting; nothing is rewritten.

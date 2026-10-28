@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { isTerritoryArea } from "../lib/territory/active";
-import { TERRITORIES } from "../lib/territory/conquest/registry";
+import { isOpenArea, OPEN_CATALOG } from "../lib/territory/catalog";
 import { placeLine, type AreaIndex } from "../lib/territory/hierarchy";
 import type { GeoArea } from "../lib/territory/types";
 import { resolveMode, useThemePrefs } from "../lib/theme";
 import { BangladeshMap } from "./BangladeshMap";
 
-const OPEN = new Set(TERRITORIES.map((t) => t.id));
+const OPEN = new Set(Object.keys(OPEN_CATALOG));
+const MAX_PILLS = 12;
 
 /**
  * The real Bangladesh map, full screen, behind a button: tap a division, then a district, then your upazila or city area.
@@ -23,7 +24,8 @@ export function TerritoryMapSheet({ index, activeId, initialFocusId, onPick, onC
   const focus = index.get(focusId) ?? index.root;
   const path = index.pathTo(focus.id);
   const children = index.childrenOf(focus.id);
-  const openAreas = index.all.filter((a) => OPEN.has(a.id) && a.id !== activeId);
+  const allOpen = index.all.filter((a) => isOpenArea(a.id) && a.id !== activeId);
+  const openAreas = allOpen.slice(0, MAX_PILLS);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -105,7 +107,7 @@ export function TerritoryMapSheet({ index, activeId, initialFocusId, onPick, onC
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--acc-text)" }}>
             <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 3, background: "var(--accent)" }} />
-            Open now
+            Open now{allOpen.length > MAX_PILLS ? ` (${allOpen.length})` : ""}
           </span>
           {openAreas.map((a) => (
             <button key={a.id} className="pill pill-btn" onClick={() => onPick(a)} style={{ height: 30, background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--acc-text)", border: 0 }}>{a.name}</button>

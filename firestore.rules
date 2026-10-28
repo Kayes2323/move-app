@@ -39,9 +39,11 @@ service cloud.firestore {
       }
     }
 
-    // Cells needed to conquer each Territory: ceil(80% of its eligible cells). Must match app/lib/territory/coverage/rules.ts.
+    // Cells needed to conquer each Territory: ceil(its own threshold x its eligible cells), generated from the validated area catalog (app/data/territory-catalog.json).
     function requiredCells(areaId) {
+      // generated:begin requiredCells (tools/territory-mask/catalog.ts)
       return ({ 'bd-upa-dhaka-mohammadpur': 3104 }).get(areaId, 1000000000);
+      // generated:end requiredCells
     }
     function claimOf(uid) {
       return getAfter(/databases/$(database)/documents/users/$(uid)).data.territory.claim;

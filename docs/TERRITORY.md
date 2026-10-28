@@ -1,4 +1,4 @@
-# Territory: geographic exploration and Kings (pilot: Mohammadpur)
+# Territory: geographic exploration and Kings (pilot: Mohammadpur; expanding, see TERRITORY-EXPANSION.md)
 
 Territory is **exploration of real ground**, not an activity-distance challenge. Kilometres never count towards it.
 
@@ -14,7 +14,10 @@ takeover progress = exploration credits since the reign began / (2 x required)
 * **Never used**: activity distance, multipliers, and the 19.411 km perimeter (kept only as information). The superseded distance model (`conquest/credit|config|progress|store`) is not imported anywhere (a test enforces it).
 * **Display**: one decimal, rounded down; 100 only when the requirement is met (99.9 at most before). Remaining is rounded up. The raw share of *all* eligible cells is kept and shown alongside ("x% of all its streets explored").
 
-### Conquest threshold: 80%, and why
+### Conquest threshold: 80% for the pilot, and each area's own
+The threshold is per area (`requiredCells(eligible, areaId)`, whole percent from the catalog; default 80). The reasoning below is the pilot's; other areas' figures come from the same analysis run on their own masks (`tools/territory-mask/batch.ts`).
+
+#### The pilot: 80%, and why
 Analysis of the mask: 325 cells (8.4%) are eligible only via service roads/tracks/paths (often gated compounds and private lanes in Dhaka), 86 (2.2%) only along trunk roads, 184 (4.7%) lie outside the main connected road network. Together 559 cells (14.4%) are doubtful; the confidently public, connected part is 85.6%. 80% leaves a further ~5 point margin for GPS misses in dense lanes: hard, but achievable without entering every gated compound. Unreachable cells are **not** removed from the denominator; the threshold absorbs them. Required for Mohammadpur: **3,104 cells**.
 
 ### Takeover and reclaim: 2x, in new geographic exploration
@@ -50,7 +53,7 @@ Firestore-safe (no arrays inside arrays) and bounded:
 
 ## Active Territory (which area counts) — `app/lib/territory/active.ts`
 * **Chosen, never assumed.** The active Territory is the area the user picked, saved with their account in `users/{uid}.territoryActive = { areaId, at }`. There is no default area: a user who never chose sees "Choose Territory". Not GPS, not the Journey route (the "Chandpur" shown on Home is the Journey's virtual route, `currentRoute`), never Mohammadpur by default. Accounts from before this field existed keep the area of their saved coverage (they chose it then). A regression test fails if any screen references the Mohammadpur id.
-* **Which areas.** Upazilas and Dhaka city thanas (ADM3) from the real hierarchy (`public/geo/bd/index.json`). An area is **open** when its streets are mapped (an eligibility mask + registry entry): Mohammadpur only, for now. Any other area can be chosen; its screen says it isn't open yet and nothing counts there until it opens (then it starts empty from that moment).
+* **Which areas.** Upazilas and Dhaka city thanas (ADM3) from the real hierarchy (`public/geo/bd/index.json`). An area is **OPEN** when it is in the bundled catalog (`app/data/territory-catalog.json`): a real boundary, a validated mask, and its own conquest threshold from its analysis (`docs/TERRITORY-EXPANSION.md`). Every other area is **COMING_SOON** (real data, needs work) or **NOT_OPEN** (failed validation), each with its reason (`public/geo/bd/territories.json`). Any area can be chosen; a closed one says why, and nothing counts there until it opens (then it starts empty from that moment).
 * **Switching** (`setActiveTerritory`, one Firestore transaction on the user's own document, `update()` so maps are replaced, not merged):
   * the area that was active is parked whole in `territoryParked.{areaId}` (cells, applied activities, campaign, wins, claim) with `parkedAt`;
   * an area played before resumes exactly as it was, and the time away is added to its `gaps` ([from, to, ...], flat, at most 40 periods): activities that started in a gap never count for it (no back-fill), while takeover credits earned before are kept;

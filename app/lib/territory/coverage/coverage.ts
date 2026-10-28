@@ -237,7 +237,7 @@ export interface CoverageProgress {
 /** Share of the requirement explored. Cells that are not (or are no longer) eligible under this mask are not counted. */
 export function coverageProgress(state: CoverageState, mask: EligibilityMask, scope: CellScope): CoverageProgress {
   const total = mask.meta.counts.eligibleCells;
-  const required = requiredCells(total);
+  const required = requiredCells(total, mask.meta.areaId);
   const explored = Math.min(state.cells.filter((c) => scope.isEligible(c)).length, total);
   const shown = shownPercent(explored, required);
   return {
@@ -264,7 +264,7 @@ export interface CampaignProgress {
 }
 
 export function campaignProgress(campaign: Campaign, mask: EligibilityMask, scope: CellScope): CampaignProgress {
-  const need = takeoverCredits(mask.meta.counts.eligibleCells);
+  const need = takeoverCredits(mask.meta.counts.eligibleCells, mask.meta.areaId);
   let credits = 0;
   for (const c of campaign.once.keys()) if (scope.isEligible(c)) credits += 1;
   for (const c of campaign.twice) if (scope.isEligible(c)) credits += 2;
@@ -288,7 +288,7 @@ export function progressAfter(state: CoverageState, activityId: string, mask: El
 /** Explored cells right after activity i: today's total minus what later activities added (exact: added cells are disjoint). */
 function approxAfter(state: CoverageState, i: number, mask: EligibilityMask) {
   const total = mask.meta.counts.eligibleCells;
-  const required = requiredCells(total);
+  const required = requiredCells(total, mask.meta.areaId);
   const laterAdded = state.applied.slice(i + 1).reduce((s, a) => s + a.added, 0);
   const explored = Math.max(0, Math.min(state.cells.length - laterAdded, total));
   const shown = shownPercent(explored, required);

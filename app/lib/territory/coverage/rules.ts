@@ -25,14 +25,18 @@
  * A former King reclaims under exactly the same rule; there is no automatic reclaim.
  */
 export const TERRITORY_RULES_VERSION = "territory-rules/1";
+import { thresholdPercentOf } from "../catalog";
+
+/** The default share of eligible cells that conquers a Territory. An area can carry its own (see `territory/catalog.ts` and the area's analysis). */
 export const COMPLETION_THRESHOLD = 0.8;
 export const TAKEOVER_MULTIPLIER = 2;
 export const MAX_CREDITS_PER_CELL = 2;
 /** Calendar days for the "different day" rule are Asia/Dhaka (UTC+6, no DST). */
 export const DAY_OFFSET_MS = 6 * 3_600_000;
 
-export const requiredCells = (eligible: number): number => Math.ceil(eligible * COMPLETION_THRESHOLD);
-export const takeoverCredits = (eligible: number): number => requiredCells(eligible) * TAKEOVER_MULTIPLIER;
+/** Cells needed to conquer: the area's own threshold (from its validated analysis), else the default. */
+export const requiredCells = (eligible: number, areaId?: string | null): number => Math.ceil((eligible * (areaId ? thresholdPercentOf(areaId) : COMPLETION_THRESHOLD * 100)) / 100);
+export const takeoverCredits = (eligible: number, areaId?: string | null): number => requiredCells(eligible, areaId) * TAKEOVER_MULTIPLIER;
 export const dayOf = (ms: number): number => Math.floor((ms + DAY_OFFSET_MS) / 86_400_000);
 
 /** Display helpers: one decimal, rounded down, 100 only when met; what is left rounded up, never 0 while something remains. */

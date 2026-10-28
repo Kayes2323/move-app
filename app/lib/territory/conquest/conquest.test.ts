@@ -28,8 +28,9 @@ test("geodesic distance is exact on the ellipsoid (Geoscience Australia's Vincen
 });
 
 test("Mohammadpur's target is its real perimeter, recomputed here from the stored boundary", () => {
-  const t = getTerritory(MOHAMMADPUR_ID)!;
-  assert.ok(t);
+  const found = getTerritory(MOHAMMADPUR_ID)!;
+  assert.ok(found?.target);
+  const t = found as typeof found & { target: NonNullable<typeof found.target> };
   const ring = toLngLat(t.boundary.coordinates[0]);
   assert.deepEqual(ring[0], ring[ring.length - 1]);
   const perimeter = pathLengthM(ring);

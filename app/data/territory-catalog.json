@@ -1,0 +1,13 @@
+{
+ "schema": 1,
+ "areas": {
+  "bd-upa-dhaka-mohammadpur": {
+   "name": "Mohammadpur",
+   "percent": 80,
+   "eligibleCells": 3880,
+   "requiredCells": 3104,
+   "maskVersion": "territory-mask/1:bd-upa-dhaka-mohammadpur:2d8866a921f6",
+   "chunk": "upazilas/dhaka"
+  }
+ }
+}

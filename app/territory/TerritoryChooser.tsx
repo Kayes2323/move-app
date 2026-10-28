@@ -3,35 +3,36 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { isTerritoryArea } from "../lib/territory/active";
-import { TERRITORIES } from "../lib/territory/conquest/registry";
+import { isOpenArea } from "../lib/territory/catalog";
 import { loadBoundaries } from "../lib/territory/data";
 import { placeLine, type AreaIndex } from "../lib/territory/hierarchy";
 import { locateArea } from "../lib/territory/locate";
 import { STORAGE_KEY as LEGACY_SELECTION_KEY } from "../lib/territory/selection";
+import { stateLabel, stateOf, useClosedStatuses, type ClosedStatus } from "../lib/territory/status";
 import type { GeoArea, Geometry } from "../lib/territory/types";
 import type { SavedTerritory } from "../lib/territoryState";
 import { AreaShape } from "./AreaShape";
 import { TerritoryMapSheet } from "./TerritoryMapSheet";
 
-const OPEN = new Set(TERRITORIES.map((t) => t.id));
 const fold = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const GOLD = "#D9A520";
 
 type Locate = { status: "idle" } | { status: "busy" } | { status: "found"; area: GeoArea } | { status: "none" | "denied" | "error"; message: string };
 
-function Badge({ kind }: { kind: "open" | "soon" | "active" | "king" }) {
+function Badge({ kind, label }: { kind: "open" | "soon" | "active" | "king"; label?: string }) {
   const styles: Record<typeof kind, React.CSSProperties> = {
     open: { background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--acc-text)" },
     soon: { background: "var(--surf2)", color: "var(--mute)" },
     active: { background: "var(--ink)", color: "var(--bg)" },
     king: { background: "rgba(245,197,66,.16)", color: GOLD },
   };
-  const text = { open: "Open", soon: "Not open yet", active: "Active", king: "👑 King" }[kind];
+  const text = label ?? { open: "Open", soon: "Not open", active: "Active", king: "👑 King" }[kind];
   return <span style={{ ...styles[kind], font: "800 10px Archivo, sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: "5px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{text}</span>;
 }
 
-function AreaRow({ area, index, activeId, onPick, extra }: { area: GeoArea; index: AreaIndex; activeId: string | null; onPick: (a: GeoArea) => void; extra?: React.ReactNode }) {
+function AreaRow({ area, index, activeId, onPick, extra, closed }: { area: GeoArea; index: AreaIndex; activeId: string | null; onPick: (a: GeoArea) => void; extra?: React.ReactNode; closed: Record<string, ClosedStatus> | null }) {
   const active = area.id === activeId;
+  const st = stateOf(area.id, closed);
   return (
     <button className="row" onClick={() => onPick(area)} aria-label={`${area.name}, ${placeLine(index, area.id)}${active ? ", active Territory" : ""}`} style={{ minHeight: 64 }}>
       <span style={{ minWidth: 0 }}>
@@ -40,7 +41,7 @@ function AreaRow({ area, index, activeId, onPick, extra }: { area: GeoArea; inde
       </span>
       <span style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
         {extra}
-        {active ? <Badge kind="active" /> : <Badge kind={OPEN.has(area.id) ? "open" : "soon"} />}
+        {active ? <Badge kind="active" /> : <Badge kind={st.kind === "OPEN" ? "open" : "soon"} label={stateLabel(st)} />}
       </span>
     </button>
   );
@@ -86,6 +87,7 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
   const areas = useMemo(() => index.all.filter(isTerritoryArea), [index]);
   const active = activeId ? index.get(activeId) : undefined;
   const activeSaved = saved.find((s) => s.areaId === activeId);
+  const closed = useClosedStatuses();
   const otherSaved = saved.flatMap((s) => {
     const a = index.get(s.areaId);
     return a && s.areaId !== activeId ? [{ s, a }] : [];
@@ -194,7 +196,7 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
       {q.trim().length >= 2 ? (
         <Section title={results.length ? `${results.length === 50 ? "Top 50" : results.length} ${results.length === 1 ? "area" : "areas"}` : "No areas found"}>
           {results.map((a) => (
-            <AreaRow key={a.id} area={a} index={index} activeId={activeId} onPick={pickArea} extra={<Stat s={saved.find((s) => s.areaId === a.id)} />} />
+            <AreaRow closed={closed} key={a.id} area={a} index={index} activeId={activeId} onPick={pickArea} extra={<Stat s={saved.find((s) => s.areaId === a.id)} />} />
           ))}
           {!results.length && <p className="mute body" style={{ paddingTop: 8 }}>Try an upazila or a Dhaka area, like Mirpur or Hajiganj.</p>}
         </Section>
@@ -210,10 +212,10 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
                   {activeSaved?.king && <Badge kind="king" />}
-                  {OPEN.has(active.id) ? (
+                  {isOpenArea(active.id) ? (
                     activeSaved && activeSaved.percent !== null && <span className="blk" style={{ fontSize: 22 }}>{activeSaved.percent.toFixed(1)}<span className="unit">%</span></span>
                   ) : (
-                    <Badge kind="soon" />
+                    <Badge kind="soon" label={stateLabel(stateOf(active.id, closed))} />
                   )}
                 </div>
               </div>
@@ -229,7 +231,7 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
               here.area.id === activeId ? (
                 <p className="mute" style={{ fontSize: 13, padding: "10px 0" }}>📍 You&apos;re in {here.area.name}, your Territory.</p>
               ) : (
-                <AreaRow area={here.area} index={index} activeId={activeId} onPick={pickArea} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>You&apos;re here</span>} />
+                <AreaRow closed={closed} area={here.area} index={index} activeId={activeId} onPick={pickArea} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>You&apos;re here</span>} />
               )
             ) : (
               <button className="row" onClick={locateMe} disabled={here.status === "busy"} style={{ minHeight: 60 }}>
@@ -242,13 +244,13 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
                 </span>
               </button>
             )}
-            {legacy && isTerritoryArea(legacy) && <AreaRow area={legacy} index={index} activeId={activeId} onPick={pickArea} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>Picked earlier</span>} />}
+            {legacy && isTerritoryArea(legacy) && <AreaRow closed={closed} area={legacy} index={index} activeId={activeId} onPick={pickArea} extra={<span className="mute" style={{ fontSize: 11, fontWeight: 700 }}>Picked earlier</span>} />}
           </Section>
 
           {otherSaved.length > 0 && (
             <Section title="Your other Territories">
               {otherSaved.map(({ s, a }) => (
-                <AreaRow key={a.id} area={a} index={index} activeId={activeId} onPick={pickArea} extra={<Stat s={s} />} />
+                <AreaRow closed={closed} key={a.id} area={a} index={index} activeId={activeId} onPick={pickArea} extra={<Stat s={s} />} />
               ))}
             </Section>
           )}
@@ -274,7 +276,7 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
                 {shape ? <AreaShape geometries={[shape]} width={72} height={72} pad={4} fill="color-mix(in srgb, var(--accent) 22%, transparent)" /> : <span className="mute" aria-hidden="true">◎</span>}
               </div>
               <div style={{ minWidth: 0 }}>
-                <p className="lab" style={{ color: "var(--acc-text)" }}>{OPEN.has(pick.id) ? "Open for Territory" : "Not open yet"}</p>
+                <p className="lab" style={{ color: "var(--acc-text)" }}>{isOpenArea(pick.id) ? "Open for Territory" : stateOf(pick.id, closed).kind === "COMING_SOON" ? "Coming soon" : "Not open yet"}</p>
                 <p className="h2" style={{ marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pick.name}</p>
                 <p className="mute" style={{ fontSize: 13, marginTop: 2 }}>{placeLine(index, pick.id)}</p>
               </div>
@@ -293,7 +295,7 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
                 <ul className="body mute" style={{ marginTop: 8, paddingLeft: 18, display: "grid", gap: 6 }}>
                   {active && <li>Your progress in {active.name} stays safe.{activeSaved?.king ? ` You stay King of ${active.name}.` : ""}</li>}
                   <li>Moves you start from now count toward {pick.name}.</li>
-                  {!OPEN.has(pick.id) && <li>{pick.name}&apos;s streets aren&apos;t mapped for Territory yet, so moves there won&apos;t count yet.</li>}
+                  {!isOpenArea(pick.id) && <li>{pick.name} isn&apos;t open for Territory: {(stateOf(pick.id, closed) as { reason?: string }).reason}. Moves there won&apos;t count until it opens.</li>}
                 </ul>
                 {error && <p role="alert" style={{ color: "var(--danger)", fontSize: 13, marginTop: 12 }}>{error}</p>}
                 <div style={{ display: "flex", gap: 10, marginTop: 20 }}>

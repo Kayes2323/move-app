@@ -22,7 +22,8 @@ import { contributionPolicy } from "./territory/contribution";
 import { loadMask } from "./territory/mask/load";
 import { scopeFromMask } from "./territory/mask/scope";
 import type { TerritorySnapshot } from "./territory/coverage/snapshot";
-import { getTerritory, type TerritoryDefinition } from "./territory/conquest/registry";
+import { loadTerritoryDef, type TerritoryDefinition } from "./territory/conquest/registry";
+import { isOpenArea } from "./territory/catalog";
 import { planSwitch, resolveActiveId, savedAreas, type ActiveFields } from "./territory/active";
 import type { EligibilityMask } from "./territory/mask/types";
 import type { CellScope } from "./territory/exploration/explore";
@@ -90,7 +91,7 @@ export async function moveInProgress(uid: string): Promise<boolean> {
 }
 
 /** Is this area open for Territory: its streets are mapped (an eligibility mask exists) and it can be played? */
-export const isOpenTerritory = (areaId: string | null | undefined): boolean => Boolean(getTerritory(areaId));
+export const isOpenTerritory = (areaId: string | null | undefined): boolean => isOpenArea(areaId);
 
 /**
  * Makes `areaId` the user's active Territory, in one transaction on their own document. The area that was active keeps all its
@@ -173,8 +174,8 @@ async function claim(uid: string, def: TerritoryDefinition, choice: CoverageChoi
       kind: d.kind,
       reignStartedAt: fs.serverTimestamp(),
       updatedAt: fs.serverTimestamp(),
-      requiredCells: requiredCells(mask.meta.counts.eligibleCells),
-      requiredCredits: takeoverCredits(mask.meta.counts.eligibleCells),
+      requiredCells: requiredCells(mask.meta.counts.eligibleCells, mask.meta.areaId),
+      requiredCredits: takeoverCredits(mask.meta.counts.eligibleCells, mask.meta.areaId),
       rulesVersion: TERRITORY_RULES_VERSION,
       maskVersion: mask.maskVersion,
     });
@@ -200,7 +201,7 @@ async function claim(uid: string, def: TerritoryDefinition, choice: CoverageChoi
  */
 export async function loadTerritory(uid: string, user: Pick<UserDoc, "territory" | "territoryActive" | "name">, runs: readonly RunEntry[]): Promise<TerritorySnapshot | null> {
   const parsed = parseStoredCoverage(user.territory);
-  const def = parsed ? getTerritory(parsed.choice.areaId) : undefined;
+  const def = parsed ? await loadTerritoryDef(parsed.choice.areaId) : undefined;
   // only the ACTIVE Territory is ever brought up to date; any other area's progress stays exactly as it was left
   if (!parsed || !def || resolveActiveId(user) !== parsed.choice.areaId) return null;
   const [mask, own] = await Promise.all([loadMask(parsed.choice.areaId), readOwnership(parsed.choice.areaId)]);
@@ -354,9 +355,10 @@ export async function loadTerritoryHome(uid: string): Promise<TerritoryHome> {
 export async function territoryForActivity(uid: string, user: ActiveFields, activityId: string): Promise<TerritorySnapshot | null> {
   for (const { areaId, record } of savedAreas(user)) {
     const parsed = parseStoredCoverage(record);
-    const def = getTerritory(areaId);
-    if (!parsed || !def) continue;
+    if (!parsed || !isOpenTerritory(areaId)) continue;
     if (!parsed.state.applied.some((a) => a.id === activityId) && !parsed.state.wins?.some((w) => w.activityId === activityId)) continue;
+    const def = await loadTerritoryDef(areaId);
+    if (!def) continue;
     const [mask, own] = await Promise.all([loadMask(areaId), readOwnership(areaId)]);
     return assemble(def, parsed.choice, parsed.state, mask, scopeFromMask(mask), uid, own.ownership, own.status);
   }
