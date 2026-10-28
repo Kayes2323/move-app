@@ -53,9 +53,9 @@ Per area (`tools/territory-mask/batch.ts`, reproducing the pilot's published ana
 | fewer than 300 eligible cells | NOT_OPEN (too few mapped streets) |
 | 50%+ of built-up ground has no mapped street (50+ built-up cells) | COMING_SOON (OSM needs mapping first) |
 | under 60% of mapped streets in one connected network (islands, rivers) | COMING_SOON |
-| otherwise threshold = min(80, confident share - 5, the share that keeps the requirement at or under 6,000 cells), rounded down to 5 | OPEN if 40% or more, else NOT_OPEN (too large for one conquest, or too doubtful) |
+| otherwise threshold = min(80, confident share - 5, the share that keeps the requirement at or under 8,000 cells), rounded down to 5 | OPEN if 40% or more, else NOT_OPEN (too large for one conquest, or too doubtful) |
 
-6,000 cells is about 210 km of different street, roughly twice the pilot's 3,104 cells (109 km). That cap is a product decision I made to keep a conquest realistic; the data for other caps is in every analysis.
+The cap is 8,000 cells (about 280 km of different street at Dhaka's cell size; the pilot needs 3,104 cells, 109 km). Hajiganj, the priority upazila, has 15,736 eligible cells (552 km of street in 194 km2), so at 50% it needs 7,868 cells; at the first cap I tried (6,000) it would have stayed closed by 295 cells. The cap is my product decision, not a fact; every analysis lists the 80/70/60/50/40% figures so it can be changed and rerun.
 
 The **takeover** requirement stays exactly 2 x the area's own requirement, in new cell credits, capped at 2 per cell per reign: it is always achievable (2R is at most 2 x eligible).
 

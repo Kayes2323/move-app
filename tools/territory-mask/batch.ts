@@ -98,15 +98,15 @@ export function classMetres(osm: OverpassJson, owned: ReadonlySet<number>, zoom:
 
 /**
  * PROPOSED policy, not a fact about the world: how many cells one person can reasonably be asked to find. Mohammadpur needs 3,104
- * (about 109 km of different street). Anything that would need much more than about twice that is not a realistic single conquest.
+ * (about 109 km of different street). Large rural upazilas (Hajiganj needs 7,868 cells at 50%) are allowed a lower threshold; much more than 2.5x the pilot is not a realistic single conquest.
  */
 export const POLICY = {
   /** Never ask for more than this share, whatever the area. */
   maxPercent: 80,
   /** Never ask for less than this: below it a "conquest" would not mean most of the place. */
   minPercent: 40,
-  /** The most cells a single conquest may require (about 210 km of different street at Dhaka's cell size). */
-  maxRequiredCells: 6000,
+  /** The most cells a single conquest may require (8,000 is about 280 km of different street: a long project on foot, but not a lifetime). */
+  maxRequiredCells: 8000,
   /** Below this the mapped streets are too few to be a Territory. */
   minEligibleCells: 300,
   /** Margin kept between the confident share of the area and the threshold, for GPS misses (the pilot used 5). */

@@ -59,7 +59,7 @@ test("every open area has its own validated mask, and the catalog says exactly w
     assert.equal([...cellsOfMask(mask)].length, e.eligibleCells, id);
     assert.ok(Number.isInteger(e.percent) && e.percent >= 40 && e.percent <= 80, `${id}: threshold ${e.percent}`);
     assert.equal(e.requiredCells, Math.ceil((e.eligibleCells * e.percent) / 100), id);
-    assert.ok(e.requiredCells <= Math.max(6000, 3104), `${id}: ${e.requiredCells} cells is too many for one conquest`);
+    assert.ok(e.requiredCells <= 8000, `${id}: ${e.requiredCells} cells is too many for one conquest`);
     assert.ok(!seen.has(mask.contentHash), `${id}: identical to another area's mask (copied?)`);
     seen.add(mask.contentHash);
   }

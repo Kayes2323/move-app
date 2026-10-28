@@ -56,12 +56,12 @@ test("policy: thresholds follow the area, and closed areas say why", () => {
   const ok = { eligibleCells: 3880, confidentShare: 0.856, largestShare: 0.95, builtUpCells: 400, gapShare: 0.05, validationOk: true };
   assert.deepEqual([recommend(ok).status, recommend(ok).percent], ["OPEN_CANDIDATE", 80]);
   // a big rural upazila: 80% would be far too many cells, so the threshold shrinks to what one person can find
-  const big = recommend({ ...ok, eligibleCells: 9000 });
+  const big = recommend({ ...ok, eligibleCells: 15736 });
   assert.equal(big.status, "OPEN_CANDIDATE");
-  assert.equal(big.percent, 65);
+  assert.equal(big.percent, 50);
   assert.ok((big.requiredCells ?? 0) <= POLICY.maxRequiredCells);
   // too large even at the floor
-  const huge = recommend({ ...ok, eligibleCells: 30000 });
+  const huge = recommend({ ...ok, eligibleCells: 40000 });
   assert.equal(huge.status, "NOT_OPEN");
   assert.match(huge.reason, /too large/);
   assert.equal(recommend({ ...ok, eligibleCells: 120 }).status, "NOT_OPEN");

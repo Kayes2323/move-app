@@ -1,0 +1,107 @@
+{
+ "areaId": "bd-upa-bagerhat-chitalmari",
+ "areaName": "Chitalmari",
+ "maskVersion": "territory-mask/1:bd-upa-bagerhat-chitalmari:2418bc41bd39",
+ "contentHash": "2418bc41bd39a5c7a4e94983e721abc67cc63ad9bbc9a26e77d66c0865449ca3",
+ "validation": {
+  "ok": true,
+  "problems": [],
+  "neighbourLeakCells": 0
+ },
+ "counts": {
+  "ownedCells": 159820,
+  "eligibleCells": 3188,
+  "areaKm2": 198.37,
+  "eligibleShareOfOwned": 2,
+  "uniqueStreetKm": 112.3
+ },
+ "roads": {
+  "waysInArea": 403,
+  "includedKm": 125.6,
+  "byClassKm": {
+   "trunk": 0,
+   "main": 123.8,
+   "minor": 1.7
+  },
+  "densityKmPerKm2": 0.6
+ },
+ "quality": {
+  "trunkOnlyCells": 0,
+  "minorOnlyCells": 43,
+  "outsideLargestCells": 2152,
+  "doubtfulCells": 2152,
+  "confidentShare": 0.325,
+  "regions": 45,
+  "largestRegionCells": 1036,
+  "largestShare": 0.325,
+  "builtUpCells": 4,
+  "builtUpWithoutRoad": 2,
+  "gapShare": 0.5,
+  "singleCellHoles": 2
+ },
+ "thresholds": [
+  {
+   "percent": 80,
+   "requiredCells": 2551,
+   "uniqueStreetKm": 89.9,
+   "takeoverCredits": 5102
+  },
+  {
+   "percent": 70,
+   "requiredCells": 2232,
+   "uniqueStreetKm": 78.6,
+   "takeoverCredits": 4464
+  },
+  {
+   "percent": 60,
+   "requiredCells": 1913,
+   "uniqueStreetKm": 67.4,
+   "takeoverCredits": 3826
+  },
+  {
+   "percent": 50,
+   "requiredCells": 1594,
+   "uniqueStreetKm": 56.2,
+   "takeoverCredits": 3188
+  },
+  {
+   "percent": 40,
+   "requiredCells": 1276,
+   "uniqueStreetKm": 45,
+   "takeoverCredits": 2552
+  }
+ ],
+ "recommendation": {
+  "status": "COMING_SOON",
+  "reason": "mapped streets are fragmented: only 32% are in one connected network (islands or rivers)",
+  "percent": null,
+  "requiredCells": null
+ },
+ "maskBytes": 41120,
+ "type": "UPAZILA",
+ "parentId": "bd-dis-bagerhat",
+ "sources": {
+  "boundary": {
+   "dataset": "geoBoundaries gbOpen BGD ADM3 (full resolution, not the simplified display copy)",
+   "repository": "https://github.com/wmgeolab/geoBoundaries",
+   "commit": "5c25134028196d43ce97b5071934fd0cfc92f09f",
+   "shapeId": "5055444B77604595910958",
+   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+   "attribution": "Administrative boundaries: Bangladesh Bureau of Statistics (BBS) and OCHA ROAP via geoBoundaries, CC BY 3.0 IGO",
+   "datasetSha256": "8ae8f7b6e8be317b3c4c8e0113c7ea8082e8dcb5fce69ff2e77505e4ba574a28"
+  },
+  "roads": {
+   "dataset": "OpenStreetMap",
+   "licence": "Open Database Licence (ODbL) 1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "licenceUrl": "https://www.openstreetmap.org/copyright",
+   "snapshotTimestamp": "2026-09-28T00:00:04Z",
+   "extract": {
+    "source": "https://osm-pds.s3.amazonaws.com/2026/planet-260928.osm.pbf",
+    "md5": "3b704522e01272f5a6078ec93b275b64",
+    "snapshotTimestamp": "2026-09-28T00:00:04Z"
+   }
+  }
+ },
+ "builtBy": "tools/territory-mask/build-batch.ts"
+}
