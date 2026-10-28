@@ -38,11 +38,18 @@ export interface LiveMapProps {
 }
 
 const cssVar = (name: string, fallback: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-const tileUrl = (dark: boolean) => `https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "rastertiles/voyager"}/{z}/{x}/{y}{r}.png`;
+/**
+ * Street tiles. Default: OpenStreetMap's own standard tiles, which need no key (their usage policy: light use, attribution, no bulk
+ * downloading; fine for a small app, not for heavy traffic). For production scale set NEXT_PUBLIC_MAP_TILE_URL (and
+ * NEXT_PUBLIC_MAP_ATTRIBUTION) to a keyed provider such as MapTiler: https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=...
+ * The dark theme darkens these light tiles with a CSS filter (see .map-tiles-dark).
+ */
+const TILE_URL = process.env.NEXT_PUBLIC_MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const ATTRIBUTION = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION || '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>';
 
 /**
  * The real street map of wherever the user actually is, with the route recorded so far drawn over it. It only DRAWS what it is given:
- * recording, filtering, distance and storage stay in the tracking engine. Tiles come from CARTO's OpenStreetMap-based basemaps; if they
+ * recording, filtering, distance and storage stay in the tracking engine. Tiles come from OpenStreetMap (see TILE_URL); if they
  * cannot be loaded the map says so and offers a retry instead of showing an empty background as if it were a map.
  */
 export function LiveMap({ point, accuracy, segments, dark, gps, territory }: LiveMapProps) {
@@ -74,7 +81,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
       if (dead || !host.current) return;
       L.current = lib;
       const m = lib.map(host.current, { zoomControl: false, attributionControl: false, minZoom: 3, maxZoom: 19, preferCanvas: true, zoomSnap: 0.5, center: [0, 0], zoom: 2 });
-      lib.control.attribution({ position: "bottomleft", prefix: false }).addAttribution('<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap</a> · <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">© CARTO</a>').addTo(m);
+      lib.control.attribution({ position: "bottomleft", prefix: false }).addAttribution(ATTRIBUTION).addTo(m);
       m.on("dragstart", () => setFollowing(false));
       map.current = m;
       const ro = new ResizeObserver(() => m.invalidateSize());
@@ -105,7 +112,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
     layers.current.tiles?.remove();
     let ok = 0;
     let bad = 0;
-    const layer = lib.tileLayer(tileUrl(dark), { subdomains: "abcd", maxZoom: 19, keepBuffer: 3, updateWhenIdle: false });
+    const layer = lib.tileLayer(TILE_URL, { maxZoom: 19, keepBuffer: 3, updateWhenIdle: false, className: dark ? "map-tiles-dark" : "" });
     layer.on("tileload", () => {
       ok += 1;
       setLoadedTiles(ok);

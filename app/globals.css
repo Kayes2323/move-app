@@ -389,6 +389,7 @@ a {
 .leaflet-tooltip.terr-tip::before { display: none; }
 .leaflet-container { font-family: "Archivo", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
 .leaflet-interactive:focus { outline: none; }
+.map-tiles-dark { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.7); }
 .leaflet-container .leaflet-control-attribution { background: color-mix(in srgb, var(--bg) 78%, transparent); color: var(--mute); font-size: 10px; border-radius: 0 8px 0 0; padding: 1px 6px; }
 .leaflet-container .leaflet-control-attribution a { color: var(--ink); }
 

@@ -70,19 +70,20 @@ async function drawTile(helper, ways, z, x, y, dark) {
 }
 
 /**
- * Serves map tiles for every CARTO URL the page asks for. `mode.fail` makes the "server" answer 500 so the error and retry paths
+ * Serves map tiles for every OpenStreetMap tile URL the page asks for. `mode.fail` makes the "server" answer 500 so the error and retry paths
  * can be tested. Returns counters: how many tiles were asked for, with the address of each.
  */
 export async function installTiles(ctx, helper, ways) {
   const state = { fail: false, requests: [] };
-  await ctx.route(/basemaps\.cartocdn\.com\//, async (route) => {
-    const m = route.request().url().match(/\/(dark_all|rastertiles\/voyager)\/(\d+)\/(\d+)\/(\d+)(@2x)?\.png/);
+  await ctx.route(/tile\.openstreetmap\.org\//, async (route) => {
+    const m = route.request().url().match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
     if (!m) return route.fulfill({ status: 404 });
-    const [, style, z, x, y] = m;
-    state.requests.push({ z: Number(z), x: Number(x), y: Number(y), dark: style === "dark_all" });
+    const [, z, x, y] = m;
+    const style = "light";
+    state.requests.push({ z: Number(z), x: Number(x), y: Number(y), dark: false });
     if (state.fail) return route.fulfill({ status: 500, body: "tile server down" });
     try {
-      const png = await drawTile(helper, ways, Number(z), Number(x), Number(y), style === "dark_all");
+      const png = await drawTile(helper, ways, Number(z), Number(x), Number(y), false);
       return await route.fulfill({ status: 200, contentType: "image/png", body: png });
     } catch {
       // the test finished (page closed) while a tile was still being drawn
