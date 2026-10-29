@@ -26,7 +26,7 @@ function Badge({ kind, label }: { kind: "open" | "soon" | "active" | "king"; lab
     active: { background: "var(--ink)", color: "var(--bg)" },
     king: { background: "rgba(245,197,66,.16)", color: GOLD },
   };
-  const text = label ?? { open: "Open", soon: "Not open", active: "Active", king: "👑 King" }[kind];
+  const text = label ?? { open: "Open", soon: "Not open", active: "Active", king: "👑 Owner" }[kind];
   return <span style={{ ...styles[kind], font: "800 10px Archivo, sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: "5px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{text}</span>;
 }
 
@@ -293,7 +293,7 @@ export function TerritoryChooser({ index, activeId, saved, running, onChoose }: 
               <>
                 <h2 id="confirm-title" className="h2" style={{ marginTop: 20 }}>{active ? "Change active Territory?" : `Make ${pick.name} your Territory?`}</h2>
                 <ul className="body mute" style={{ marginTop: 8, paddingLeft: 18, display: "grid", gap: 6 }}>
-                  {active && <li>Your progress in {active.name} stays safe.{activeSaved?.king ? ` You stay King of ${active.name}.` : ""}</li>}
+                  {active && <li>Your progress in {active.name} stays safe.{activeSaved?.king ? ` You stay Owner of ${active.name}.` : ""}</li>}
                   <li>Moves you start from now count toward {pick.name}.</li>
                   {!isOpenArea(pick.id) && <li>{pick.name} isn&apos;t open for Territory: {(stateOf(pick.id, closed) as { reason?: string }).reason}. Moves there won&apos;t count until it opens.</li>}
                 </ul>

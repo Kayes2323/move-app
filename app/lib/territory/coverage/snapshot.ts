@@ -16,6 +16,8 @@ export interface TerritorySnapshot {
   ownership: Ownership | null;
   ownershipStatus: "ok" | "unavailable";
   standing: Standing;
+  /** Your Territory score in whole metres (capped, validated distance inside the Territory). */
+  score: number;
   /** Takeover/reclaim progress against the current King, when there is one and it is not you. */
   campaign: CampaignProgress | null;
   /** Set when this very load made the user King. */

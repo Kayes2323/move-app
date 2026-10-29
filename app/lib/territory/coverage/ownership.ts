@@ -3,6 +3,7 @@ import type { EligibilityMask } from "../mask/types";
 import { campaignProgress, coverageProgress, newCampaign, type Campaign, type CoverageChoice, type CoverageState } from "./coverage";
 import { requiredCells, takeoverCredits } from "./rules";
 import { ANONYMOUS_NAME } from "../../profile/model";
+import { outranks, type Explorer } from "../explorers";
 
 /**
  * Ownership of a Territory: who is King, since when, and how a King is made or replaced. Pure decisions only; the
@@ -20,7 +21,7 @@ export interface Ownership {
   reign: number;
   /** When the current King took the Territory (server time, ms). Takeover credits only count from here. */
   reignStartedAt: number;
-  kind: "conquest" | "takeover";
+  kind: "conquest" | "takeover" | "lead";
 }
 
 export type Standing =
@@ -36,7 +37,7 @@ export type Standing =
 export function standing(uid: string, ownership: Ownership | null, state: CoverageState): Standing {
   if (!ownership) return "unclaimed";
   if (ownership.ownerUid === uid) return "king";
-  return state.wins?.some((w) => w.reign < ownership.reign) ? "former-king" : "challenger";
+  return state.wins?.some((w) => w.reign < ownership.reign && (w.kind === "takeover" || ownership.kind !== "lead")) ? "former-king" : "challenger";
 }
 
 /** The campaign the user should be running against the current King, or null when there is none (unclaimed, or they are King). */
@@ -100,7 +101,7 @@ export function parseOwnership(raw: unknown, areaId: string): Ownership | null {
     ownerPhoto: typeof o.ownerPhoto === "string" && /^https:\/\//.test(o.ownerPhoto) ? o.ownerPhoto : "",
     reign,
     reignStartedAt: ms,
-    kind: o.kind === "takeover" ? "takeover" : "conquest",
+    kind: o.kind === "takeover" ? "takeover" : o.kind === "lead" ? "lead" : "conquest",
   };
 }
 
@@ -109,4 +110,26 @@ export function publicName(name: string | null | undefined): string {
   if (name === ANONYMOUS_NAME) return name; // someone who chose not to be shown stays "Move athlete", not "Move"
   const first = (name ?? "").trim().split(/\s+/)[0] ?? "";
   return first.slice(0, 24) || "Runner";
+}
+
+/**
+ * Who owns a Territory under the Territory score: the explorer with the highest score (ties: reached first, then uid).
+ * Pure decision, called inside the ownership transaction with freshly read scores, so two overtakes at once cannot both win:
+ *  - nobody owns it and I have a score: I become the first Owner (reign 1);
+ *  - someone else owns it and I outrank their CURRENT published score: I become the next Owner (reign + 1);
+ *  - otherwise nothing changes (including when I already own it, and when scores are exactly equal).
+ * An Owner whose score grew while offline is not harmed for long: the moment they sync, they outrank the new Owner and reclaim it.
+ */
+export interface LeadDecision {
+  ok: boolean;
+  reign: number;
+  reason?: "no-score" | "already-owner" | "owner-leads" | "owner-score-missing";
+}
+
+export function leadDecision(me: Pick<Explorer, "uid" | "score" | "scoreAt">, ownership: Ownership | null, ownerScore: Pick<Explorer, "uid" | "score" | "scoreAt"> | null): LeadDecision {
+  if (me.score <= 0) return { ok: false, reign: (ownership?.reign ?? 0) + 1, reason: "no-score" };
+  if (!ownership) return { ok: true, reign: 1 };
+  if (ownership.ownerUid === me.uid) return { ok: false, reign: ownership.reign + 1, reason: "already-owner" };
+  if (!ownerScore) return { ok: true, reign: ownership.reign + 1 }; // an Owner with no published score (an older Owner) holds nothing to outrank
+  return outranks(me, ownerScore) ? { ok: true, reign: ownership.reign + 1 } : { ok: false, reign: ownership.reign + 1, reason: "owner-leads" };
 }

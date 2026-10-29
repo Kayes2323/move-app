@@ -21,6 +21,8 @@ import { Celebration } from "../Celebration";
 import { KingCard } from "../KingCard";
 import { TerritoryHeroMap } from "../TerritoryHeroMap";
 import { TerritoryBoard } from "../TerritoryBoard";
+import { territoryMilestones } from "../../lib/territory/coverage/milestones";
+import { firstName } from "../../lib/profile/model";
 
 interface Loaded extends TerritoryHome {
   uid: string;
@@ -28,6 +30,7 @@ interface Loaded extends TerritoryHome {
 }
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
+const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(m >= 10000 ? 1 : 2)} km` : `${Math.round(m)} m`);
 const seenKey = (uid: string, area: string, reign: number) => `move.territory.celebrated.${uid}.${area}.${reign}`;
 const GOLD = "#D9A520";
 
@@ -114,8 +117,8 @@ export default function TerritoryHub() {
             setFailed("");
             // Celebrate a reign once: right after winning it here, or the first time the hub is opened after winning it elsewhere.
             const snap = loaded.snapshot;
-            const win = snap?.justWon ?? (snap?.standing === "king" ? snap.state.wins?.[snap.state.wins.length - 1] : undefined);
-            if (snap && win && snap.ownership?.reign === win.reign) {
+            const win = snap?.justWon ?? (snap?.state.claim ? [...(snap.state.wins ?? [])].reverse().find((w) => w.kind === "conquest") : undefined);
+            if (snap && win) {
               const key = seenKey(user.uid, snap.def.id, win.reign);
               let seen = false;
               try {
@@ -208,7 +211,7 @@ export default function TerritoryHub() {
   const chips = (
     <>
       {data.pending > 0 && <span className="status-chip warn">{data.pending} {data.pending === 1 ? "move" : "moves"} waiting to sync</span>}
-      {data.open && data.ownershipStatus !== "ok" && <span className="status-chip">Kings can&apos;t be shown right now</span>}
+      {data.open && data.ownershipStatus !== "ok" && <span className="status-chip">The Owner can&apos;t be shown right now</span>}
       {outside && <span className="status-chip" title="Active Territory and current location are separate">📍 You&apos;re in {outside.name} · outside your Territory</span>}
       {inside && <span className="status-chip">📍 You&apos;re in {active.name}</span>}
     </>
@@ -257,33 +260,37 @@ export default function TerritoryHub() {
   const progress = snap.progress;
   const st = snap.standing;
   const king = st === "king";
-  const campaign = snap.campaign;
-  const showCampaign = st === "challenger" || st === "former-king";
-  const percent = showCampaign ? (campaign?.percent ?? 0) : progress.percent;
-  const fraction = king ? 1 : showCampaign ? (campaign?.fraction ?? 0) : progress.fraction;
-  const caption = king ? "King" : showCampaign ? (st === "former-king" ? "to reclaim" : "to take over") : "conquered";
-  const ringLabel = king ? `${def.name} conquered: you are King` : `${pct(percent)} ${caption}`;
+  const ownerEx = snap.ownership ? board?.explorers.find((e) => e.uid === snap.ownership!.ownerUid) ?? null : null;
+  const ranked = board?.explorers ?? [];
+  const runnerUp = ranked.find((e) => e.uid !== snap.ownership?.ownerUid) ?? null;
+  const leadM = ownerEx && runnerUp ? Math.max(0, ownerEx.score - runnerUp.score) : null;
+  const conqueredByMe = Boolean(snap.state.claim);
+  const percent = progress.percent;
+  const fraction = progress.fraction;
+  const caption = conqueredByMe ? "Conquered" : "conquered";
+  const ringLabel = conqueredByMe ? `${def.name} conquered` : `${pct(percent)} conquered`;
   const shareHref = (id: string | null | undefined) => (id ? `/share?a=${encodeURIComponent(id)}&ctx=territory` : "/share?ctx=territory");
   const myWin = snap.state.wins?.[snap.state.wins.length - 1];
   const lastMove = [...snap.state.applied].reverse().find((a) => a.added > 0);
   const lastGain = lastMove ? Math.min(100, progressAfter(snap.state, lastMove.id, snap.mask)?.addedPercent ?? 0) : null;
+  const milestones = territoryMilestones(snap.state, snap.mask.meta.counts.eligibleCells, def.id);
+  const nextMilestone = milestones.find((m) => !m.reached) ?? null;
+  const behindM = ownerEx && !king ? Math.max(0, ownerEx.score - snap.score) : null;
 
   const badge = king ? (
-    <span className="stand stand-king">👑 Your Territory</span>
+    <span className="stand stand-king">👑 You own it</span>
   ) : st === "former-king" ? (
-    <span className="stand stand-rival">Territory lost</span>
+    <span className="stand stand-rival">Ownership lost</span>
   ) : st === "challenger" ? (
-    <span className="stand stand-rival">Held by another King</span>
+    <span className="stand stand-rival">Owned by {firstName(snap.ownership?.ownerName)}</span>
   ) : (
-    <span className="stand stand-open">Unconquered</span>
+    <span className="stand stand-open">No owner yet</span>
   );
   const goal = king
-    ? { title: `You hold ${def.name}`, line: "Others take it only by exploring it twice over. Keep moving." }
-    : st === "former-king"
-      ? { title: `Reclaim ${def.name}`, line: `${pct(campaign?.remainingPercent ?? 100)} left · explore it twice over, on different days` }
-      : st === "challenger"
-        ? { title: `Take over ${def.name}`, line: `${pct(campaign?.remainingPercent ?? 100)} left · explore it twice over, on different days` }
-        : { title: snap.ownership ? `Conquer ${def.name}` : "Be the first King", line: `${pct(progress.remainingPercent)} left to explore` };
+    ? { title: `You own ${def.name}`, line: leadM === null ? "Keep exploring to stay ahead." : leadM === 0 ? "Level with the next explorer. Keep exploring to stay ahead." : `You lead by ${km(leadM)}. Keep exploring to stay ahead.` }
+    : snap.ownership
+      ? { title: `Take the lead in ${def.name}`, line: behindM === null ? "Explore streets to build your score." : behindM === 0 ? "You are level. Reach the score first to take the lead." : `${km(behindM)} behind ${firstName(snap.ownership.ownerName)}` }
+      : { title: "Be the first Owner", line: "Explore to earn the first score." };
 
   return (
     <main className="app terr">
@@ -295,58 +302,55 @@ export default function TerritoryHub() {
         <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 18 }}>
           <ProgressRing
             fraction={fraction}
-            gold={king || showCampaign}
+            gold={conqueredByMe}
             label={ringLabel}
             caption={caption}
-            center={king ? <span className="crown" style={{ fontSize: 40 }} aria-hidden="true">👑</span> : <span className="blk" style={{ fontSize: 30, lineHeight: 1 }}>{percent.toFixed(1)}<span style={{ fontSize: 16 }}>%</span></span>}
+            center={conqueredByMe ? <span className="crown" style={{ fontSize: 40 }} aria-hidden="true">👑</span> : <span className="blk" style={{ fontSize: 30, lineHeight: 1 }}>{percent.toFixed(1)}<span style={{ fontSize: 16 }}>%</span></span>}
           />
           <div style={{ minWidth: 0 }}>
-            <p className="lab" style={{ color: king || showCampaign ? GOLD : "var(--acc-text)" }}>{king ? "Conquered" : "Your goal"}</p>
+            <p className="lab" style={{ color: king ? GOLD : "var(--acc-text)" }}>{king ? "Owner" : "Your goal"}</p>
             <p className="h2" style={{ marginTop: 6 }}>{goal.title}</p>
             <p className="mute" style={{ fontSize: 13, marginTop: 6, lineHeight: "18px" }}>{goal.line}</p>
           </div>
         </div>
 
-        {king ? (
-          <>
-            <Link href={shareHref(myWin?.activityId)} className="btn btn-go" style={{ marginTop: 22 }}>Share your Territory</Link>
-            <Link href="/run?mode=territory" className="btn btn-line" style={{ marginTop: 10 }}>Keep exploring</Link>
-          </>
-        ) : (
-          <Link href="/run?mode=territory" className="btn btn-go" style={{ marginTop: 22 }}>
-            <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
-            {st === "former-king" ? "Reclaim territory" : st === "challenger" ? "Take over" : "Start exploring"}
-          </Link>
-        )}
+        {conqueredByMe && <Link href={shareHref(myWin?.activityId)} className="btn btn-go" style={{ marginTop: 22 }}>Share your Territory</Link>}
+        <Link href="/run?mode=territory" className={`btn ${conqueredByMe ? "btn-line" : "btn-go"}`} style={{ marginTop: conqueredByMe ? 10 : 22 }}>
+          <svg className="ic" viewBox="0 0 24 24" style={{ fill: "currentColor" }} aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg>
+          {st === "former-king" ? "Win it back" : st === "challenger" ? "Take the lead" : king || conqueredByMe ? "Keep exploring" : "Start exploring"}
+        </Link>
 
-        <h2 className="lab" style={{ marginTop: 28 }}>King</h2>
+        <h2 className="lab" style={{ marginTop: 28 }}>Owner</h2>
         <div style={{ marginTop: 10 }}>
-          {data.ownershipStatus === "ok" ? <KingCard ownership={snap.ownership} you={king} territory={def.name} explorer={snap.ownership ? board?.explorers.find((e) => e.uid === snap.ownership!.ownerUid) ?? null : null} /> : <p className="mute body">Kings can&apos;t be shown right now. Your exploration is still counted.</p>}
+          {data.ownershipStatus === "ok" ? <KingCard ownership={snap.ownership} you={king} territory={def.name} explorer={ownerEx} leadM={leadM} alone={Boolean(board && board.status === "ok" && ranked.length <= 1)} /> : <p className="mute body">The Owner can&apos;t be shown right now. Your exploration is still counted.</p>}
         </div>
 
         <TerritoryBoard board={board} uid={data.uid} territory={def.name} onRetry={() => { setBoard(null); setBoardTry((n) => n + 1); }} />
 
         <h2 className="lab" style={{ marginTop: 28 }}>Your progress</h2>
         <div className="stat-row" style={{ marginTop: 10 }}>
-          {showCampaign && campaign ? (
-            <div className="stat">
-              <p className="lab">Takeover credits</p>
-              <p className="blk">{campaign.credits.toLocaleString("en-US")}</p>
-              <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>of {campaign.requiredCredits.toLocaleString("en-US")}</p>
-            </div>
-          ) : (
-            <div className="stat">
-              <p className="lab">Last move</p>
-              <p className="blk" style={{ color: lastGain ? "var(--acc-text)" : undefined }}>{lastGain === null ? "—" : `+${lastGain.toFixed(1)}%`}</p>
-              <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>new ground</p>
-            </div>
-          )}
+          <div className="stat">
+            <p className="lab">Your score</p>
+            <p className="blk" data-testid="my-score">{km(snap.score)}</p>
+            <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>valid distance here</p>
+          </div>
           <div className="stat">
             <p className="lab">Explored</p>
             <p className="blk">{pct(progress.coverage * 100)}</p>
-            <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>of all its streets · {progress.moves} {progress.moves === 1 ? "move" : "moves"}</p>
+            <p className="mute" style={{ fontSize: 12, marginTop: 2 }}>of all its streets · {progress.moves} {progress.moves === 1 ? "move" : "moves"}{lastGain ? ` · last +${lastGain.toFixed(1)}%` : ""}</p>
           </div>
         </div>
+
+        <h2 className="lab" style={{ marginTop: 28 }}>Milestones</h2>
+        <ol data-testid="milestones" style={{ listStyle: "none", margin: "10px 0 0", padding: 0, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
+          {milestones.map((m) => (
+            <li key={m.percent} data-reached={m.reached} aria-label={`${m.percent}% ${m.reached ? "reached" : "not reached"}`} className="card" style={{ padding: "10px 4px", textAlign: "center", opacity: m.reached ? 1 : 0.5, border: m.reached ? "1px solid var(--accent)" : "1px solid transparent" }}>
+              <p className="blk" style={{ fontSize: 15, color: m.reached ? "var(--acc-text)" : undefined }}>{m.percent}%</p>
+              <p className="mute" style={{ fontSize: 10, marginTop: 2 }}>{m.reached ? (m.atMs ? new Date(m.atMs).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "reached") : "locked"}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mute" style={{ fontSize: 12, marginTop: 8, lineHeight: 1.45 }}>{nextMilestone ? `${(nextMilestone.cells - progress.exploredCells).toLocaleString("en-US")} more cells to ${nextMilestone.percent}% of what conquering ${def.name} takes.` : `You have explored what conquering ${def.name} takes.`}</p>
 
         <details className="howto" style={{ marginTop: 18, borderTop: "1px solid var(--hair)" }}>
           <summary>
@@ -354,9 +358,9 @@ export default function TerritoryHub() {
             <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 18, height: 18, transition: "transform .2s" }}><path d="M6 9l6 6 6-6" /></svg>
           </summary>
           <ul className="body mute" style={{ paddingLeft: 18, display: "grid", gap: 6, paddingBottom: 6 }}>
-            <li>Walk or run new streets in {def.name}. Only new ground counts, never kilometres.</li>
-            <li>Explore 80% of its streets to conquer it and become King.</li>
-            <li>To take it from a King, explore it twice over, on different days, after their reign began.</li>
+            <li><b>Owner</b>: whoever has the highest score in {def.name}. It can change hands whenever someone passes the score.</li>
+            <li><b>Score</b>: validated distance walked or run inside {def.name}. Each ~35 m cell counts up to 40 m a day, on 2 different days. Repeating a route the same day, loops and standing still add nothing.</li>
+            <li><b>Territory Conquered</b>: explore {def.name}&apos;s requirement (the share of its streets set for this area). The first person to do it keeps that achievement for good, even if someone else owns the Territory.</li>
             <li>Cycling and moves outside {def.name} don&apos;t count.</li>
           </ul>
         </details>

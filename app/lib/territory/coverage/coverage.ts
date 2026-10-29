@@ -207,6 +207,18 @@ export function applyActivity(state: CoverageState, choice: CoverageChoice, scop
   return { state: { ...state, cells: next.cells, applied, appliedLowWater: lowWater, campaign }, added, credits, status: "explored" };
 }
 
+/**
+ * What an activity contributes to the capped distance score (coverage/score.ts): its qualifying eligible cells and the trusted
+ * metres in each, or null when it cannot count (cycling, before the Territory was chosen, while another Territory was active,
+ * another area). Independent of whether the cells were new: a second day on a known street still scores. Pure.
+ */
+export function scoreActivity(choice: CoverageChoice, scope: CellScope, act: CoverageActivity, config: ExplorationConfig = DEFAULT_EXPLORATION_CONFIG): { cells: number[]; metres: number[] } | null {
+  if (scope.areaId !== choice.areaId) return null;
+  if (act.startMs < choice.selectedAt || inGap(choice, act.startMs)) return null;
+  const result = exploreActivity(choice, scope, act, config);
+  return result ? { cells: result.cells, metres: result.metres } : null;
+}
+
 /** Counts activities into a (fresh) campaign only, e.g. after the King changed. Coverage is untouched. Pure and idempotent. */
 export function applyToCampaign(state: CoverageState, choice: CoverageChoice, scope: CellScope, act: CoverageActivity, config: ExplorationConfig = DEFAULT_EXPLORATION_CONFIG): CoverageState {
   if (!state.campaign || act.startMs < state.campaign.startedAt || act.startMs < choice.selectedAt || inGap(choice, act.startMs) || state.campaign.applied.includes(act.id)) return state;

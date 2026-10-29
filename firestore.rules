@@ -10,13 +10,14 @@
 // Preventing that needs server-side validation (e.g. a Cloud Function that recomputes totals from activities).
 //
 // TERRITORY OWNERSHIP (territories/{areaId}) is shared, competitive state. These rules make sure that:
-//   - only you can make yourself King, never anyone else;
-//   - a change of King happens only as the next reign (reign + 1), so two simultaneous claims cannot both succeed;
+//   - only you can make yourself Owner, never anyone else;
+//   - the Owner is the explorer with the highest published Territory score (capped, validated distance); a change of Owner is only
+//     the next reign (reign + 1) and needs your published score to outrank the current Owner's, so two simultaneous overtakes cannot both succeed;
+//   - a published score is bounded by what the explored cells allow (at most 80 m per cell), never by a free number;
 //   - the reign start is the server's clock, not the phone's;
-//   - the claim is backed, in the same transaction, by a claim proof in your own users/{uid} document whose explored
-//     cells (conquest) or takeover credits (2x) meet the Territory's requirement, counted from after the current reign began;
+//   - "Territory Conquered" is created once, backed by your claim proof, and can never change;
 //   - only a first name and an https photo are public; events are append-only.
-// Known limit: the claim proof is computed on the phone from its own GPS tracks. A determined user could forge it.
+// Known limit: scores and claim proofs are computed on the phone from its own GPS tracks. A determined user could forge them.
 // The data needed to check it server-side is kept (activities, tracks, mask and algorithm versions); see docs/TERRITORY.md.
 rules_version = '2';
 service cloud.firestore {
@@ -24,6 +25,11 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // The private ledger behind the Territory score: owner only. Only its published total (explorers/{uid}) is public.
+      match /territoryScores/{areaId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
 
       // users/{uid}/activities/{activityId} and users/{uid}/activities/{activityId}/tracks/{chunk}
       match /activities/{activityId} {
@@ -53,33 +59,40 @@ service cloud.firestore {
     match /territories/{areaId} {
       allow read: if request.auth != null;
 
-      function validKing() {
+      // OWNERSHIP FOLLOWS THE TERRITORY SCORE (capped, validated distance; see app/lib/territory/coverage/score.ts).
+      // The Owner is the explorer with the highest PUBLISHED score; a change of Owner is the next reign and needs the challenger's
+      // published score (explorers/{uid}, which the rules bound below) to outrank the current Owner's. Ties go to whoever reached
+      // the score first; equal in both never changes hands. Transactions serialise two overtakes at once: the second must outrank the first.
+      function validOwner() {
         let d = request.resource.data;
-        let c = claimOf(request.auth.uid);
         return d.keys().hasOnly(['areaId', 'name', 'ownerUid', 'ownerName', 'ownerPhoto', 'reign', 'kind', 'reignStartedAt', 'updatedAt', 'requiredCells', 'requiredCredits', 'rulesVersion', 'maskVersion'])
           && d.areaId == areaId
+          && d.kind == 'lead'
           && d.ownerUid == request.auth.uid
           && d.ownerName is string && d.ownerName.size() > 0 && d.ownerName.size() <= 40
           && d.ownerPhoto is string && d.ownerPhoto.size() <= 500 && (d.ownerPhoto == '' || d.ownerPhoto.matches('https://.*'))
           && d.reignStartedAt == request.time
           && d.updatedAt == request.time
-          && d.requiredCells == requiredCells(areaId)
-          && c.areaId == areaId && c.reign == d.reign && c.kind == d.kind;
+          && d.requiredCells == requiredCells(areaId);
+      }
+      function explorerOf(uid) {
+        return /databases/$(database)/documents/territories/$(areaId)/explorers/$(uid);
       }
 
-      // first conquest: reign 1, the claimant's own coverage reaches the requirement
-      allow create: if request.auth != null && validKing()
+      // the first Owner: reign 1, with a published score
+      allow create: if request.auth != null && validOwner()
         && request.resource.data.reign == 1
-        && request.resource.data.kind == 'conquest'
-        && claimOf(request.auth.uid).explored >= requiredCells(areaId);
+        && get(explorerOf(request.auth.uid)).data.score > 0;
 
-      // takeover / reclaim: the next reign only, by someone else, with 2x the requirement in credits earned since this reign began
-      allow update: if request.auth != null && validKing()
+      // a new Owner: the next reign only, by someone else, whose published score outranks the current Owner's
+      allow update: if request.auth != null && validOwner()
         && resource.data.ownerUid != request.auth.uid
         && request.resource.data.reign == resource.data.reign + 1
-        && request.resource.data.kind == 'takeover'
-        && claimOf(request.auth.uid).credits >= 2 * requiredCells(areaId)
-        && claimOf(request.auth.uid).campaignStartedAt >= resource.data.reignStartedAt.toMillis();
+        && get(explorerOf(request.auth.uid)).data.score > 0
+        && (!exists(explorerOf(resource.data.ownerUid))
+            || get(explorerOf(request.auth.uid)).data.score > get(explorerOf(resource.data.ownerUid)).data.get('score', 0)
+            || (get(explorerOf(request.auth.uid)).data.score == get(explorerOf(resource.data.ownerUid)).data.get('score', 0)
+                && get(explorerOf(request.auth.uid)).data.scoreAt < get(explorerOf(resource.data.ownerUid)).data.get('scoreAt', 0)));
 
       allow delete: if false;
 
@@ -103,13 +116,16 @@ service cloud.firestore {
         allow create, update: if request.auth != null
           && request.auth.uid == uid
           && requiredCells(areaId) < 1000000000
-          && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'username', 'exploredCells', 'requiredCells', 'moves', 'lastGainAt', 'updatedAt'])
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'username', 'score', 'scoreAt', 'exploredCells', 'requiredCells', 'moves', 'lastGainAt', 'updatedAt'])
           && request.resource.data.uid == uid
           && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
           && request.resource.data.photo is string && request.resource.data.photo.size() <= 600 && (request.resource.data.photo == '' || request.resource.data.photo.matches('https://.*'))
           && request.resource.data.username is string && request.resource.data.username.size() <= 20
           && request.resource.data.exploredCells is int && request.resource.data.exploredCells >= 0 && request.resource.data.exploredCells <= 3 * requiredCells(areaId)
           && request.resource.data.requiredCells == requiredCells(areaId)
+          // the score is credited only in cells the person has explored, at most 2 days x 40 m each: it can never exceed 80 m per explored cell
+          && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 80 * request.resource.data.exploredCells
+          && request.resource.data.scoreAt is number && request.resource.data.scoreAt >= 0
           && request.resource.data.moves is int && request.resource.data.moves >= 0 && request.resource.data.moves <= 100000
           && request.resource.data.lastGainAt is number && request.resource.data.lastGainAt >= 0
           && request.resource.data.updatedAt == request.time;
@@ -141,9 +157,8 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
-    // "Territory Conquered": a permanent record of whoever completed a Territory's requirement first. Created once, by the person
-    // the conquest event (reign 1) names, in the same transaction as the conquest or afterwards; never changed or removed,
-    // and unaffected by later takeovers.
+    // "Territory Conquered": a permanent record of whoever completed a Territory's requirement first. Created once, backed by the
+    // claimant's own claim proof (explored >= requirement); never changed or removed, and unaffected by who owns the Territory later.
     match /territoryAchievements/{areaId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
@@ -152,7 +167,12 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind == 'conquered'
         && request.resource.data.at == request.time
-        && getAfter(/databases/$(database)/documents/territories/$(areaId)/events/1).data.ownerUid == request.auth.uid;
+        && (
+          // earned now: the claim proof written in the same transaction shows the area's requirement is met
+          (claimOf(request.auth.uid).areaId == areaId && claimOf(request.auth.uid).kind == 'conquest' && claimOf(request.auth.uid).explored >= requiredCells(areaId))
+          // or an earlier conqueror (before achievements existed) whose conquest event names them
+          || getAfter(/databases/$(database)/documents/territories/$(areaId)/events/1).data.ownerUid == request.auth.uid
+        );
       allow update, delete: if false;
     }
   }

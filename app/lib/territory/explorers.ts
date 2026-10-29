@@ -20,12 +20,19 @@ export interface Explorer {
   name: string;
   photo: string;
   username: string;
+  /**
+   * The Territory score: capped, validated in-territory distance in whole metres (coverage/score.ts). Decides who leads and the ranking.
+   * Exploration (cells) is the separate measure that decides "Territory Conquered".
+   */
+  score: number;
+  /** When the score last grew (ms): with equal scores, whoever got there first ranks higher. */
+  scoreAt: number;
   exploredCells: number;
   /** Cells that conquer the Territory, so a card can show progress without loading the mask. */
   requiredCells: number;
   /** Moves that found new ground. */
   moves: number;
-  /** When their count last grew (ms). With equal counts, whoever got there first ranks higher. */
+  /** When they last found new ground (ms). */
   lastGainAt: number;
 }
 
@@ -36,6 +43,7 @@ export function explorerOf(
   who: { name: string; photo: string; username?: string },
   state: Pick<CoverageState, "applied">,
   progress: Pick<CoverageProgress, "exploredCells" | "requiredCells">,
+  points: { score: number; scoreAt: number } = { score: 0, scoreAt: 0 },
 ): Explorer {
   const gains = state.applied.filter((a) => a.added > 0);
   return {
@@ -43,6 +51,8 @@ export function explorerOf(
     name: who.name,
     photo: who.photo,
     username: who.username ?? "",
+    score: points.score,
+    scoreAt: points.scoreAt,
     exploredCells: progress.exploredCells,
     requiredCells: progress.requiredCells,
     moves: gains.length,
@@ -51,14 +61,17 @@ export function explorerOf(
 }
 
 /**
- * The order of explorers. Total and deterministic, so every phone ranks the same people the same way:
- *   1. more explored cells first;
- *   2. tie: whoever reached that count first (earlier `lastGainAt`) ranks higher;
+ * The order of explorers (and so who leads). Total and deterministic, so every phone ranks the same people the same way:
+ *   1. higher score first;
+ *   2. tie: whoever reached that score first (earlier `scoreAt`);
  *   3. still tied: the smaller uid (arbitrary but stable, never random).
  */
-export function rankExplorers<T extends Pick<Explorer, "uid" | "exploredCells" | "lastGainAt">>(list: readonly T[]): T[] {
-  return [...list].sort((a, b) => b.exploredCells - a.exploredCells || a.lastGainAt - b.lastGainAt || (a.uid < b.uid ? -1 : a.uid > b.uid ? 1 : 0));
+export function rankExplorers<T extends Pick<Explorer, "uid" | "score" | "scoreAt">>(list: readonly T[]): T[] {
+  return [...list].sort((a, b) => b.score - a.score || a.scoreAt - b.scoreAt || (a.uid < b.uid ? -1 : a.uid > b.uid ? 1 : 0));
 }
+
+/** Does `a` beat `b` for the lead? Strictly higher score, or the same score reached earlier. Equal in both is not a win. */
+export const outranks = (a: Pick<Explorer, "uid" | "score" | "scoreAt">, b: Pick<Explorer, "uid" | "score" | "scoreAt">): boolean => rankExplorers([a, b])[0] === a && (a.score !== b.score || a.scoreAt !== b.scoreAt);
 
 /** Reads an explorer document defensively: a malformed one is dropped rather than shown. */
 export function parseExplorer(id: string, raw: unknown): Explorer | null {
@@ -73,6 +86,8 @@ export function parseExplorer(id: string, raw: unknown): Explorer | null {
     name: o.name.slice(0, 40) || "Runner",
     photo: typeof o.photo === "string" && /^https:\/\//.test(o.photo) ? o.photo.slice(0, 600) : "",
     username: typeof o.username === "string" ? o.username.slice(0, 20) : "",
+    score: n(o.score) ?? 0,
+    scoreAt: n(o.scoreAt) ?? 0,
     exploredCells: cells,
     requiredCells: required,
     moves: n(o.moves) ?? 0,
@@ -82,12 +97,12 @@ export function parseExplorer(id: string, raw: unknown): Explorer | null {
 
 /** Does the stored projection already say what the user's own validated state says? (Then nothing needs to be written.) */
 export const sameExplorer = (a: Explorer | null, b: Explorer): boolean =>
-  Boolean(a) && a!.name === b.name && a!.photo === b.photo && a!.username === b.username && a!.exploredCells === b.exploredCells && a!.requiredCells === b.requiredCells && a!.moves === b.moves && a!.lastGainAt === b.lastGainAt;
+  Boolean(a) && a!.name === b.name && a!.photo === b.photo && a!.username === b.username && a!.score === b.score && a!.scoreAt === b.scoreAt && a!.exploredCells === b.exploredCells && a!.requiredCells === b.requiredCells && a!.moves === b.moves && a!.lastGainAt === b.lastGainAt;
 
 /** One entry of the ownership history (territories/{areaId}/events/{reign}). */
 export interface ReignEvent {
   reign: number;
-  kind: "conquest" | "takeover";
+  kind: "conquest" | "takeover" | "lead";
   ownerUid: string;
   ownerName: string;
   ownerPhoto: string;
@@ -104,7 +119,7 @@ export function parseReignEvent(raw: unknown): ReignEvent | null {
   const ms = typeof at === "number" ? at : typeof at?.toMillis === "function" ? at.toMillis() : 0;
   return {
     reign,
-    kind: o.kind === "takeover" ? "takeover" : "conquest",
+    kind: o.kind === "takeover" ? "takeover" : o.kind === "lead" ? "lead" : "conquest",
     ownerUid: o.ownerUid,
     ownerName: typeof o.ownerName === "string" ? o.ownerName.slice(0, 40) : "Runner",
     ownerPhoto: typeof o.ownerPhoto === "string" && /^https:\/\//.test(o.ownerPhoto) ? o.ownerPhoto : "",

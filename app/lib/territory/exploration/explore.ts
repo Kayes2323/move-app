@@ -34,6 +34,12 @@ export interface ExplorationResult {
   status: ExplorationStatus;
   /** Newly qualifying, eligible cells for the active area, ascending. This is exploration, not distance. */
   cells: number[];
+  /**
+   * Trusted path length (metres, one decimal) inside each cell of `cells`, in the same order. Only cells that qualified are listed, so
+   * drift, loops of jitter and unusable fixes contribute nothing. It feeds the capped Territory distance score (coverage/score.ts);
+   * it never decides which cells are explored.
+   */
+  metres: number[];
   diagnostics: (ValidationReport & { qualifyingCells: number; outsideScopeCells: number }) | null;
 }
 
@@ -46,6 +52,7 @@ const EMPTY = (input: TerritoryActivityInput, cfg: ExplorationConfig, status: Ex
   areaId,
   status,
   cells: [],
+  metres: [],
   diagnostics: null,
 });
 
@@ -103,6 +110,7 @@ export function explore(input: TerritoryActivityInput, scope: CellScope | null, 
   return {
     ...EMPTY(input, cfg, "ok", scope.areaId),
     cells,
+    metres: cells.map((c) => Math.round((byCell.get(c)?.metres ?? 0) * 10) / 10),
     diagnostics: { ...report, qualifyingCells: qualifying.length, outsideScopeCells: qualifying.length - cells.length },
   };
 }

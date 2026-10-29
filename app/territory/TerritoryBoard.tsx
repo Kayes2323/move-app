@@ -5,6 +5,7 @@ import type { TerritoryBoard as Board } from "../lib/territoryState";
 import { firstName } from "../lib/profile/model";
 
 const GOLD = "#D9A520";
+const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(m >= 10000 ? 1 : 2)} km` : `${Math.round(m)} m`);
 const day = (ms: number) => (ms ? new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
 
 /**
@@ -37,16 +38,16 @@ export function TerritoryBoard({ board, uid, territory, onRetry }: { board: Boar
           <div style={{ minWidth: 0 }}>
             <p className="lab" style={{ color: GOLD }}>Territory Conquered</p>
             <p style={{ fontSize: 15, fontWeight: 800, marginTop: 2 }}>{board.conquered.uid === uid ? "You" : firstName(board.conquered.name)}{board.conquered.username ? <span className="mute" style={{ fontWeight: 500 }}> · @{board.conquered.username}</span> : null}</p>
-            <p className="mute" style={{ fontSize: 12, marginTop: 1 }}>First to complete {territory}{board.conquered.atMs ? ` · ${day(board.conquered.atMs)}` : ""}. This stays even if the Territory changes hands.</p>
+            <p className="mute" style={{ fontSize: 12, marginTop: 1 }}>First to complete {territory}{board.conquered.atMs ? ` · ${day(board.conquered.atMs)}` : ""}. This stays even when the Owner changes.</p>
           </div>
         </div>
       )}
 
-      <h2 className="lab" style={{ marginTop: 28 }}>Active explorers</h2>
+      <h2 className="lab" style={{ marginTop: 28 }}>Top explorers</h2>
       {board.explorers.length === 0 ? (
         <div className="card" data-testid="explorers-empty" style={{ marginTop: 10 }}>
           <p className="body">No one has explored {territory} yet.</p>
-          <p className="mute" style={{ fontSize: 12.5, marginTop: 4 }}>Explore a new street and you&apos;ll be the first on this list.</p>
+          <p className="mute" style={{ fontSize: 12.5, marginTop: 4 }}>Explore a street and you&apos;ll be the first on this list.</p>
         </div>
       ) : (
         <ol data-testid="explorers" style={{ listStyle: "none", margin: "10px 0 0", padding: 0, display: "grid", gap: 8 }}>
@@ -59,18 +60,18 @@ export function TerritoryBoard({ board, uid, territory, onRetry }: { board: Boar
                 <Avatar name={e.name} photo={e.photo} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 15, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: you ? "var(--acc-text)" : "var(--ink)" }}>{you ? "You" : firstName(e.name)}{e.username ? <span className="mute" style={{ fontWeight: 500, fontSize: 12.5 }}> @{e.username}</span> : null}</p>
-                  <p className="mute" style={{ fontSize: 12 }}>{e.moves} {e.moves === 1 ? "move" : "moves"}{e.lastGainAt ? ` · last found new ground ${day(e.lastGainAt)}` : ""}</p>
+                  <p className="mute" style={{ fontSize: 12 }}>{e.exploredCells.toLocaleString("en-US")} cells · {p.toFixed(1)}% explored{e.scoreAt ? ` · ${day(e.scoreAt)}` : ""}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <p className="blk" style={{ fontSize: 17 }}>{e.exploredCells.toLocaleString("en-US")}</p>
-                  <p className="mute" style={{ fontSize: 11 }}>cells · {p.toFixed(1)}%</p>
+                  <p className="blk" style={{ fontSize: 17 }}>{km(e.score)}</p>
+                  <p className="mute" style={{ fontSize: 11 }}>valid score</p>
                 </div>
               </li>
             );
           })}
         </ol>
       )}
-      <p className="mute" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.45 }}>Ranked by explored cells (validated ground, counted once). A tie goes to whoever got there first. Distance isn&apos;t part of this ranking.</p>
+      <p className="mute" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.45 }}>Ranked by score: validated distance inside {territory}, each cell counting up to 40 m a day on 2 different days. Repeating a route the same day adds nothing. A tie goes to whoever reached it first.</p>
 
       {board.history.length > 0 && (
         <>
@@ -81,7 +82,7 @@ export function TerritoryBoard({ board, uid, territory, onRetry }: { board: Boar
                 <Avatar name={h.ownerName} photo={h.ownerPhoto} size={32} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontSize: 14, fontWeight: 700 }}>{h.ownerUid === uid ? "You" : firstName(h.ownerName)}{i === 0 ? <span style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: 1, marginLeft: 8 }}>CURRENT</span> : null}</span>
-                  <span className="mute" style={{ display: "block", fontSize: 12 }}>{h.kind === "conquest" ? "Conquered" : "Took over"}{h.atMs ? ` · ${day(h.atMs)}` : ""}</span>
+                  <span className="mute" style={{ display: "block", fontSize: 12 }}>{h.kind === "conquest" ? "Conquered" : h.kind === "lead" ? (i === board.history.length - 1 ? "First to score" : "Took the lead") : "Took over"}{h.atMs ? ` · ${day(h.atMs)}` : ""}</span>
                 </span>
                 <span className="mute" style={{ fontSize: 12 }}>Reign {h.reign}</span>
               </li>

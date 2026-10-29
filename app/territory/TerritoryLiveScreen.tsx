@@ -75,7 +75,7 @@ export function TerritoryLiveScreen({ snapshot, activity, ...card }: Props) {
       </div>
       {king ? (
         <>
-          <p className="blk" style={{ fontSize: 26, lineHeight: 1.1, marginTop: 2 }}>YOU ARE KING</p>
+          <p className="blk" style={{ fontSize: 26, lineHeight: 1.1, marginTop: 2 }}>YOU OWN IT</p>
           <p className="mute" style={{ fontSize: 13, marginTop: 4 }}>{(live.progress.coverage * 100).toFixed(1)}% of its streets explored</p>
         </>
       ) : (

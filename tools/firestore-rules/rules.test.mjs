@@ -5,7 +5,7 @@
 //   FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node tools/firestore-rules/rules.test.mjs
 //
 // It loads ../../firestore.rules exactly as written and checks the Phase 1 collections (publicProfiles, usernames, explorers,
-// territoryAchievements) plus the existing conquest/takeover rules they sit next to.
+// territoryAchievements) and the Phase 2 ownership rules: the Owner is whoever leads the published Territory score.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
 import { doc, setDoc, getDoc, deleteDoc, writeBatch, serverTimestamp, updateDoc } from "firebase/firestore";
@@ -29,21 +29,12 @@ const t = async (name, fn) => {
 const as = (uid) => env.authenticatedContext(uid).firestore();
 const anon = () => env.unauthenticatedContext().firestore();
 
-const explorer = (uid, o = {}) => ({ uid, name: "Rafi", photo: "", username: "", exploredCells: 100, requiredCells: REQ, moves: 3, lastGainAt: 1700000000000, updatedAt: serverTimestamp(), ...o });
-const king = (uid, o = {}) => ({ areaId: AREA, name: "Mohammadpur", ownerUid: uid, ownerName: "Rafi", ownerPhoto: "", reign: 1, kind: "conquest", reignStartedAt: serverTimestamp(), updatedAt: serverTimestamp(), requiredCells: REQ, requiredCredits: 2 * REQ, rulesVersion: "territory-rules/1", maskVersion: "m", ...o });
+const explorer = (uid, o = {}) => ({ uid, name: "Rafi", photo: "", username: "", score: 2000, scoreAt: 1700000000000, exploredCells: 100, requiredCells: REQ, moves: 3, lastGainAt: 1700000000000, updatedAt: serverTimestamp(), ...o });
+const king = (uid, o = {}) => ({ areaId: AREA, name: "Mohammadpur", ownerUid: uid, ownerName: "Rafi", ownerPhoto: "", reign: 1, kind: "lead", reignStartedAt: serverTimestamp(), updatedAt: serverTimestamp(), requiredCells: REQ, requiredCredits: 2 * REQ, rulesVersion: "territory-rules/1", maskVersion: "m", ...o });
 const claim = (reign, kind, explored, credits = 0, campaignStartedAt = 0) => ({ territory: { claim: { areaId: AREA, reign, kind, explored, credits, campaignStartedAt, rulesVersion: "territory-rules/1", maskVersion: "m", algorithmVersion: "a", at: 1 } } });
 const event = (uid, reign, kind = "conquest", prev = null) => ({ areaId: AREA, reign, kind, ownerUid: uid, ownerName: "Rafi", ownerPhoto: "", previousOwnerUid: prev, at: serverTimestamp() });
 const achievement = (uid, o = {}) => ({ areaId: AREA, uid, name: "Rafi", photo: "", username: "", kind: "conquered", at: serverTimestamp(), ...o });
 
-async function conquer(uid, { withAchievement = true, explored = REQ } = {}) {
-  const db = as(uid);
-  const b = writeBatch(db);
-  b.set(doc(db, "users", uid), claim(1, "conquest", explored));
-  b.set(doc(db, "territories", AREA), king(uid));
-  b.set(doc(db, "territories", AREA, "events", "1"), event(uid, 1));
-  if (withAchievement) b.set(doc(db, "territoryAchievements", AREA), achievement(uid));
-  await b.commit();
-}
 
 /* ---- publicProfiles: nothing sensitive can be written ---- */
 const pub = (o = {}) => ({ name: "Rafi Ahmed", photo: "https://x.test/p.jpg", totalKm: 1, streak: 1, updatedAt: 1, username: "rafi_a", bio: "Runs.", ...o });
@@ -114,63 +105,112 @@ await t("explorers: signed-in people read; owner can remove their entry", async 
   await assertSucceeds(deleteDoc(ex(as("u1"), "u1")));
 });
 
-/* ---- conquest, achievement, takeover ---- */
-await t("conquest + Territory Conquered in one batch", () => conquer("u1"));
-await t("conquest still needs the requirement (existing rule)", () => assertFails(conquer("u1", { explored: REQ - 1 })));
-await t("achievement: nobody can create it without the conquest", () => assertFails(setDoc(doc(as("u1"), "territoryAchievements", AREA), achievement("u1"))));
-await t("achievement: someone else cannot create it for themselves after your conquest", async () => {
-  await conquer("u1", { withAchievement: false });
-  await assertFails(setDoc(doc(as("u2"), "territoryAchievements", AREA), achievement("u2")));
+/* ---- explorers: the score bound ---- */
+await t("explorers: a score above 80 m per explored cell is refused", () => assertFails(setDoc(ex(as("u1"), "u1"), explorer("u1", { exploredCells: 10, score: 801 }))));
+await t("explorers: exactly 80 m per explored cell is the most allowed", () => assertSucceeds(setDoc(ex(as("u1"), "u1"), explorer("u1", { exploredCells: 10, score: 800 }))));
+await t("explorers: a fractional or negative score is refused", async () => {
+  await assertFails(setDoc(ex(as("u1"), "u1"), explorer("u1", { score: 1.5 })));
+  await assertFails(setDoc(ex(as("u1"), "u1"), explorer("u1", { score: -1 })));
 });
-await t("achievement: an existing King can be given theirs afterwards (backfill)", async () => {
-  await conquer("u1", { withAchievement: false });
-  await assertSucceeds(setDoc(doc(as("u1"), "territoryAchievements", AREA), achievement("u1")));
+
+/* ---- ownership follows the published score ---- */
+const publish = (uid, o = {}) => env.withSecurityRulesDisabled((c) => setDoc(doc(c.firestore(), "territories", AREA, "explorers", uid), { ...explorer(uid, o), updatedAt: 1 }));
+const seedOwner = async (uid, reign = 1) => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    const d = c.firestore();
+    await setDoc(doc(d, "territories", AREA), { ...king(uid, { reign }), reignStartedAt: 1, updatedAt: 1 });
+  });
+};
+const takeLead = async (uid, reign, prev) => {
+  const db = as(uid);
+  const b = writeBatch(db);
+  if (reign === 1) b.set(doc(db, "territories", AREA), king(uid));
+  else b.update(doc(db, "territories", AREA), king(uid, { reign }));
+  b.set(doc(db, "territories", AREA, "events", String(reign)), event(uid, reign, "lead", prev));
+  await b.commit();
+};
+await t("first Owner: someone with a published score can become Owner (reign 1)", async () => { await publish("u1"); await takeLead("u1", 1, null); });
+await t("first Owner: no published score, no ownership", async () => { await assertFails(takeLead("u1", 1, null)); });
+await t("first Owner: cannot be made reign 2 from nothing", async () => { await publish("u1"); await assertFails(takeLead("u1", 2, null)); });
+await t("OVERTAKE: a higher published score takes the lead (next reign)", async () => { await seedOwner("u1"); await publish("u1", { score: 2000 }); await publish("u2", { score: 2001, exploredCells: 100 }); await takeLead("u2", 2, "u1"); });
+await t("TIE on score: the one who reached it first wins; a later one cannot take it", async () => {
+  await seedOwner("u1"); await publish("u1", { score: 2000, scoreAt: 100 }); await publish("u2", { score: 2000, scoreAt: 200 });
+  await assertFails(takeLead("u2", 2, "u1"));
+  await publish("u3", { score: 2000, scoreAt: 50 });
+  await takeLead("u3", 2, "u1");
 });
-await t("achievement: cannot be changed or removed, even by its owner", async () => {
-  await conquer("u1");
-  await assertFails(updateDoc(doc(as("u1"), "territoryAchievements", AREA), { name: "Other" }));
-  await assertFails(deleteDoc(doc(as("u1"), "territoryAchievements", AREA)));
+await t("EXACTLY equal score and time never changes hands", async () => { await seedOwner("u1"); await publish("u1", { score: 2000, scoreAt: 100 }); await publish("u2", { score: 2000, scoreAt: 100 }); await assertFails(takeLead("u2", 2, "u1")); });
+await t("a lower score cannot take the lead", async () => { await seedOwner("u1"); await publish("u1", { score: 2000 }); await publish("u2", { score: 1999 }); await assertFails(takeLead("u2", 2, "u1")); });
+await t("an Owner whose published score is missing (older Owner) can be overtaken by anyone with a score", async () => { await seedOwner("u1"); await publish("u2", { score: 5 }); await takeLead("u2", 2, "u1"); });
+await t("you cannot 'take' what you already own, or skip reigns, or change someone else's name into the Owner doc", async () => {
+  await seedOwner("u1"); await publish("u1"); await publish("u2", { score: 9000, exploredCells: 200 });
+  await assertFails(takeLead("u1", 2, "u1"));
+  await assertFails(takeLead("u2", 3, "u1"));
+  const db = as("u2");
+  await assertFails(updateDoc(doc(db, "territories", AREA), king("u1", { reign: 2 }))); // impersonation: ownerUid is someone else
+});
+await t("CONCURRENT overtakes: the second must outrank the first Owner, not the old one", async () => {
+  await seedOwner("u1"); await publish("u1", { score: 1000 }); await publish("u2", { score: 3000, exploredCells: 100 }); await publish("u3", { score: 2000, exploredCells: 100 });
+  await takeLead("u2", 2, "u1");
+  await assertFails(takeLead("u3", 3, "u2")); // 2000 does not outrank u2's 3000
+  await assertFails(takeLead("u3", 2, "u1")); // and the old reign is gone
+});
+await t("the reign start is the server's time and ownership cannot be deleted", async () => {
+  await seedOwner("u1"); await publish("u2", { score: 9000, exploredCells: 200 });
+  const db = as("u2");
+  await assertFails(updateDoc(doc(db, "territories", AREA), king("u2", { reign: 2, reignStartedAt: 5 })));
+  await assertFails(deleteDoc(doc(db, "territories", AREA)));
+});
+await t("old-style conquest/takeover kinds can no longer be written", async () => {
+  await publish("u1");
+  const db = as("u1");
+  await assertFails(setDoc(doc(db, "territories", AREA), king("u1", { kind: "conquest" })));
+});
+
+/* ---- Territory Conquered ---- */
+const proof = (explored) => ({ territory: { claim: { areaId: AREA, reign: 1, kind: "conquest", explored, credits: 0, campaignStartedAt: 0, rulesVersion: "territory-rules/1", maskVersion: "m", algorithmVersion: "a", at: 1 } } });
+async function conquered(uid, explored = REQ) {
+  const db = as(uid);
+  const b = writeBatch(db);
+  b.set(doc(db, "users", uid), proof(explored));
+  b.set(doc(db, "territoryAchievements", AREA), achievement(uid));
+  await b.commit();
+}
+await t("Territory Conquered: awarded with a proof that meets the requirement, without being the Owner", () => conquered("u1"));
+await t("Territory Conquered: refused when the proof falls short", () => assertFails(conquered("u1", REQ - 1)));
+await t("Territory Conquered: nobody can create it without a proof", () => assertFails(setDoc(doc(as("u1"), "territoryAchievements", AREA), achievement("u1"))));
+await t("Territory Conquered: only the first; a second person cannot create or replace it", async () => {
+  await conquered("u1");
+  await assertFails(conquered("u2"));
   await assertFails(setDoc(doc(as("u1"), "territoryAchievements", AREA), achievement("u1", { name: "Changed" })));
 });
-await t("achievement: a takeover leaves it exactly where it was (permanent, separate from ownership)", async () => {
-  await conquer("u1");
+await t("Territory Conquered: permanent, cannot be changed or removed by its owner", async () => {
+  await conquered("u1");
+  await assertFails(updateDoc(doc(as("u1"), "territoryAchievements", AREA), { name: "Other" }));
+  await assertFails(deleteDoc(doc(as("u1"), "territoryAchievements", AREA)));
+});
+await t("Territory Conquered: cannot be created for someone else", async () => {
   const db = as("u2");
   const b = writeBatch(db);
-  b.set(doc(db, "users", "u2"), claim(2, "takeover", 0, 2 * REQ, Date.now() + 60_000));
-  b.update(doc(db, "territories", AREA), king("u2", { reign: 2, kind: "takeover", ownerName: "Tania" }));
-  b.set(doc(db, "territories", AREA, "events", "2"), event("u2", 2, "takeover", "u1"));
-  await b.commit();
+  b.set(doc(db, "users", "u2"), proof(REQ));
+  b.set(doc(db, "territoryAchievements", AREA), achievement("u1"));
+  await assertFails(b.commit());
+});
+await t("Territory Conquered: an ownership change leaves it exactly where it was", async () => {
+  await conquered("u1");
+  await seedOwner("u1"); await publish("u1", { score: 100, exploredCells: 100 }); await publish("u2", { score: 5000, exploredCells: 200 });
+  await takeLead("u2", 2, "u1");
   const after = await getDoc(doc(as("u2"), "territoryAchievements", AREA));
   if (after.data().uid !== "u1") throw new Error("the achievement moved");
-  await assertFails(setDoc(doc(as("u2"), "territoryAchievements", AREA), achievement("u2")));
 });
-await t("achievement: a takeover cannot create one for the challenger", async () => {
-  await conquer("u1", { withAchievement: false });
-  const db = as("u2");
-  const b = writeBatch(db);
-  b.set(doc(db, "users", "u2"), claim(2, "takeover", 0, 2 * REQ, Date.now() + 60_000));
-  b.update(doc(db, "territories", AREA), king("u2", { reign: 2, kind: "takeover" }));
-  b.set(doc(db, "territories", AREA, "events", "2"), event("u2", 2, "takeover", "u1"));
-  b.set(doc(db, "territoryAchievements", AREA), achievement("u2"));
-  await assertFails(b.commit());
+await t("Territory Conquered: a legacy first King (reign-1 event) can be given theirs afterwards", async () => {
+  await env.withSecurityRulesDisabled((c) => setDoc(doc(c.firestore(), "territories", AREA, "events", "1"), event("u1", 1)));
+  await assertSucceeds(setDoc(doc(as("u1"), "territoryAchievements", AREA), achievement("u1")));
 });
-await t("takeover without 2x credits is still refused (existing rule)", async () => {
-  await conquer("u1");
-  const db = as("u2");
-  const b = writeBatch(db);
-  b.set(doc(db, "users", "u2"), claim(2, "takeover", 0, 2 * REQ - 1, Date.now() + 60_000));
-  b.update(doc(db, "territories", AREA), king("u2", { reign: 2, kind: "takeover" }));
-  b.set(doc(db, "territories", AREA, "events", "2"), event("u2", 2, "takeover", "u1"));
-  await assertFails(b.commit());
-});
-await t("a second conquest (reign 1 again) is refused", async () => {
-  await conquer("u1");
-  const db = as("u2");
-  const b = writeBatch(db);
-  b.set(doc(db, "users", "u2"), claim(1, "conquest", REQ));
-  b.set(doc(db, "territories", AREA), king("u2"));
-  b.set(doc(db, "territories", AREA, "events", "1"), event("u2", 1));
-  await assertFails(b.commit());
+await t("private score ledger: owner only", async () => {
+  await assertSucceeds(setDoc(doc(as("u1"), "users", "u1", "territoryScores", AREA), { ledger: "a.1.2" }));
+  await assertFails(getDoc(doc(as("u2"), "users", "u1", "territoryScores", AREA)));
+  await assertFails(setDoc(doc(as("u2"), "users", "u1", "territoryScores", AREA), { ledger: "x" }));
 });
 
 await env.cleanup();

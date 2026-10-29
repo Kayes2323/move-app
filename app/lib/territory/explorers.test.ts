@@ -24,13 +24,13 @@ function street(i: number, t0: number) {
 }
 const act = (id: string, i: number, startMs: number): CoverageActivity => ({ id, userId: "u1", kind: "walking", startMs, endMs: startMs + 600_000, points: street(i, startMs) });
 
-const ex = (uid: string, cells: number, lastGainAt: number): Explorer => ({ uid, name: uid, photo: "", username: "", exploredCells: cells, requiredCells: 3104, moves: 1, lastGainAt });
+const ex = (uid: string, score: number, scoreAt: number): Explorer => ({ uid, name: uid, photo: "", username: "", score, scoreAt, exploredCells: 1, requiredCells: 3104, moves: 1, lastGainAt: scoreAt });
 
-test("ranking: more explored cells first", () => {
+test("ranking: higher score first", () => {
   assert.deepEqual(rankExplorers([ex("a", 10, 1), ex("b", 30, 2), ex("c", 20, 3)]).map((e) => e.uid), ["b", "c", "a"]);
 });
 
-test("TIE-BREAK: equal cells go to whoever reached them first; still tied, the smaller uid (stable, never random)", () => {
+test("TIE-BREAK: equal scores go to whoever reached them first; still tied, the smaller uid (stable, never random)", () => {
   assert.deepEqual(rankExplorers([ex("late", 50, 900), ex("early", 50, 100)]).map((e) => e.uid), ["early", "late"]);
   assert.deepEqual(rankExplorers([ex("zed", 50, 100), ex("abe", 50, 100)]).map((e) => e.uid), ["abe", "zed"]);
 });
@@ -51,7 +51,7 @@ test("DYNAMIC OWNERSHIP OF THE LIST: a later valid contribution overtakes; the o
   assert.equal(before[0].uid, "holder");
   const after = rankExplorers([ex("holder", 100, 1), ex("rival", 101, 50)]);
   assert.equal(after[0].uid, "rival");
-  assert.equal(after[1].exploredCells, 100);
+  assert.equal(after[1].score, 100);
 });
 
 test("the projection comes from validated coverage and is the same however often it is computed (duplicate sync, restart)", () => {
@@ -122,4 +122,48 @@ test("Territory Conquered: a record names the first conqueror and is read back u
   assert.equal(rec?.atMs, 123);
   assert.equal(parseConquered("another-area", { areaId: "bd-upa-dhaka-mohammadpur", uid: "u1" }), null); // a record for another area is not this area's
   assert.equal(parseConquered("a", null), null);
+});
+
+/* ---------- who leads: the ownership decision ---------- */
+import { leadDecision, standing, type Ownership } from "./coverage/ownership";
+import { outranks } from "./explorers";
+
+const owner = (uid: string, reign: number, kind: Ownership["kind"] = "lead"): Ownership => ({ areaId: "a", ownerUid: uid, ownerName: uid, ownerPhoto: "", reign, reignStartedAt: 1, kind });
+const me = (score: number, scoreAt: number, uid = "me") => ({ uid, score, scoreAt });
+
+test("OWNER: nobody owns it, so the first person with a score becomes Owner (reign 1); no score, no ownership", () => {
+  assert.deepEqual(leadDecision(me(10, 1), null, null), { ok: true, reign: 1 });
+  assert.equal(leadDecision(me(0, 1), null, null).ok, false);
+});
+
+test("OWNER: a strictly higher score takes the lead, the next reign; a lower or equal one does not", () => {
+  assert.deepEqual(leadDecision(me(101, 9), owner("o", 3), me(100, 1, "o")), { ok: true, reign: 4 });
+  assert.equal(leadDecision(me(99, 1), owner("o", 3), me(100, 9, "o")).reason, "owner-leads");
+});
+
+test("TIE: equal scores go to whoever reached it first; exactly equal never changes hands", () => {
+  assert.equal(leadDecision(me(100, 5), owner("o", 1), me(100, 9, "o")).ok, true);
+  assert.equal(leadDecision(me(100, 9), owner("o", 1), me(100, 5, "o")).ok, false);
+  assert.equal(leadDecision(me(100, 5), owner("o", 1), me(100, 5, "o")).ok, false);
+  assert.equal(outranks(me(100, 5, "a"), me(100, 5, "b")), false); // the uid only orders a list, it never takes ownership
+});
+
+test("the Owner is never 'taken' from themselves, and an Owner with no published score can be overtaken", () => {
+  assert.equal(leadDecision(me(500, 1), owner("me", 2), null).reason, "already-owner");
+  assert.deepEqual(leadDecision(me(5, 1), owner("old", 1, "conquest"), null), { ok: true, reign: 2 });
+});
+
+test("CONCURRENT: two challengers decided one after the other; the second must outrank the first, not the original Owner", () => {
+  const first = leadDecision(me(300, 2, "c1"), owner("o", 1), me(100, 1, "o"));
+  assert.equal(first.ok, true);
+  const second = leadDecision(me(200, 3, "c2"), owner("c1", first.reign), me(300, 2, "c1"));
+  assert.equal(second.ok, false);
+});
+
+test("HISTORY: an Owner who was overtaken is a former Owner; a conqueror who never owned it is just a challenger", () => {
+  const st = (wins: { reign: number; kind: "conquest" | "takeover" }[], o: Ownership) => standing("me", o, { areaId: "a", cells: [], applied: [], wins: wins.map((w) => ({ ...w, activityId: null, atMs: 1 })) });
+  assert.equal(st([{ reign: 1, kind: "takeover" }], owner("x", 2)), "former-king");
+  assert.equal(st([{ reign: 1, kind: "conquest" }], owner("x", 2)), "challenger"); // conquering is an achievement, not ownership
+  assert.equal(st([], owner("me", 2)), "king");
+  assert.equal(st([{ reign: 1, kind: "conquest" }], owner("x", 2, "takeover")), "former-king"); // legacy reigns keep their meaning
 });

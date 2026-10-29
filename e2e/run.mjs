@@ -512,13 +512,13 @@ async function scenarioExpansion() {
     const sheet = await s.pg.getByRole("alertdialog").innerText();
     check("X1a. Hajiganj shows as open for Territory in the confirm step", /Open for Territory/i.test(sheet) && !/isn't open/i.test(sheet), sheet.replace(/\s+/g, " ").slice(0, 160));
     await s.pg.getByRole("alertdialog").getByRole("button", { name: "Choose Territory" }).click();
-    await ready(s.pg, "text=Start exploring");
+    await ready(s.pg, "[data-progress]");
     const db = await dbOf(s.pg);
     const t = await hubText(s.pg);
     check("X1. Hajiganj becomes the active Territory, saved with its own mask version, starting empty from now", db["users/u1"].territoryActive?.areaId === HAJ && db["users/u1"].territory?.areaId === HAJ && db["users/u1"].territory.maskVersion === HM.maskVersion && db["users/u1"].territory.cells.length === 0 && db["users/u1"].territory.selectedAt >= now, JSON.stringify(db["users/u1"].territory).slice(0, 200));
     check("X1b. the Territory screen is Hajiganj, not Mohammadpur, and nothing of the Chandpur Journey leaks in", /HAJIGANJ/i.test(t) && !/Mohammadpur/i.test(t) && !/Dhaka\s*(→|to)\s*Chandpur/i.test(t) && !/km to go|checkpoint/i.test(t), t.slice(0, 220));
     await s.pg.reload();
-    await ready(s.pg, "text=Start exploring");
+    await ready(s.pg, "[data-progress]");
     check("X1c. after a refresh Hajiganj is still the active Territory", /HAJIGANJ/i.test(await hubText(s.pg)));
     check("X1d. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
     await s.ctx.close();
@@ -529,7 +529,7 @@ async function scenarioExpansion() {
     const db = seed(hajState(), [walkRun("h1", 2), walkRun("m1", 1)], { h1: streetChunkFor(HM, 0, now - 2 * day - 300000), m1: streetChunk(0, now - day - 300000) });
     const s = await fresh({ db });
     await s.pg.goto(`${BASE}/territory/current`);
-    await ready(s.pg, "text=Start exploring");
+    await ready(s.pg, "[data-progress]");
     await s.pg.waitForTimeout(800);
     const t = await text(s.pg);
     const out = (await dbOf(s.pg))["users/u1"].territory;
@@ -559,14 +559,14 @@ async function scenarioExpansion() {
     const own = JSON.stringify(before[`territories/${MOH}`]);
     const cells = JSON.stringify(before["users/u1"].territory.cells);
     await chooseArea(s.pg, "Hajiganj");
-    await ready(s.pg, "text=Start exploring");
+    await ready(s.pg, "[data-progress]");
     const mid = await dbOf(s.pg);
     check("X3a. switching to Hajiganj parks Mohammadpur whole (cells, wins, claim) and starts Hajiganj empty", mid["users/u1"].territoryParked?.[MOH] && JSON.stringify(mid["users/u1"].territoryParked[MOH].cells) === cells && mid["users/u1"].territoryParked[MOH].claim?.reign === 1 && mid["users/u1"].territory.areaId === HAJ && mid["users/u1"].territory.cells.length === 0);
-    check("X3b. you stay King of Mohammadpur: ownership unchanged, nothing written for Hajiganj", JSON.stringify(mid[`territories/${MOH}`]) === own && !Object.keys(mid).some((k) => k.startsWith(`territories/${HAJ}`)));
+    check("X3b. you stay Owner of Mohammadpur: ownership unchanged, nothing written for Hajiganj", JSON.stringify(mid[`territories/${MOH}`]) === own && !Object.keys(mid).some((k) => k.startsWith(`territories/${HAJ}`)));
     await chooseArea(s.pg, "Mohammadpur");
     await ready(s.pg, "text=Share your Territory");
     const back = await dbOf(s.pg);
-    check("X3c. back in Mohammadpur: still King with the same ground, the time away recorded, Hajiganj parked", /You are King/i.test(await hubText(s.pg)) && JSON.stringify(back["users/u1"].territory.cells) === cells && back["users/u1"].territory.gaps?.length === 2 && back["users/u1"].territoryParked?.[HAJ]);
+    check("X3c. back in Mohammadpur: still King with the same ground, the time away recorded, Hajiganj parked", /You own it/i.test(await hubText(s.pg)) && JSON.stringify(back["users/u1"].territory.cells) === cells && back["users/u1"].territory.gaps?.length === 2 && back["users/u1"].territoryParked?.[HAJ]);
     check("X3d. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
     await s.ctx.close();
   }
@@ -679,7 +679,7 @@ async function scenarioSwitch() {
     const cellsBefore = JSON.stringify(before["users/u1"].territory.cells);
     await chooseArea(s.pg, "Chandpur Sadar", { confirm: false });
     const sheet = await s.pg.getByRole("alertdialog").innerText();
-    check("W5a. the confirm step promises Mohammadpur stays safe and that you stay King", /progress in Mohammadpur stays safe/i.test(sheet) && /stay King of Mohammadpur/i.test(sheet), sheet.replace(/\s+/g, " ").slice(0, 200));
+    check("W5a. the confirm step promises Mohammadpur stays safe and that you stay Owner", /progress in Mohammadpur stays safe/i.test(sheet) && /stay Owner of Mohammadpur/i.test(sheet), sheet.replace(/\s+/g, " ").slice(0, 200));
     await s.pg.getByRole("alertdialog").getByRole("button", { name: "Change Territory" }).click();
     await ready(s.pg, "text=isn't open for Territory yet");
     const mid = await dbOf(s.pg);
@@ -698,7 +698,7 @@ async function scenarioSwitch() {
     await ready(s.pg, "text=Share your Territory");
     const back = await dbOf(s.pg);
     const t = await hubText(s.pg);
-    check("W7. returning to Mohammadpur: still King, the same explored ground, the time away recorded", /Your Territory/i.test(t) && /You are King/i.test(t) && JSON.stringify(back["users/u1"].territory.cells) === cellsBefore && back["users/u1"].territory.gaps?.length === 2 && !back["users/u1"].territoryParked?.[MOH], JSON.stringify(back["users/u1"].territory.gaps));
+    check("W7. returning to Mohammadpur: still Owner, the same explored ground, the time away recorded", /You own it/i.test(t) && JSON.stringify(back["users/u1"].territory.cells) === cellsBefore && back["users/u1"].territory.gaps?.length === 2 && !back["users/u1"].territoryParked?.[MOH], JSON.stringify(back["users/u1"].territory.gaps));
     check("W8. no back-fill: the walk made while Chandpur was active was not counted for Mohammadpur", !back["users/u1"].territory.applied.some((a) => a.i === "away"));
     check("W8b. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
     await s.ctx.close();
@@ -973,7 +973,7 @@ async function scenarioConquest() {
   const t0 = await text(a.pg);
   check("C1. a new user is asked to choose a Territory: no Mohammadpur, no percentage, no distance target", !/Mohammadpur/i.test(t0) && !/% conquered/i.test(t0) && !/to conquer/.test(t0) && !(await dbOf(a.pg))["users/u1"].territory, t0.slice(0, 160));
   await chooseArea(a.pg, "Mohammadpur");
-  await a.pg.waitForSelector("text=Start exploring", { timeout: 15000 });
+  await a.pg.waitForSelector("[data-progress]", { timeout: 15000 });
   check("C2a. choosing Mohammadpur opens its Territory screen", /\/territory\/current\/?$/.test(a.pg.url()), a.pg.url());
   const saved = (await dbOf(a.pg))["users/u1"].territory;
   check("C2. choosing stores the area, mask version and rules, with nothing explored yet", saved && saved.areaId === "bd-upa-dhaka-mohammadpur" && saved.maskVersion === MASK.maskVersion && /territory-coverage/.test(saved.coverageVersion) && saved.cells.length === 0 && saved.applied.length === 0 && (await dbOf(a.pg))["users/u1"].territoryActive?.areaId === "bd-upa-dhaka-mohammadpur", JSON.stringify(saved).slice(0, 200));
@@ -991,7 +991,7 @@ async function scenarioConquest() {
     for (const [id, chunk] of Object.entries(tracks)) db[TRACK(id)] = chunk;
     return db;
   };
-  const percentOf = async (db, wait = "text=Start exploring") => {
+  const percentOf = async (db, wait = "[data-progress]") => {
     const s = await fresh({ db });
     await s.pg.goto(`${BASE}/territory/current`);
     await s.pg.waitForSelector(wait, { timeout: 30000 });
@@ -1027,106 +1027,128 @@ async function scenarioConquest() {
 
   const reload = await fresh({ db: seed([walk("r1", 2)], { r1: streetChunk(0, now - 2 * 86400000 - 300000) }) });
   await reload.pg.goto(`${BASE}/territory/current`);
-  await reload.pg.waitForSelector("text=Start exploring", { timeout: 30000 });
+  await reload.pg.waitForSelector("[data-progress]", { timeout: 30000 });
   await reload.pg.waitForTimeout(500);
   const first = JSON.stringify((await dbOf(reload.pg))["users/u1"].territory);
   await reload.pg.reload();
-  await reload.pg.waitForSelector("text=Start exploring", { timeout: 30000 });
+  await reload.pg.waitForSelector("[data-progress]", { timeout: 30000 });
   await reload.pg.waitForTimeout(500);
   check("C14. reloading reprocesses nothing: the saved state is identical", JSON.stringify((await dbOf(reload.pg))["users/u1"].territory) === first);
   await reload.ctx.close();
 
-  // ---------- ownership: King, takeover, reclaim ----------
+  // ---------- ownership follows the Territory score; Territory Conquered is separate and permanent ----------
   const day = 86400000;
-  const kingDoc = (uid, name, reign, startedAt) => ({ areaId: "bd-upa-dhaka-mohammadpur", name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: reign === 1 ? "conquest" : "takeover", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion });
+  const leadDoc = (uid, name, reign, startedAt) => ({ areaId: "bd-upa-dhaka-mohammadpur", name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: "lead", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 620800, rulesVersion: "territory-score/1", maskVersion: MASK.maskVersion });
+  const scoreOfDoc = (uid, name, score, scoreAt, cells = 500) => ({ uid, name, photo: "", username: "", score, scoreAt, exploredCells: cells, requiredCells: 3104, moves: 3, lastGainAt: scoreAt });
   const hub = async (db, wait) => {
     const s = await fresh({ db });
     await s.pg.goto(`${BASE}/territory/current`);
     await s.pg.waitForSelector(wait, { timeout: 30000 });
-    await s.pg.waitForTimeout(700);
+    await s.pg.waitForTimeout(900);
     return s;
   };
 
-  // K1-K4: reaching the threshold makes you the first King, once
+  // K1-K7: reaching the requirement earns Territory Conquered (once, for good); the same walk also scores, so the first scorer owns it
   {
     const db = seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({ cells: runsOf(ELIGIBLE.slice(0, 3104)), applied: [ap("r0", 3104, now - 2 * day)] }));
-    const s = await hub(db, "text=CONQUERED");
+    const s = await hub(db, "text=TERRITORY CONQUERED");
     const t = await text(s.pg);
     const mem = await dbOf(s.pg);
+    const ach = mem["territoryAchievements/bd-upa-dhaka-mohammadpur"];
+    check("K1. meeting the requirement earns Territory Conquered: a permanent record for you, with your claim proof", ach?.uid === "u1" && ach.kind === "conquered" && mem["users/u1"].territory.claim?.kind === "conquest" && mem["users/u1"].territory.claim.explored >= 3104, JSON.stringify(ach));
+    check("K2. the celebration says TERRITORY CONQUERED with a Share action", /CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && (await s.pg.getByRole("dialog").getByRole("link", { name: "Share" }).count()) === 1, t.slice(0, 200));
     const own = mem["territories/bd-upa-dhaka-mohammadpur"];
-    check("K1. reaching 80% makes you King: ownership saved with you as owner, reign 1", own && own.ownerUid === "u1" && own.reign === 1 && own.kind === "conquest" && own.requiredCells === 3104, JSON.stringify(own).slice(0, 200));
-    check("K2. the conquest is recorded once as an event, with your claim proof in your own document", mem["territories/bd-upa-dhaka-mohammadpur/events/1"]?.ownerUid === "u1" && mem["users/u1"].territory.claim?.reign === 1 && mem["users/u1"].territory.claim.explored >= 3104);
-    check("K3. the celebration: CONQUERED, MOHAMMADPUR, NEW KING, a Share action", /CONQUERED/.test(t) && /MOHAMMADPUR/.test(t) && /NEW KING/.test(t) && (await s.pg.getByRole("dialog").getByRole("link", { name: "Share" }).count()) === 1, t.slice(0, 200));
-    check("K4. only public data is published: first name, no email", own.ownerName === "Rafi" && !JSON.stringify(own).includes("r@x.com"));
+    const me = mem["territories/bd-upa-dhaka-mohammadpur/explorers/u1"];
+    check("K3. your real walk was scored and published; as the only scorer you are the first Owner (reign 1, kind lead)", me?.score > 0 && own?.ownerUid === "u1" && own.reign === 1 && own.kind === "lead" && mem["territories/bd-upa-dhaka-mohammadpur/events/1"]?.kind === "lead", JSON.stringify(me));
+    check("K4. only public data is published: first name, no email, no position", own.ownerName === "Rafi" && !JSON.stringify([own, me]).includes("r@x.com") && !/lat|lng/.test(JSON.stringify(me)));
     await s.pg.getByRole("button", { name: "Continue" }).click();
     await s.pg.waitForTimeout(300);
     const t2 = await text(s.pg);
-    check("K5. the hub then shows you as King with a Share action", /Your Territory/i.test(t2) && /King/i.test(t2) && /You/.test(t2) && /Share your Territory/i.test(t2));
+    check("K5. the hub then shows you as Owner, Unchallenged, with your score", /You own it/i.test(t2) && /Unchallenged/.test(t2) && /Share your Territory/i.test(t2));
     await s.pg.reload();
     await s.pg.waitForSelector("text=Share your Territory", { timeout: 30000 });
-    await s.pg.waitForTimeout(500);
+    await s.pg.waitForTimeout(700);
     const after = await dbOf(s.pg);
-    check("K6. reloading neither celebrates again nor creates a second conquest", (await s.pg.getByRole("dialog").count()) === 0 && after["territories/bd-upa-dhaka-mohammadpur"].reign === 1 && !after["territories/bd-upa-dhaka-mohammadpur/events/2"]);
+    check("K6. reloading neither celebrates again nor creates a second ownership change, and the score is unchanged (duplicate sync)", (await s.pg.getByRole("dialog").count()) === 0 && after["territories/bd-upa-dhaka-mohammadpur"].reign === 1 && !after["territories/bd-upa-dhaka-mohammadpur/events/2"] && after["territories/bd-upa-dhaka-mohammadpur/explorers/u1"].score === me.score && after["territoryAchievements/bd-upa-dhaka-mohammadpur"].at === ach.at);
     check("K7. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
     await s.ctx.close();
   }
 
-  // K8-K10: another King holds it: you see them, and a takeover that only real exploration moves
+  // K8: someone else owns it with a higher score: you see them and what it takes, and nothing changes hands
   {
     const db = seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({ selectedAt: now - 5 * day }));
-    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 1, now - 3 * day);
-    const s = await hub(db, "text=Take over");
+    db["territories/bd-upa-dhaka-mohammadpur"] = leadDoc("u2", "Tania", 1, now - 3 * day);
+    db["territories/bd-upa-dhaka-mohammadpur/explorers/u2"] = scoreOfDoc("u2", "Tania", 900000, now - 3 * day, 3000);
+    const s = await hub(db, "text=Take the lead");
+    await s.pg.waitForSelector("[data-testid=owner-detail]", { timeout: 15000 });
     const t = await text(s.pg);
-    check("K8. the current King is shown: Tania, crowned, since a date", /Held by another King/i.test(t) && /Tania/.test(t) && /since/.test(t));
-    check("K9. TAKE OVER opens a Territory run", (await s.pg.getByRole("link", { name: /take over/i }).getAttribute("href")) === "/run?mode=territory");
-    const credits = await dbOf(s.pg);
-    const camp = credits["users/u1"].territory.campaign;
-    const m = t.match(/([\d.]+)% to take over/i);
-    check("K10. a real walk inside Mohammadpur after the reign began earns takeover credit, but nowhere near 2x", camp && camp.reign === 1 && m && Number(m[1]) > 0 && Number(m[1]) < 1 && credits["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2", `${m && m[1]} ${JSON.stringify(camp).slice(0, 120)}`);
-    await s.ctx.close();
-  }
-
-  // K11-K14: with 2x the requirement earned since the reign began, the challenger takes it
-  {
-    const reignStart = now - 3 * day;
-    const db = seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({
-      selectedAt: now - 5 * day,
-      cells: runsOf(ELIGIBLE),
-      applied: [ap("r1", 0, now - day)],
-      campaign: { reign: 1, startedAt: reignStart, once: [], twice: runsOf(ELIGIBLE.slice(0, 3104)), applied: ["r1"] },
-    }));
-    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 1, reignStart);
-    const s = await hub(db, "text=TERRITORY TAKEN");
     const mem = await dbOf(s.pg);
-    const own = mem["territories/bd-upa-dhaka-mohammadpur"];
-    check("K11. 2x the requirement takes the Territory: you are King, reign 2, a takeover", own.ownerUid === "u1" && own.reign === 2 && own.kind === "takeover", JSON.stringify(own).slice(0, 160));
-    check("K12. the takeover event names the previous King by account id only", mem["territories/bd-upa-dhaka-mohammadpur/events/2"]?.previousOwnerUid === "u2" && !("previousOwnerName" in mem["territories/bd-upa-dhaka-mohammadpur/events/2"]));
-    check("K13. the takeover celebration says TERRITORY TAKEN and offers Share", /TERRITORY TAKEN/.test(await text(s.pg)) && (await s.pg.getByRole("dialog").getByRole("link", { name: "Share" }).count()) === 1);
-    check("K14. your campaign is closed once you are King", mem["users/u1"].territory.campaign === undefined && mem["users/u1"].territory.claim.credits >= 6208);
+    check("K8. the Owner (Tania) is shown with her score and how far behind you are; no takeover happens", /Owned by Tania/i.test(t) && /Current Owner/i.test(t) && /behind Tania/i.test(t) && mem["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2" && mem["territories/bd-upa-dhaka-mohammadpur"].reign === 1, t.slice(0, 200));
+    check("K9. 'Take the lead' opens a Territory run", (await s.pg.getByRole("link", { name: /take the lead/i }).getAttribute("href")) === "/run?mode=territory");
     await s.ctx.close();
   }
 
-  // K15-K16: a former King who lost it sees the new King and a reclaim, earned the same way
+  // K10-K12: a higher score takes the lead (the next reign), the former Owner is history, and a tie goes to whoever got there first
   {
-    const db = seed([], {}, stored({ selectedAt: now - 9 * day, cells: runsOf(ELIGIBLE.slice(0, 3200)), wins: [{ reign: 1, kind: "conquest", activityId: "r0", atMs: now - 8 * day }] }));
-    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 2, now - day);
-    const s = await hub(db, "text=Reclaim territory");
+    const base = () => seed([walk("r1", 1)], { r1: streetChunk(0, now - day - 300000) }, stored({ selectedAt: now - 5 * day }));
+    const probe = await hub(base(), "[data-progress]");
+    const mine = (await dbOf(probe.pg))["territories/bd-upa-dhaka-mohammadpur/explorers/u1"];
+    await probe.ctx.close();
+    check("K10a. (setup) your real walk has a score", mine?.score > 0, JSON.stringify(mine));
+
+    const low = base();
+    low["territories/bd-upa-dhaka-mohammadpur"] = leadDoc("u2", "Tania", 1, now - 3 * day);
+    low["territories/bd-upa-dhaka-mohammadpur/explorers/u2"] = scoreOfDoc("u2", "Tania", mine.score - 1, now - 3 * day);
+    const s = await hub(low, "text=You own it");
+    const mem = await dbOf(s.pg);
+    check("K10. a higher score takes the lead: you are Owner, reign 2, kind lead, with an event naming the previous Owner by id only", mem["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u1" && mem["territories/bd-upa-dhaka-mohammadpur"].reign === 2 && mem["territories/bd-upa-dhaka-mohammadpur/events/2"]?.previousOwnerUid === "u2" && !("previousOwnerName" in mem["territories/bd-upa-dhaka-mohammadpur/events/2"]));
+    check("K10b. the history lists you as current and Tania before you; her explorer entry is untouched", /CURRENT/.test(await s.pg.locator("[data-testid=history]").innerText()) && mem["territories/bd-upa-dhaka-mohammadpur/explorers/u2"].score === mine.score - 1);
+    check("K10c. taking the lead creates no Territory Conquered record (you have not met the requirement)", !mem["territoryAchievements/bd-upa-dhaka-mohammadpur"]);
+    await s.ctx.close();
+
+    const tieLater = base();
+    tieLater["territories/bd-upa-dhaka-mohammadpur"] = leadDoc("u2", "Tania", 1, now - 3 * day);
+    tieLater["territories/bd-upa-dhaka-mohammadpur/explorers/u2"] = scoreOfDoc("u2", "Tania", mine.score, mine.scoreAt - 5000);
+    const t1 = await hub(tieLater, "text=Take the lead");
+    check("K11. TIE: the Owner reached the same score first, so she keeps it", (await dbOf(t1.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2");
+    await t1.ctx.close();
+
+    const tieEarlier = base();
+    tieEarlier["territories/bd-upa-dhaka-mohammadpur"] = leadDoc("u2", "Tania", 1, now - 3 * day);
+    tieEarlier["territories/bd-upa-dhaka-mohammadpur/explorers/u2"] = scoreOfDoc("u2", "Tania", mine.score, mine.scoreAt + 5000);
+    const t2 = await hub(tieEarlier, "text=You own it");
+    check("K12. TIE: you reached the same score first, so you take the lead", (await dbOf(t2.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u1");
+    await t2.ctx.close();
+
+    const equal = base();
+    equal["territories/bd-upa-dhaka-mohammadpur"] = leadDoc("u2", "Tania", 1, now - 3 * day);
+    equal["territories/bd-upa-dhaka-mohammadpur/explorers/u2"] = scoreOfDoc("u2", "Tania", mine.score, mine.scoreAt);
+    const t3 = await hub(equal, "text=Take the lead");
+    check("K12b. exactly equal score and time never changes hands", (await dbOf(t3.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2");
+    await t3.ctx.close();
+  }
+
+  // K13: a former Owner sees it was lost, with no automatic return; ownership only moves on score
+  {
+    const db = seed([], {}, stored({ selectedAt: now - 9 * day, cells: runsOf(ELIGIBLE.slice(0, 3200)), wins: [{ reign: 1, kind: "takeover", activityId: "r0", atMs: now - 8 * day }] }));
+    db["territories/bd-upa-dhaka-mohammadpur"] = leadDoc("u2", "Tania", 2, now - day);
+    db["territories/bd-upa-dhaka-mohammadpur/explorers/u2"] = scoreOfDoc("u2", "Tania", 500000, now - day, 3000);
+    const s = await hub(db, "text=Win it back");
     const t = await text(s.pg);
-    check("K15. Territory lost: the new King is shown, with RECLAIM TERRITORY", /Territory lost/i.test(t) && /Tania/.test(t) && /Reclaim territory/i.test(t) && /0\.0% to reclaim/i.test(t), t.slice(0, 240));
-    check("K16. having been King gives no automatic reclaim", (await dbOf(s.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2");
+    check("K13. Ownership lost: the new Owner is shown and the way back is exploring, nothing automatic", /Ownership lost/i.test(t) && /Tania/.test(t) && /Win it back/i.test(t) && (await dbOf(s.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2");
     await s.ctx.close();
   }
 
-  // K17: a takeover that is not earned is refused even if the screen were bypassed
+  // K14: exploration milestones are real: 800 explored cells = 10% and 25% of the requirement, nothing more
   {
-    const reignStart = now - 3 * day;
-    const db = seed([], {}, stored({ selectedAt: now - 5 * day, cells: runsOf(ELIGIBLE), campaign: { reign: 1, startedAt: reignStart, once: [{ d: 1, c: runsOf(ELIGIBLE) }], twice: [], applied: [] } }));
-    db["territories/bd-upa-dhaka-mohammadpur"] = kingDoc("u2", "Tania", 1, reignStart);
-    const s = await hub(db, "text=Take over");
-    check("K17. walking every street once (3,880 credits) is not 2x: no takeover", (await dbOf(s.pg))["territories/bd-upa-dhaka-mohammadpur"].ownerUid === "u2" && /62\.5% to take over/i.test(await text(s.pg)), (await text(s.pg)).match(/[\d.]+% to take over/i)?.[0]);
+    const db = seed([], {}, stored({ cells: runsOf(ELIGIBLE.slice(0, 800)), applied: [ap("r0", 800, now - 2 * day)] }));
+    const s = await hub(db, "[data-testid=milestones]");
+    const reached = await s.pg.locator("[data-testid=milestones] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-reached")));
+    check("K14. milestones: 800 cells reach 10% and 25% of the requirement only", reached.join(",") === "true,true,false,false,false", reached.join(","));
     await s.ctx.close();
   }
 }
+
 
 async function scenarioShare() {
   // Share Cards: three modes (Territory, Routes, Normal), real data only, and a photo's subject is never covered.
@@ -2301,9 +2323,9 @@ async function scenarioProfile() {
   const MOH = "bd-upa-dhaka-mohammadpur";
   const now = Date.now();
   const day = 86400000;
-  const kingDoc = (uid, name, reign, startedAt) => ({ areaId: MOH, name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: reign === 1 ? "conquest" : "takeover", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion });
-  const evt = (uid, name, reign, at, prev = null) => ({ areaId: MOH, reign, kind: reign === 1 ? "conquest" : "takeover", ownerUid: uid, ownerName: name, ownerPhoto: "", previousOwnerUid: prev, at });
-  const explorerDoc = (uid, name, cells, lastGainAt, extra = {}) => ({ uid, name, photo: "", username: "", exploredCells: cells, requiredCells: 3104, moves: 4, lastGainAt, ...extra });
+  const kingDoc = (uid, name, reign, startedAt) => ({ areaId: MOH, name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: "lead", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 620800, rulesVersion: "territory-score/1", maskVersion: MASK.maskVersion });
+  const evt = (uid, name, reign, at, prev = null) => ({ areaId: MOH, reign, kind: "lead", ownerUid: uid, ownerName: name, ownerPhoto: "", previousOwnerUid: prev, at });
+  const explorerDoc = (uid, name, cells, lastGainAt, extra = {}) => ({ uid, name, photo: "", username: "", score: cells * 10, scoreAt: lastGainAt, exploredCells: cells, requiredCells: 3104, moves: 4, lastGainAt, ...extra });
   const board = (over = (d) => d) => {
     const db = baseDb();
     db["users/u1"].territory = stored({ selectedAt: now - 5 * day, cells: runsOf(ELIGIBLE.slice(0, 300)), applied: [ap("r0", 300, now - 2 * day)] });
@@ -2319,7 +2341,7 @@ async function scenarioProfile() {
   const openBoard = async (db) => {
     const s = await pfresh({ db });
     await s.pg.goto(`${BASE}/territory/current`);
-    await s.pg.waitForSelector("text=Active explorers", { timeout: 30000 });
+    await s.pg.waitForSelector("text=Top explorers", { timeout: 30000 });
     await s.pg.waitForSelector("[data-testid=explorers], [data-testid=explorers-empty]", { timeout: 15000 });
     await s.pg.waitForTimeout(600);
     return s;
@@ -2329,12 +2351,12 @@ async function scenarioProfile() {
     const s = await openBoard(board());
     const t = await text(s.pg);
     const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
-    check("B1. Active explorers are ranked by real stored cells: Tania (3,300), Karim (3,104), then you (300)", order.join(",") === "u2,u3,u1", order.join(","));
-    check("B2. the Owner card shows the Owner's name, username, explored cells and share of the requirement", /Tania/.test(t) && /@tania_t/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()) && /3,300/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()) && /100\.0%/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()));
+    check("B1. Top explorers are ranked by stored score: Tania (33 km), Karim (31 km), then you (no scored walk yet)", order.join(",") === "u2,u3,u1", order.join(","));
+    check("B2. the Owner card shows the Owner's name, username, valid score, lead over the runner-up and explored cells", /Tania/.test(t) && /@tania_t/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()) && /33\.0 km/.test(await s.pg.locator("[data-testid=owner-score]").innerText()) && /3,300 cells explored/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()) && /Leads by/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()));
     check("B3. ownership history lists the current owner and the former one, newest first", (await s.pg.locator("[data-testid=history] li").count()) === 2 && /CURRENT/.test(await s.pg.locator("[data-testid=history] li").first().innerText()) && /Karim/.test(await s.pg.locator("[data-testid=history] li").nth(1).innerText()));
-    check("B4. 'Territory Conquered' names the first conqueror (Karim), who is no longer the Owner", /Karim/.test(await s.pg.locator("[data-testid=conquered-record]").innerText()) && /stays even if/.test(await s.pg.locator("[data-testid=conquered-record]").innerText()));
+    check("B4. 'Territory Conquered' names the first conqueror (Karim), who is no longer the Owner", /Karim/.test(await s.pg.locator("[data-testid=conquered-record]").innerText()) && /stays even when/.test(await s.pg.locator("[data-testid=conquered-record]").innerText()));
     const mem = await dbOf(s.pg);
-    check("B5. your own projection was published as an absolute value of your validated cells, with no position data", mem[`territories/${MOH}/explorers/u1`]?.exploredCells === 300 && !JSON.stringify(mem[`territories/${MOH}/explorers/u1`]).match(/lat|lng|route|point/i), JSON.stringify(mem[`territories/${MOH}/explorers/u1`]));
+    check("B5. your own projection was published as absolute values (cells, and a score of 0 because no track backs a score yet), with no position data", mem[`territories/${MOH}/explorers/u1`]?.exploredCells === 300 && mem[`territories/${MOH}/explorers/u1`].score === 0 && !JSON.stringify(mem[`territories/${MOH}/explorers/u1`]).match(/lat|lng|route|point/i), JSON.stringify(mem[`territories/${MOH}/explorers/u1`]));
     check("B6. the permanent achievement was not touched by the takeover", mem[`territoryAchievements/${MOH}`].uid === "u3");
     check("B7. no uncaught page errors on the Territory screen", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
     // duplicate sync / reload: same projection, no second writes needed
@@ -2355,31 +2377,36 @@ async function scenarioProfile() {
       return d;
     }));
     const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
-    check("B9. TIE on 400 cells: whoever reached it first ranks higher (Karim, then you, then Tania)", order.join(",") === "u3,u1,u2", order.join(","));
+    check("B9. TIE on score: whoever reached it first ranks higher (Karim, then Tania; you have no score yet)", order.join(",") === "u3,u2,u1", order.join(","));
     await s.ctx.close();
   }
 
-  // a later contribution overtakes
+  // a later contribution overtakes: your real, scored walk passes the Owner and the Owner changes
   {
     const s = await openBoard(board((d) => {
-      d["users/u1"].territory = stored({ selectedAt: now - 9 * day, cells: runsOf(ELIGIBLE.slice(0, 3400)), applied: [ap("r0", 3400, now - 1000)] });
+      d["users/u1"].runs = [{ id: "r1", km: 1, duration: "05:00", date: new Date(now - day).toISOString(), activity: "walking" }];
+      d["users/u1/activities/r1/tracks/0"] = streetChunk(0, now - day - 300000);
+      d[`territories/${MOH}/explorers/u2`] = explorerDoc("u2", "Tania", 3300, now - day, { score: 100, username: "tania_t" });
+      d[`territories/${MOH}/explorers/u3`] = explorerDoc("u3", "Karim", 3104, now - 9 * day, { score: 50 });
       return d;
     }));
     const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
-    check("B10. DYNAMIC: your later contribution (3,400 cells) overtakes the Owner's 3,300 on the explorers list", order[0] === "u1", order.join(","));
-    check("B10b. but the Owner is still the Owner: the list is exploration, takeover rules are unchanged", /Tania/.test(await s.pg.locator("section[aria-label=King]").innerText()));
+    const mem = await dbOf(s.pg);
+    check("B10. DYNAMIC: your real scored walk passes Tania's score, so you lead the list and become the Owner (reign 3)", order[0] === "u1" && mem[`territories/${MOH}`].ownerUid === "u1" && mem[`territories/${MOH}`].reign === 3 && mem[`territories/${MOH}/events/3`]?.previousOwnerUid === "u2", order.join(","));
+    check("B10b. history keeps every reign (3 entries) and the permanent Territory Conquered record stays with Karim", (await s.pg.locator("[data-testid=history] li").count()) === 3 && mem[`territoryAchievements/${MOH}`].uid === "u3");
     await s.ctx.close();
   }
 
-  // privacy: someone hidden is not listed, and removing yourself deletes your entry
+  // privacy: someone hidden still competes, but under the anonymous name, with no picture or username
   {
     const s = await openBoard(board((d) => {
       d["users/u1"].privacy = { showInTerritory: false };
-      d[`territories/${MOH}/explorers/u1`] = explorerDoc("u1", "Rafi", 200, now - 3 * day);
+      d["users/u1"].username = "rafi_a";
+      d["users/u1"].photo = "https://lh3.googleusercontent.test/rafi.jpg";
       return d;
     }));
-    const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
-    check("B11. PRIVACY: an athlete who hid themselves has no explorer entry (an old one is removed)", !order.includes("u1") && !(await dbOf(s.pg))[`territories/${MOH}/explorers/u1`], order.join(","));
+    const e = (await dbOf(s.pg))[`territories/${MOH}/explorers/u1`];
+    check("B11. PRIVACY: an athlete who hid themselves still has a score entry, but it says only 'Move athlete': no photo, no username", e && e.name === "Move athlete" && e.photo === "" && e.username === "" && e.exploredCells === 300, JSON.stringify(e));
     await s.ctx.close();
   }
 
@@ -2401,13 +2428,13 @@ async function scenarioProfile() {
     const s = await pfresh({ db });
     await s.pg.route("**/*", (r) => r.continue());
     await s.pg.goto(`${BASE}/territory/current`);
-    await s.pg.waitForSelector("text=Active explorers", { timeout: 30000 });
+    await s.pg.waitForSelector("text=Top explorers", { timeout: 30000 });
     await s.pg.evaluate(() => localStorage.setItem("__mock_fail", "getDocs"));
     await s.pg.getByRole("button", { name: "Try again" }).first().click({ timeout: 2000 }).catch(() => undefined);
     await s.pg.reload();
-    await s.pg.waitForSelector("text=Take over", { timeout: 30000 });
+    await s.pg.waitForSelector("text=Take the lead", { timeout: 30000 });
     await s.pg.waitForSelector("text=Explorers can't be shown right now", { timeout: 15000 });
-    check("B13. ERROR: if the board can't load, a retry card shows while the core Territory screen (King, progress, action) stays usable", /Tania/.test(await text(s.pg)) && (await s.pg.getByRole("link", { name: /take over/i }).count()) === 1);
+    check("B13. ERROR: if the board can't load, a retry card shows while the core Territory screen (King, progress, action) stays usable", /Tania/.test(await text(s.pg)) && (await s.pg.getByRole("link", { name: /take the lead/i }).count()) === 1);
     await s.pg.evaluate(() => localStorage.setItem("__mock_fail", ""));
     await s.pg.getByRole("button", { name: "Try again" }).click();
     await s.pg.waitForSelector("[data-testid=explorers]", { timeout: 15000 });
@@ -2420,9 +2447,9 @@ async function scenarioProfile() {
     const s = await pfresh({ db: board() });
     await s.ctx.addInitScript(() => localStorage.setItem("__mock_fail", "getDocs_slow"));
     await s.pg.goto(`${BASE}/territory/current`);
-    await s.pg.waitForSelector("text=Take over", { timeout: 30000 });
+    await s.pg.waitForSelector("text=Take the lead", { timeout: 30000 });
     const skeleton = await s.pg.locator("[aria-label='Loading explorers']").count();
-    check("B15. the core Territory page (King, progress, action) is complete while the explorers are still loading", (await s.pg.getByRole("link", { name: /take over/i }).count()) === 1 && skeleton === 1, `skeleton=${skeleton}`);
+    check("B15. the core Territory page (King, progress, action) is complete while the explorers are still loading", (await s.pg.getByRole("link", { name: /take the lead/i }).count()) === 1 && skeleton === 1, `skeleton=${skeleton}`);
     await s.pg.waitForSelector("[data-testid=explorers]", { timeout: 15000 });
     await s.ctx.close();
   }
@@ -2514,7 +2541,7 @@ try {
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);
-    try { await fn(); } catch (err) { check(`${name}: scenario completed`, false, String(err).split("\n")[0]); }
+    try { await fn(); } catch (err) { check(`${name}: scenario completed`, false, String(err.stack || err).split("\n").filter((l) => /^\S|run\.mjs/.test(l)).slice(0, 3).join(" | ")); }
   }
 } finally {
   await browser?.close();

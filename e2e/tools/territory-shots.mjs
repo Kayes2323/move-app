@@ -1,5 +1,5 @@
 // Screenshots of the Phase 1 screens, from the E2E build (in-memory Firebase). Every name, number and picture here is a TEST FIXTURE
-// written by this script, not production data. Usage: E2E=1 npx next dev -p 3333, then node --import tsx e2e/tools/phase1-shots.mjs <outDir>
+// written by this script, not production data. Usage: E2E=1 npx next dev -p 3333, then node --import tsx e2e/tools/territory-shots.mjs <outDir>
 import { chromium } from "playwright-core";
 import { readFileSync, mkdirSync } from "node:fs";
 const BASE = process.env.BASE || "http://localhost:3333";
@@ -16,15 +16,15 @@ const disc = (c1, c2) => `<svg xmlns="http://www.w3.org/2000/svg" width="200" he
 const PICS = { "https://lh3.googleusercontent.test/rafi.jpg": disc("#4F6EF7", "#7C3AED"), "https://pics.test/tania.jpg": disc("#F97316", "#EC4899"), "https://pics.test/karim.jpg": disc("#14B8A6", "#38BDF8"), "https://pics.test/nila.jpg": disc("#EAB308", "#22C55E") };
 
 const stored = (o) => ({ areaId: MOH, selectedAt: now - 9 * day, maskVersion: MASK.maskVersion, algorithmVersion: "territory-explore/1", coverageVersion: "territory-coverage/2", rulesVersion: "territory-rules/1", cells: [], applied: [], ...o });
-const kingDoc = (uid, name, photo, reign, at) => ({ areaId: MOH, name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: photo, reign, kind: reign === 1 ? "conquest" : "takeover", reignStartedAt: at, updatedAt: at, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion });
-const ex = (uid, name, photo, cells, last, username = "") => ({ uid, name, photo, username, exploredCells: cells, requiredCells: 3104, moves: 6, lastGainAt: last });
+const kingDoc = (uid, name, photo, reign, at) => ({ areaId: MOH, name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: photo, reign, kind: "lead", reignStartedAt: at, updatedAt: at, requiredCells: 3104, requiredCredits: 620800, rulesVersion: "territory-score/1", maskVersion: MASK.maskVersion });
+const ex = (uid, name, photo, cells, last, username = "", score = cells * 9) => ({ uid, name, photo, username, score, scoreAt: last, exploredCells: cells, requiredCells: 3104, moves: 6, lastGainAt: last });
 const db = {
   "users/u1": { uid: "u1", name: "Rafi Ahmed", email: "r@x.com", photo: "https://lh3.googleusercontent.test/rafi.jpg", username: "rafi_a", bio: "Morning runner. Mohammadpur streets, one cell at a time.", heightCm: 175, weight: 70, totalKm: 64.2, streak: 4, currentRoute: "Chandpur", completedKm: 12, runs: [{ id: "x", km: 5, duration: "30:00", pace: 6, activity: "running", date: new Date(now - day).toISOString() }], onboarded: true,
     territoryActive: { areaId: MOH, at: now - 9 * day }, territory: stored({ cells: runsOf(ELIGIBLE.slice(0, 1180)), applied: [{ i: "r0", n: 1180, t: now - 2 * day }] }) },
   "publicProfiles/u1": { name: "Rafi Ahmed", photo: "https://lh3.googleusercontent.test/rafi.jpg", totalKm: 64.2, streak: 4, username: "rafi_a" },
   [`territories/${MOH}`]: kingDoc("u2", "Tania", "https://pics.test/tania.jpg", 2, now - 2 * day),
-  [`territories/${MOH}/events/1`]: { areaId: MOH, reign: 1, kind: "conquest", ownerUid: "u3", ownerName: "Karim", ownerPhoto: "https://pics.test/karim.jpg", previousOwnerUid: null, at: now - 16 * day },
-  [`territories/${MOH}/events/2`]: { areaId: MOH, reign: 2, kind: "takeover", ownerUid: "u2", ownerName: "Tania", ownerPhoto: "https://pics.test/tania.jpg", previousOwnerUid: "u3", at: now - 2 * day },
+  [`territories/${MOH}/events/1`]: { areaId: MOH, reign: 1, kind: "lead", ownerUid: "u3", ownerName: "Karim", ownerPhoto: "https://pics.test/karim.jpg", previousOwnerUid: null, at: now - 16 * day },
+  [`territories/${MOH}/events/2`]: { areaId: MOH, reign: 2, kind: "lead", ownerUid: "u2", ownerName: "Tania", ownerPhoto: "https://pics.test/tania.jpg", previousOwnerUid: "u3", at: now - 2 * day },
   [`territoryAchievements/${MOH}`]: { areaId: MOH, uid: "u3", name: "Karim", photo: "https://pics.test/karim.jpg", username: "karim_k", kind: "conquered", at: now - 16 * day },
   [`territories/${MOH}/explorers/u2`]: ex("u2", "Tania", "https://pics.test/tania.jpg", 3342, now - 2 * day, "tania_t"),
   [`territories/${MOH}/explorers/u3`]: ex("u3", "Karim", "https://pics.test/karim.jpg", 3104, now - 16 * day, "karim_k"),
@@ -50,7 +50,7 @@ await shot("01-profile", "/profile", { wait: "text=Personal records", full: true
 await shot("02-edit-profile-top", "/profile/edit", { wait: "#ep-name" });
 await shot("03-edit-profile-full", "/profile/edit", { wait: "#ep-name", full: true });
 await shot("04-edit-profile-dark", "/profile/edit", { wait: "#ep-name", scheme: "dark", full: true });
-await shot("05-territory-owner-explorers", "/territory/current", { wait: "[data-testid=explorers]", full: true });
+await shot("05-territory-owner-explorers", "/territory/current", { wait: "[data-testid=milestones]", full: true });
 await shot("06-territory-owner-explorers-dark", "/territory/current", { wait: "[data-testid=explorers]", full: true, scheme: "dark" });
 await shot("07-territory-board-error", "/territory/current", { wait: "text=Explorers can't be shown", fail: "getDocs", full: true });
 const empty = JSON.parse(JSON.stringify(db));

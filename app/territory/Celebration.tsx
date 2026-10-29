@@ -5,7 +5,7 @@ import { KingAvatar } from "./KingCard";
 import { TerritoryEmblem } from "./TerritoryEmblem";
 
 /**
- * The moment a user becomes King: by first conquest, or by taking (or retaking) it. Coverage and the move's real distance
+ * The moment a user earns Territory Conquered by completing the area's requirement first. Coverage and the move's real distance
  * are shown apart: they are different numbers.
  */
 export function Celebration({ def, kind, name, photo, coveragePercent, distanceKm, shareHref, onClose }: { def: TerritoryDefinition; kind: "conquest" | "takeover"; name: string; photo: string; coveragePercent: number; distanceKm: number | null; shareHref: string; onClose: () => void }) {
@@ -20,12 +20,12 @@ export function Celebration({ def, kind, name, photo, coveragePercent, distanceK
       <div className="mv-rise" style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, animationDelay: ".5s" }}>
         <KingAvatar name={name} photo={photo} size={48} />
         <div style={{ textAlign: "left" }}>
-          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: "#F5C542" }}>NEW KING</p>
+          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: "#F5C542" }}>TERRITORY CONQUERED</p>
           <p className="h2">{name}</p>
         </div>
       </div>
       <p className="mv-rise" style={{ marginTop: 12, fontSize: 14, color: "rgba(255,255,255,.75)", animationDelay: ".6s" }}>
-        {kind === "conquest" ? "You are the first King of " + def.name + "." : "You are the new King."}
+        {kind === "conquest" ? "You were the first to conquer " + def.name + ". This achievement is yours for good." : "You now own it."}
       </p>
       <div className="mv-rise" style={{ display: "flex", gap: 10, marginTop: 18, animationDelay: ".7s" }}>
         <div className="card" style={{ background: "rgba(255,255,255,.06)", minWidth: 120 }}>
