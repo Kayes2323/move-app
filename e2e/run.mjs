@@ -346,7 +346,8 @@ async function scenarioCrashRecovery() {
   await second.pg.waitForTimeout(5200);
   await second.pg.reload();
   await second.pg.waitForSelector("text=unfinished");
-  await second.pg.getByRole("button", { name: "Discard" }).click();
+  await second.pg.getByRole("button", { name: "Discard", exact: true }).click();
+  await second.pg.getByRole("alertdialog").getByRole("button", { name: "Discard", exact: true }).click();
   await second.pg.waitForTimeout(500);
   check("9E. discarding removes the activity from the phone", (await idb(second.pg)).activities.length === 0 && /start moving/i.test(await text(second.pg)));
   await second.ctx.close();
@@ -379,7 +380,7 @@ async function scenarioPermissions() {
   await shift(s.pg, 2000);
   await s.pg.getByRole("button", { name: "Finish activity" }).click();
   await s.pg.waitForTimeout(800);
-  check("zero-distance activity is explained and discarded", s.pg.dialogs.some((m) => /No distance/.test(m)) && (await idb(s.pg)).activities.length === 0);
+  check("zero-distance activity is explained and discarded", /No distance was recorded/.test(await s.pg.getByRole("alertdialog").innerText()) && (await idb(s.pg)).activities.length === 0);
   await s.pg.goto(`${BASE}/run?mode=normal`);
   await s.pg.getByText("Running").click();
   await tracking(s.pg);
@@ -1624,9 +1625,11 @@ async function scenarioRoutes() {
   await sw.ctx.addInitScript(geoAt(23.9, 90.3));
   await sw.pg.goto(`${BASE}/journey/sylhet`);
   await sw.pg.getByRole("button", { name: "Start journey" }).click();
+  const switchText = await sw.pg.getByRole("alertdialog").innerText();
+  await sw.pg.getByRole("alertdialog").getByRole("button", { name: "Switch journey" }).click();
   await sw.pg.waitForURL((u) => u.pathname === "/", { timeout: 15000 });
   const afterSwitch = await userDoc(sw.pg);
-  check("R11. switching to Sylhet saves Chandpur's 12.4 km and starts Sylhet at 0", afterSwitch.currentRoute === "Sylhet" && afterSwitch.completedKm === 0 && afterSwitch.journeyProgress?.chandpur?.completedKm === 12.4 && sw.pg.dialogs.some((d) => /saved/.test(d)), JSON.stringify(afterSwitch.journeyProgress));
+  check("R11. switching to Sylhet saves Chandpur's 12.4 km and starts Sylhet at 0", afterSwitch.currentRoute === "Sylhet" && afterSwitch.completedKm === 0 && afterSwitch.journeyProgress?.chandpur?.completedKm === 12.4 && /saved/.test(switchText), JSON.stringify(afterSwitch.journeyProgress));
   await sw.pg.goto(`${BASE}/journey`);
   await sw.pg.getByRole("list", { name: "Journeys" }).waitFor();
   check("R12. the Routes list shows the saved Chandpur progress", await until(async () => /9\.4% done/.test(await sw.pg.locator('ul[aria-label="Journeys"] > li').first().innerText()) && /saved/.test(await sw.pg.locator('ul[aria-label="Journeys"] > li').first().innerText()), 10000));
@@ -1871,6 +1874,34 @@ async function scenarioSatellite() {
   await helperCtx.close();
 }
 
+async function scenarioDialogs() {
+  // Move's own dialogs instead of the browser's "movefitapp.vercel.app says ..."
+  const SHOTS = process.env.SHOTS_DIR;
+  if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+  const s = await fresh();
+  await start(s.pg, "Walking", "normal");
+  await walk(s.pg, 6);
+  await s.pg.getByRole("button", { name: "Stop tracking" }).click();
+  const dlg = s.pg.getByRole("alertdialog");
+  await dlg.waitFor({ timeout: 5000 });
+  const txt = await dlg.innerText();
+  check("D1. closing a move asks in Move's own dialog, not the browser's", /Stop tracking\?/.test(txt) && /won't be saved/.test(txt) && s.pg.dialogs.length === 0, txt.replace(/\n/g, " | "));
+  check("D2. the safe choice has focus for something that cannot be undone", await s.pg.evaluate(() => /Keep moving/.test(document.activeElement?.textContent ?? "")));
+  await s.pg.waitForTimeout(1000);
+  if (SHOTS) await s.pg.screenshot({ path: `${SHOTS}/d1-stop-dialog-390x800.png` });
+  await s.pg.keyboard.press("Escape");
+  await dlg.waitFor({ state: "detached", timeout: 3000 });
+  check("D3. Escape keeps the move running", (await idb(s.pg)).activities.length === 1 && /LIVE/.test(await text(s.pg)));
+  await s.pg.getByRole("button", { name: "Stop tracking" }).click();
+  await dlg.getByRole("button", { name: "Keep moving" }).click();
+  check("D4. Keep moving closes the dialog and changes nothing", (await s.pg.getByRole("alertdialog").count()) === 0 && (await idb(s.pg)).activities.length === 1);
+  await s.pg.getByRole("button", { name: "Stop tracking" }).click();
+  await dlg.getByRole("button", { name: "Stop and discard" }).click();
+  await s.pg.waitForURL((u) => u.pathname === "/", { timeout: 10000 });
+  check("D5. Stop and discard throws the move away and goes home", (await idb(s.pg)).activities.length === 0 && s.pg.dialogs.length === 0);
+  await s.ctx.close();
+}
+
 async function scenarioRegression() {
   // signed-out screens redirect
   let s = await fresh({ user: null });
@@ -1960,7 +1991,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

@@ -8,6 +8,7 @@ import { RouteImage } from "../../components/RouteImage";
 import { journeyOffsetKm, journeyOriginName } from "../../lib/activity";
 import { journeyOf } from "../../lib/journey";
 import { progressOn, restartJourney, switchJourney } from "../../lib/journeySwitch";
+import { confirmDialog } from "../../lib/appDialog";
 import { addBaseLayers } from "../../lib/leafletTiles";
 import { useMapStyle } from "../../lib/useMapStyle";
 import { MapStyleToggle } from "../../components/MapStyleToggle";
@@ -248,7 +249,7 @@ export default function JourneyDetail() {
       const ref = doc(firebaseModule.db, "users", user.uid);
       const current = ((await getDoc(ref)).data() ?? {}) as Record<string, unknown>;
       const now = journeyOf(current as never);
-      if (now && now.routeName !== route.name && now.completedKm > 0 && !confirm(`Switch to ${route.name}? Your ${now.routeName} journey (${now.completedKm.toFixed(1)} km) is saved and you can resume it any time.`)) return;
+      if (now && now.routeName !== route.name && now.completedKm > 0 && !(await confirmDialog({ title: `Switch to ${route.name}?`, message: `Your ${now.routeName} journey (${now.completedKm.toFixed(1)} km) is saved and you can resume it any time.`, confirmLabel: "Switch journey", cancelLabel: "Stay" }))) return;
       const updates = switchJourney(current, { routeName: route.name }, fromIdx, firstJourneyId);
       if (Object.keys(updates).length) await setDoc(ref, updates, { merge: true });
       router.push("/");
@@ -257,7 +258,7 @@ export default function JourneyDetail() {
 
   /** Begin this journey again (the user asked): the km on it so far and its milestones start over. The other saved journeys are untouched. */
   const restart = async (fromIdx: number) => {
-    if (!confirm(`Start ${route.name} over${fromIdx > 0 ? ` from ${route.checkpoints[fromIdx].name}` : " from Dhaka"}? Your ${completedKm.toFixed(1)} km on it so far will be reset.`)) return;
+    if (!(await confirmDialog({ title: `Start ${route.name} over${fromIdx > 0 ? ` from ${route.checkpoints[fromIdx].name}` : " from Dhaka"}?`, message: `Your ${completedKm.toFixed(1)} km on it so far will be reset.`, confirmLabel: "Start over", cancelLabel: "Keep my progress", tone: "danger" }))) return;
     try {
       const firebaseModule = await import("../../firebase");
       const { doc, setDoc, getDoc } = await import("firebase/firestore");

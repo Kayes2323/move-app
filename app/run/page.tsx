@@ -18,6 +18,7 @@ import { checkLocationAccess, isNativeApp, type LocationAccess } from "../lib/tr
 import { useTracking } from "../lib/tracking/useTracking";
 import { useLivePoints } from "../lib/tracking/useLivePoints";
 import { useJourneyMilestones } from "../lib/useJourneyMilestones";
+import { alertDialog, confirmDialog } from "../lib/appDialog";
 import { MilestoneToast } from "../components/MilestoneToast";
 import { activityMetrics } from "../lib/tracking/metrics";
 
@@ -261,7 +262,7 @@ export default function RunPage() {
       const done = await runtime.finish(); // local only: works with no connection
       if ((done.summary?.km ?? 0) < 0.01) {
         await runtime.store.deleteActivity(done.id);
-        window.alert("No distance was recorded, so this activity wasn't saved.");
+        await alertDialog({ title: "Nothing to save", message: "No distance was recorded, so this activity wasn't saved." });
         router.push("/");
         return;
       }
@@ -271,12 +272,12 @@ export default function RunPage() {
     } catch (err) {
       console.error(err);
       finishing.current = false;
-      window.alert("Couldn't finish the activity. Your progress is kept; please try again.");
+      await alertDialog({ title: "Couldn't finish", message: "Your progress is kept. Please try again." });
     }
   };
 
   const onClose = async () => {
-    if (confirm("Stop tracking? This activity won't be saved.")) {
+    if (await confirmDialog({ title: "Stop tracking?", message: "This activity won't be saved.", confirmLabel: "Stop and discard", cancelLabel: "Keep moving", tone: "danger" })) {
       await runtime.discard();
       router.push("/");
     }
@@ -375,7 +376,7 @@ export default function RunPage() {
             </p>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button className="btn btn-solid" style={{ minHeight: 44, fontSize: 14, textTransform: "none", letterSpacing: 0 }} onClick={() => void runtime.continueRecovered()}>Continue Activity</button>
-              <button className="btn btn-line" style={{ width: "auto", minHeight: 44, borderColor: "var(--amberbd)", color: "var(--amber)" }} onClick={() => confirm("Discard this activity? It can't be recovered.") && void runtime.discard()}>Discard</button>
+              <button className="btn btn-line" style={{ width: "auto", minHeight: 44, borderColor: "var(--amberbd)", color: "var(--amber)" }} onClick={() => void confirmDialog({ title: "Discard this activity?", message: "It can't be recovered.", confirmLabel: "Discard", cancelLabel: "Keep it", tone: "danger" }).then(async (ok) => { if (ok) await runtime.discard(); })}>Discard</button>
             </div>
           </div>
         )}
