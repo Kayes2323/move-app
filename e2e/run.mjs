@@ -25,7 +25,8 @@ const baseDb = () => ({
   "publicProfiles/u2": { name: "Tania Rahman", photo: "", totalKm: 42.8, streak: 3 },
 });
 
-const initScript = ({ db, user, permission, mapStyle = "street" }) => `(() => {
+const initScript = ({ db, user, permission, mapStyle = "street", intro = false }) => `(() => {
+  ${intro ? "" : 'try { sessionStorage.setItem("move.intro", "1"); } catch {}'}
   if (!localStorage.getItem("__seeded")) {
     localStorage.setItem("__seeded", "1");
     localStorage.setItem("move.mapStyle", ${JSON.stringify(mapStyle)});
@@ -52,9 +53,9 @@ const initScript = ({ db, user, permission, mapStyle = "street" }) => `(() => {
 })();`;
 
 let browser;
-const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline = false, mapStyle = "street" } = {}) => {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 800 } });
-  await ctx.addInitScript(initScript({ db, user, permission, mapStyle }));
+const fresh = async ({ db = baseDb(), user = U1, permission = "granted", offline = false, mapStyle = "street", intro = false, reducedMotion } = {}) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, ...(reducedMotion ? { reducedMotion } : {}) });
+  await ctx.addInitScript(initScript({ db, user, permission, mapStyle, intro }));
   const pg = await ctx.newPage();
   pg.errors = [];
   pg.logs = [];
@@ -1947,6 +1948,63 @@ async function scenarioDialogs() {
   await a.ctx.close();
 }
 
+async function scenarioPwa() {
+  // Installable as a real app, and the opening animation.
+  const SHOTS = process.env.SHOTS_DIR;
+  if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+  const s = await fresh({ intro: true });
+  const t0 = Date.now();
+  await s.pg.goto(`${BASE}/`, { waitUntil: "commit" });
+  const shown = await s.pg.waitForSelector("#launch:not([hidden])", { timeout: 8000, state: "attached" }).then(() => true).catch(() => false);
+  check("P1. the opening animation is on screen as the page starts, before the app has loaded", shown, `${Date.now() - t0} ms`);
+  await s.pg.waitForTimeout(700);
+  if (SHOTS) await s.pg.screenshot({ path: `${SHOTS}/p1-intro-0_8s-390x800.png` });
+  await s.pg.waitForTimeout(900);
+  if (SHOTS) await s.pg.screenshot({ path: `${SHOTS}/p2-intro-1_6s-390x800.png` });
+  await s.pg.waitForTimeout(600);
+  if (SHOTS) await s.pg.screenshot({ path: `${SHOTS}/p3-intro-2_2s-390x800.png` });
+  const gone = await until(async () => await s.pg.evaluate(() => document.getElementById("launch").hidden), 6000);
+  check("P2. it finishes by itself in about 3 s and the app is underneath", gone && Date.now() - t0 < 9000 && /start moving/i.test(await text(s.pg)), `${Date.now() - t0} ms`);
+  const cover = await s.pg.evaluate(() => { const el = document.getElementById("launch"); return el ? getComputedStyle(el).display : "gone"; });
+  check("P3. once finished it no longer covers or blocks the app", cover === "none");
+  await s.pg.reload();
+  await s.pg.waitForTimeout(500);
+  check("P4. it does not play again in the same session", await s.pg.evaluate(() => document.getElementById("launch").hidden));
+  await s.ctx.close();
+
+  const k = await fresh({ intro: true });
+  await k.pg.goto(`${BASE}/`, { waitUntil: "commit" });
+  await k.pg.waitForSelector("#launch:not([hidden])", { state: "attached", timeout: 8000 });
+  await k.pg.waitForTimeout(500);
+  await k.pg.mouse.click(195, 400);
+  check("P5. a tap skips it", await until(async () => await k.pg.evaluate(() => document.getElementById("launch").hidden), 2500));
+  await k.ctx.close();
+
+  const r = await fresh({ intro: true, reducedMotion: "reduce" });
+  await r.pg.goto(`${BASE}/`, { waitUntil: "commit" });
+  await r.pg.waitForSelector("#launch:not([hidden])", { state: "attached", timeout: 8000 });
+  const t1 = Date.now();
+  check("P6. with reduced motion it only shows the logo briefly (no movement)", await until(async () => await r.pg.evaluate(() => document.getElementById("launch").hidden), 3000) && Date.now() - t1 < 2500);
+  await r.ctx.close();
+
+  // manifest and icons
+  const m = await fresh();
+  await m.pg.goto(`${BASE}/login`);
+  const man = await m.pg.evaluate(async () => { const r = await fetch("/manifest.json"); return { type: r.headers.get("content-type"), cc: r.headers.get("cache-control"), json: await r.json() }; });
+  const j = man.json;
+  check("P7. the manifest says: standalone app, own id and scope, black launch background, portrait", j.id === "/" && j.display === "standalone" && j.scope === "/" && j.background_color === "#000000" && /^\/\?source=pwa/.test(j.start_url) && j.orientation === "portrait", JSON.stringify([j.id, j.display, j.scope, j.background_color, j.start_url]));
+  const sizes = await m.pg.evaluate(async (icons) => Promise.all(icons.map((i) => new Promise((res) => { const im = new Image(); im.onload = () => res([i.src, im.naturalWidth, im.naturalHeight, i.sizes, i.purpose]); im.onerror = () => res([i.src, 0, 0, i.sizes, i.purpose]); im.src = i.src; }))), j.icons);
+  check("P8. each icon really is the size it claims, and there is a separate maskable icon", sizes.every(([, w, h, claim]) => `${w}x${h}` === claim) && sizes.some(([, , , , p]) => p === "maskable") && sizes.some(([, w]) => w === 192) && sizes.some(([, w]) => w === 512), JSON.stringify(sizes));
+  check("P9. the manifest has Start moving / Routes / Territory shortcuts", ["/run", "/journey", "/territory"].every((u) => j.shortcuts.some((s2) => s2.url === u)));
+  const sw = await m.pg.evaluate(async () => { const r = await fetch("/sw.js"); return { ok: r.ok, cc: r.headers.get("cache-control"), body: (await r.text()).length }; });
+  check("P10. the service worker is served and always re-checked (never cached)", sw.ok && sw.body > 500 && /no-cache|no-store/.test(sw.cc || ""), JSON.stringify(sw));
+  const head = await m.pg.evaluate(() => ({ link: !!document.querySelector('link[rel=manifest]'), themes: document.querySelectorAll('meta[name="theme-color"]').length, apple: document.querySelector('link[rel=apple-touch-icon]')?.getAttribute("href"), vp: document.querySelector('meta[name=viewport]')?.getAttribute("content") }));
+  check("P11. the page links the manifest, one theme colour, an iPhone icon and fills the whole screen (viewport-fit=cover)", head.link && head.themes === 1 && head.apple === "/apple-touch-icon.png" && /viewport-fit=cover/.test(head.vp), JSON.stringify(head));
+  const noExternalCss = await m.pg.evaluate(() => [...document.querySelectorAll('link[rel=stylesheet]')].every((l) => !/unpkg\.com/.test(l.href)));
+  check("P12. no render-blocking stylesheet from another website", noExternalCss);
+  await m.ctx.close();
+}
+
 async function scenarioRegression() {
   // signed-out screens redirect
   let s = await fresh({ user: null });
@@ -2036,7 +2094,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

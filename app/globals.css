@@ -112,7 +112,14 @@ body {
   font-weight: 500;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  /* feels like an app, not a web page: no pull-to-refresh bounce, no tap flash, no text-selection handles or long-press menus on controls */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
+body { -webkit-user-select: none; user-select: none; }
+input, textarea, [contenteditable="true"], .selectable { -webkit-user-select: text; user-select: text; }
+
 
 button {
   font-family: inherit;

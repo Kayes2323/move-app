@@ -1,4 +1,5 @@
 "use client";
+import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ROUTE_MAP, type Route, type Checkpoint } from "../../data/routes";

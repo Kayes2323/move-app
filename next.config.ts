@@ -10,7 +10,12 @@ const nextConfig: NextConfig = {
   // The route photos in public/images/routes carry a content hash in their name, so they can be cached for good. (Ignored by the
   // static Capacitor export, where the files ship inside the app.)
   async headers() {
-    return [{ source: "/images/routes/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] }];
+    return [
+      { source: "/images/routes/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      // the service worker and the install manifest must always be re-checked, or updates and fixes would not reach installed apps
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Service-Worker-Allowed", value: "/" }] },
+      { source: "/manifest.json", headers: [{ key: "Cache-Control", value: "no-cache" }, { key: "Content-Type", value: "application/manifest+json" }] },
+    ];
   },
   // CAPACITOR=1 builds the static bundle (out/) that the native shell ships inside the app, so it opens offline.
   ...(process.env.CAPACITOR ? { output: "export" as const, trailingSlash: true } : {}),
