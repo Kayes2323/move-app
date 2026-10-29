@@ -255,8 +255,14 @@ export default function RunPage() {
     if (kind) await begin(kind);
   };
 
+  const asking = useRef(false);
   const onFinish = async () => {
-    if (finishing.current) return;
+    if (finishing.current || asking.current) return;
+    asking.current = true;
+    const km = live?.distanceKm ?? 0;
+    const sure = await confirmDialog({ title: "Finish this move?", message: `${km.toFixed(2)} km · ${formatClock(live?.durationSec ?? 0)}. It will be saved to your history.`, confirmLabel: "Finish and save", cancelLabel: "Keep going" });
+    asking.current = false;
+    if (!sure) return;
     finishing.current = true;
     try {
       const done = await runtime.finish(); // local only: works with no connection

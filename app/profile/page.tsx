@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "../lib/appDialog";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BottomNav } from "../components/BottomNav";
@@ -86,6 +87,8 @@ export default function Profile() {
   if (failed) return <LoadError message="Couldn't load your profile." onRetry={() => { setFailed(false); setLoading(true); setAttempt((n) => n + 1); }} />;
 
   const handleSignOut = async () => {
+    const ok = await confirmDialog({ title: "Sign out of Move?", message: "Moves still waiting to sync stay on this phone and sync when you sign in again.", confirmLabel: "Sign out", cancelLabel: "Stay signed in", tone: "danger" });
+    if (!ok) return;
     const { auth } = await import("../firebase");
     const { signOut } = await import("firebase/auth");
     await signOut(auth);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SyncBootstrap } from "./components/SyncBootstrap";
 import { AppDialogHost } from "./components/AppDialogHost";
+import { AppToastHost } from "./components/AppToastHost";
 import { ThemeSync } from "./components/ThemeSync";
 import { THEME_INIT_SCRIPT } from "./lib/theme";
 
@@ -34,6 +35,7 @@ export default function RootLayout({
         <SyncBootstrap />
         <ThemeSync />
         <AppDialogHost />
+        <AppToastHost />
         {children}
       </body>
     </html>

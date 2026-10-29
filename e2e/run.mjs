@@ -112,6 +112,11 @@ const walk = async (pg, steps, { stepM = 2.8, gapMs = 2000 } = {}) => {
   }
 };
 // The live screen shows "GETTING GPS" until the first fix arrives, so wait for the controls, not for "LIVE".
+/** Taps Finish and confirms Move's "Finish this move?" dialog. */
+const finishMove = async (pg) => {
+  await pg.getByRole("button", { name: "Finish activity" }).click();
+  await pg.getByRole("alertdialog").getByRole("button", { name: "Finish and save" }).click();
+};
 const tracking = (pg) => pg.getByRole("button", { name: "Finish activity" }).waitFor({ timeout: 10000 });
 const start = async (pg, label = "Walking", mode = "journey") => {
   await pg.goto(`${BASE}/run?mode=${mode}`);
@@ -240,7 +245,7 @@ async function scenarioOfflineThenSync() {
   const live = await text(pg);
   check("5. activity tracks normally offline", bigKm(live) > 0.12, `km=${bigKm(live)}`);
   check("5. journey route is known offline (cached profile)", /Jatrabari/.test(live));
-  await pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(pg);
   await pg.waitForSelector("text=Story 9:16", { timeout: 10000 }).then(() => check("4. offline finish shows the result screen", true)).catch(() => check("4. offline finish shows the result screen", false, pg.url()));
   const result = await text(pg);
   check("4. result shows distance, duration and pace offline", /0\.1\d/.test(result) && /\d:\d{2}/.test(result) && /\/km/.test(result));
@@ -273,7 +278,7 @@ async function scenarioSyncFailures() {
   await walk(pg, 40);
   // Firebase unavailable during sync
   await pg.evaluate(() => localStorage.setItem("__mock_fail", "transaction"));
-  await pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(pg);
   await pg.waitForSelector("text=Story 9:16");
   await pg.waitForTimeout(1500);
   let local = await idb(pg);
@@ -378,7 +383,7 @@ async function scenarioPermissions() {
   await s.pg.waitForTimeout(300);
   check("8. a GPS timeout shows 'getting GPS', not an error", /GETTING GPS/.test(await text(s.pg)));
   await shift(s.pg, 2000);
-  await s.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(s.pg);
   await s.pg.waitForTimeout(800);
   check("zero-distance activity is explained and discarded", /No distance was recorded/.test(await s.pg.getByRole("alertdialog").innerText()) && (await idb(s.pg)).activities.length === 0);
   await s.pg.goto(`${BASE}/run?mode=normal`);
@@ -898,7 +903,7 @@ async function scenarioSeparation() {
     check("N18. the Territory move is saved as a TERRITORY move, with its Territory, and carries the active Journey so its distance counts there too", act && act.mode === "TERRITORY" && act.territory?.areaId === MOH && act.journey?.routeName === "Chandpur", JSON.stringify([act?.mode, act?.territory, act?.journey]));
     check("N19. the live view is Territory (or its loading state): never the Chandpur route", noJourneyText(live) && (await noRouteSvg(s.pg)) === 0 && /Mohammadpur|Territory|CONQUERED/i.test(live), live.slice(0, 200));
     await walk(s.pg, 40);
-    await s.pg.getByRole("button", { name: "Finish activity" }).click();
+    await finishMove(s.pg);
     await s.pg.waitForSelector("text=Story 9:16", { timeout: 15000 });
     await s.pg.waitForTimeout(1500);
     const u = (await dbOf(s.pg))["users/u1"];
@@ -950,7 +955,7 @@ async function scenarioSeparation() {
     const jl = await text(s.pg);
     check("N24. a route move shows the Journey route (Dhaka to Chandpur) and nothing of Territory", /Jatrabari|Next/i.test(jl) && !/CONQUERED|Mohammadpur/i.test(jl));
     await walk(s.pg, 60);
-    await s.pg.getByRole("button", { name: "Finish activity" }).click();
+    await finishMove(s.pg);
     await s.pg.waitForSelector("text=Story 9:16", { timeout: 15000 });
     await s.pg.waitForTimeout(1500);
     const ju = (await dbOf(s.pg))["users/u1"];
@@ -1358,7 +1363,7 @@ async function scenarioLiveTerritory() {
   const after = Number(((await text(s.pg)).match(/([\d.]+)% CONQUERED/) || [])[1]);
   // the cell at the end of the first pass may only qualify once the way back adds evidence to it: at most one cell
   check("L4. walking the same street back adds (almost) no new ground", after - before <= 0.1 + 1e-9, `${before} -> ${after}`);
-  await s.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(s.pg);
   await s.pg.waitForSelector("text=Save image", { timeout: 20000 });
   await s.pg.waitForTimeout(800);
   const done = await text(s.pg);
@@ -1459,7 +1464,7 @@ async function scenarioLiveMap() {
   const liveCal = Number((await a.pg.getByTestId("live-calories").innerText()).replace(/\D/g, ""));
   const liveRoutePts = Number(await attr(a.pg, "data-route-points"));
   const finalPts = (await idb(a.pg)).points;
-  await a.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(a.pg);
   await a.pg.waitForSelector("text=Save image", { timeout: 20000 });
   const done = (await idb(a.pg)).activities.find((x) => x.status === "finished" || x.summary);
   const sum = done?.summary ?? {};
@@ -1531,7 +1536,7 @@ async function scenarioLiveMap() {
   await go(j.pg, moh, 40, 61);
   await j.pg.waitForTimeout(400);
   const liveSegs = Number(await attr(j.pg, "data-route-segments"));
-  await j.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(j.pg);
   await j.pg.waitForSelector("text=Save image", { timeout: 20000 });
   const cardPaths = await j.pg.locator('svg[aria-label="Route"] path').evaluateAll((els) => els.map((e) => (e.getAttribute("d") || "").split("M").length - 1));
   check("M27b. the share card draws the same stretches as the live map (two, with the pause between them)", liveSegs === 2 && cardPaths.length > 0 && cardPaths.every((n) => n === 2), JSON.stringify({ liveSegs, cardPaths }));
@@ -1673,7 +1678,7 @@ async function scenarioRoutes() {
   for (let i = 0; i < 12; i++) { lng += LNG_STEP; await emitAt(m.pg, 23.6, lng); }
   await m.pg.waitForTimeout(1200);
   check("R18. after an app restart the 5 km milestone is not celebrated again", (await m.pg.locator("[data-milestone]").count()) === 0);
-  await m.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(m.pg);
   await m.pg.waitForSelector("text=Save image", { timeout: 20000 });
   await m.pg.waitForTimeout(800);
   const done = await userDoc(m.pg);
@@ -1725,7 +1730,7 @@ async function scenarioRoutes() {
   const tlive = await text(t.pg);
   check("R24. a Territory move shows Territory, not the Journey's route", /CONQUERED/.test(tlive) && !/Dhaka → Chandpur|Next ·/.test(tlive));
   const kmT = bigKm(tlive);
-  await t.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(t.pg);
   await t.pg.waitForSelector("text=Save image", { timeout: 20000 });
   await t.pg.waitForTimeout(800);
   const tu = await userDoc(t.pg);
@@ -1738,7 +1743,7 @@ async function scenarioRoutes() {
   await f.pg.getByText("Walking").click();
   await tracking(f.pg);
   for (let k = 0; k < 40; k++) await emitAt(f.pg, 23.6 + k * 0.00003, 90.5);
-  await f.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(f.pg);
   await f.pg.waitForSelector("text=Save image", { timeout: 20000 });
   await f.pg.waitForTimeout(600);
   const fu = await userDoc(f.pg);
@@ -1753,7 +1758,7 @@ async function scenarioRoutes() {
   await tracking(o.pg);
   await o.ctx.setOffline(true);
   for (let k = 0; k < 60; k++) await emitAt(o.pg, 23.6 + k * 0.00004, 90.5);
-  await o.pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(o.pg);
   await o.pg.waitForSelector("text=Save image", { timeout: 20000 });
   const pendingKm = (await userDoc(o.pg)).completedKm;
   await o.ctx.setOffline(false);
@@ -1900,6 +1905,46 @@ async function scenarioDialogs() {
   await s.pg.waitForURL((u) => u.pathname === "/", { timeout: 10000 });
   check("D5. Stop and discard throws the move away and goes home", (await idb(s.pg)).activities.length === 0 && s.pg.dialogs.length === 0);
   await s.ctx.close();
+
+  // Finish asks first; Keep going changes nothing
+  const f = await fresh();
+  await start(f.pg, "Walking", "normal");
+  await walk(f.pg, 15);
+  await f.pg.getByRole("button", { name: "Finish activity" }).click();
+  const fdlg = f.pg.getByRole("alertdialog");
+  const ftxt = await fdlg.innerText();
+  check("D6. Finish asks 'Finish this move?' with the distance and time", /Finish this move\?/.test(ftxt) && /km · /.test(ftxt), ftxt.replace(/\n/g, " | "));
+  await fdlg.getByRole("button", { name: "Keep going" }).click();
+  check("D7. Keep going leaves the move running", (await idb(f.pg)).activities.every((a) => a.status !== "finished") && /LIVE/.test(await text(f.pg)));
+  await finishMove(f.pg);
+  await f.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  check("D8. Finish and save finishes it and opens the card", await f.pg.getByRole("button", { name: "Save image" }).isVisible() && (await idb(f.pg)).activities.every((a) => a.status !== "active"));
+  await f.pg.getByRole("button", { name: "Save image" }).click();
+  check("D9. Save image says it saved (a notice appears)", await until(async () => (await f.pg.locator("[data-toast]").count()) > 0, 15000) || /Saved/.test(await text(f.pg)));
+  await f.ctx.close();
+
+  // Sign out asks first
+  const o = await fresh();
+  await o.pg.goto(`${BASE}/profile`);
+  await o.pg.getByRole("button", { name: "Sign out" }).click();
+  const odlg = o.pg.getByRole("alertdialog");
+  check("D10. Sign out asks first, in Move's own dialog", /Sign out of Move\?/.test(await odlg.innerText()));
+  await odlg.getByRole("button", { name: "Stay signed in" }).click();
+  await o.pg.waitForTimeout(400);
+  check("D11. Stay signed in keeps the session", /\/profile/.test(o.pg.url()));
+  await o.pg.getByRole("button", { name: "Sign out" }).click();
+  await odlg.getByRole("button", { name: "Sign out", exact: true }).click();
+  check("D12. Sign out then leaves for the login page", await o.pg.waitForURL(/\/login/, { timeout: 15000 }).then(() => true).catch(() => false));
+  await o.ctx.close();
+
+  // Appearance: every change says it was saved
+  const a = await fresh();
+  await a.pg.goto(`${BASE}/profile/appearance`);
+  await a.pg.getByRole("button", { name: "Light" }).click();
+  check("D13. changing the theme shows 'Appearance saved'", await a.pg.getByText("Appearance saved").waitFor({ timeout: 5000 }).then(() => true).catch(() => false) && (await a.pg.evaluate(() => document.documentElement.getAttribute("data-theme"))) === "light");
+  await a.pg.getByRole("button", { name: "Green" }).click();
+  check("D14. changing the accent shows it too", await a.pg.getByText("Appearance saved").isVisible());
+  await a.ctx.close();
 }
 
 async function scenarioRegression() {
@@ -1931,7 +1976,7 @@ async function scenarioRegression() {
   check("17. home shows the journey", /of 132 km/.test(await text(pg)));
   await start(pg);
   await walk(pg, 40);
-  await pg.getByRole("button", { name: "Finish activity" }).click();
+  await finishMove(pg);
   await pg.waitForSelector("text=Story 9:16");
   await until(async () => ((await dbOf(pg))["users/u1"].runs || []).length === 1, 8000);
   await pg.goto(`${BASE}/profile`);

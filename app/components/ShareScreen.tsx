@@ -1,4 +1,5 @@
 "use client";
+import { showToast } from "../lib/appToast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CARD_HEIGHT, CARD_WIDTH, type CardRatio, type CardTone } from "./ShareCard";
@@ -229,6 +230,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     setNotice("Saved.");
+    showToast("Image saved");
   };
 
   const share = async () => {

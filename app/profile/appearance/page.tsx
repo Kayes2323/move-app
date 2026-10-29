@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { showToast } from "../../lib/appToast";
 import { ACCENTS, savePrefs, useThemePrefs, type ThemeMode } from "../../lib/theme";
 
 const MODES: { id: ThemeMode; label: string }[] = [
@@ -63,7 +64,7 @@ export default function Appearance() {
       <p className="lab" style={{ marginTop: 28 }}>Theme</p>
       <div className="tiles" role="group" aria-label="Theme">
         {MODES.map((m) => (
-          <button key={m.id} className="tile" aria-pressed={prefs.mode === m.id} onClick={() => savePrefs({ ...prefs, mode: m.id })}>
+          <button key={m.id} className="tile" aria-pressed={prefs.mode === m.id} onClick={() => { savePrefs({ ...prefs, mode: m.id }); showToast("Appearance saved"); }}>
             <Thumb mode={m.id} />
             {m.label}
           </button>
@@ -78,7 +79,7 @@ export default function Appearance() {
             className="swatch"
             aria-label={a.label}
             aria-pressed={prefs.accent === a.id}
-            onClick={() => savePrefs({ ...prefs, accent: a.id })}
+            onClick={() => { savePrefs({ ...prefs, accent: a.id }); showToast("Appearance saved"); }}
             style={{ background: a.color, color: a.color }}
           >
             {prefs.accent === a.id && (
