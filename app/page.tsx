@@ -14,6 +14,7 @@ import { resolveActiveId } from "./lib/territory/activeId";
 import type { ActivityMode } from "./lib/activityMode";
 import { effectiveStreak, findRoute, formatDuration, formatKm, formatPerformance, journeyOffsetKm, journeyOriginName, nowMs, toKind, type RunEntry } from "./lib/activity";
 import { syncPublicProfile } from "./lib/publicProfile";
+import { effectivePhoto, parseProfile, publicFields } from "./lib/profile/model";
 
 interface UserData {
   name: string;
@@ -73,7 +74,7 @@ export default function Home() {
             if (cancelled) return;
             if (snap.exists()) {
               const data = snap.data();
-              if (!data.weight || !data.onboarded) {
+              if (!data.onboarded) {
                 window.location.href = "/onboarding";
                 return;
               }
@@ -81,7 +82,7 @@ export default function Home() {
               // Make sure the leaderboard copy exists for people who haven't finished an activity since it was introduced.
               if (!sessionStorage.getItem("move.publicProfileSynced")) {
                 sessionStorage.setItem("move.publicProfileSynced", "1");
-                void syncPublicProfile(firebaseUser.uid, { name: data.name, photo: data.photo, totalKm: data.totalKm ?? 0, streak: effectiveStreak(data.streak, data.lastRun, nowMs()) });
+                void syncPublicProfile(firebaseUser.uid, { ...publicFields(parseProfile(firebaseUser.uid, data)), totalKm: data.totalKm ?? 0, streak: effectiveStreak(data.streak, data.lastRun, nowMs()) });
               }
             }
             setFailed(false);
@@ -127,9 +128,9 @@ export default function Home() {
     <main className="app">
       <header className="bar">
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          {user?.photo ? (
+          {effectivePhoto(user ?? {}) ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img className="av" src={user.photo} alt="" width={44} height={44} style={{ width: 44, height: 44 }} />
+            <img className="av" src={effectivePhoto(user ?? {})} alt="" width={44} height={44} style={{ width: 44, height: 44 }} />
           ) : (
             <div className="av" style={{ width: 44, height: 44 }}>{initials}</div>
           )}

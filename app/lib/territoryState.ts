@@ -18,6 +18,8 @@ import {
 } from "./territory/coverage/coverage";
 import { alignCampaign, campaignTarget, claimDecision, parseOwnership, publicName, standing, type Ownership } from "./territory/coverage/ownership";
 import { requiredCells, takeoverCredits, TERRITORY_RULES_VERSION } from "./territory/coverage/rules";
+import { EXPLORER_KEEP, explorerOf, historyOf, parseConquered, parseExplorer, parseReignEvent, rankExplorers, sameExplorer, type ConqueredRecord, type Explorer, type ReignEvent } from "./territory/explorers";
+import { parseProfile, publicFields } from "./profile/model";
 import { contributionPolicy } from "./territory/contribution";
 import { loadMask } from "./territory/mask/load";
 import { scopeFromMask } from "./territory/mask/scope";
@@ -137,12 +139,16 @@ async function claim(uid: string, def: TerritoryDefinition, choice: CoverageChoi
     if (tSnap.exists() && !current) return null; // unreadable ownership: never overwrite it
     const d = claimDecision(uid, current, state, mask, scope);
     if (!d.ok) return null;
+    const conqueredRef = fs.doc(db, "territoryAchievements", def.id);
+    const conqueredSnap = d.kind === "conquest" ? await tx.get(conqueredRef) : null; // reads come before writes
     let name = publicName(fallbackName);
     let photo = "";
+    let handle = "";
     try {
       const p = await tx.get(profileRef);
       if (p.exists()) {
-        const v = p.data() as { name?: string; photo?: string };
+        const v = p.data() as { name?: string; photo?: string; username?: string };
+        handle = typeof v.username === "string" ? v.username : "";
         name = publicName(v.name ?? fallbackName);
         photo = typeof v.photo === "string" && /^https:\/\//.test(v.photo) ? v.photo.slice(0, 500) : "";
       }
@@ -189,6 +195,8 @@ async function claim(uid: string, def: TerritoryDefinition, choice: CoverageChoi
       previousOwnerUid: current?.ownerUid ?? null,
       at: fs.serverTimestamp(),
     });
+    // "Territory Conquered": the permanent record of whoever completed it first. Written once, never by a takeover, never changed.
+    if (conqueredSnap && !conqueredSnap.exists()) tx.set(conqueredRef, { areaId: def.id, uid, name, photo, username: handle, kind: "conquered", at: fs.serverTimestamp() });
     return { state: next, kind: d.kind, reign: d.reign };
   });
 }
@@ -271,7 +279,10 @@ export async function loadTerritory(uid: string, user: Pick<UserDoc, "territory"
     }
   }
   if (changed) await saveCoverage(uid, choice, state).catch(() => undefined);
-  return assemble(def, choice, state, mask, scope, uid, ownership, own.status, justWon);
+  const snapshot = assemble(def, choice, state, mask, scope, uid, ownership, own.status, justWon);
+  // Best effort, after everything the screen needs: publishing never delays or fails the Territory page.
+  void publishExplorer(uid, user, snapshot).catch((err) => console.warn("Explorer projection skipped", err));
+  return snapshot;
 }
 
 /** A saved area in the Territory picker: where the user has progress, and whether they hold it. */
@@ -363,4 +374,84 @@ export async function territoryForActivity(uid: string, user: ActiveFields, acti
     return assemble(def, parsed.choice, parsed.state, mask, scopeFromMask(mask), uid, own.ownership, own.status);
   }
   return null;
+}
+
+/**
+ * Keeps this person's public explorer record equal to their own validated coverage (see lib/territory/explorers.ts). The value is
+ * absolute, so running this any number of times, from any screen or device, writes the same thing; nothing is written when nothing changed.
+ * Someone who chose not to appear in Territory boards has no record at all.
+ */
+export async function publishExplorer(uid: string, user: Record<string, unknown>, snapshot: TerritorySnapshot): Promise<void> {
+  const [{ db }, f] = await Promise.all([import("../firebase"), import("firebase/firestore")]);
+  const profile = parseProfile(uid, user);
+  const ref = f.doc(db, "territories", snapshot.def.id, "explorers", uid);
+  const have = await f.getDoc(ref);
+  if (!profile.privacy.showInTerritory) {
+    if (have.exists()) await f.deleteDoc(ref);
+    return;
+  }
+  const pub = publicFields(profile);
+  const next = explorerOf(uid, { name: publicName(pub.name), photo: pub.photo, username: pub.username }, snapshot.state, snapshot.progress);
+  if (next.exploredCells === 0 && !have.exists()) return; // nobody to list yet
+  if (sameExplorer(have.exists() ? parseExplorer(uid, have.data()) : null, next)) {
+    await ensureConquered(uid, snapshot, pub);
+    return;
+  }
+  const { uid: _uid, ...fields } = next;
+  void _uid;
+  await f.setDoc(ref, { uid, ...fields, updatedAt: f.serverTimestamp() });
+  await ensureConquered(uid, snapshot, pub);
+}
+
+/**
+ * Accounts that conquered a Territory before achievements existed get their permanent "Territory Conquered" record, once.
+ * The rules only allow it when the conquest event (reign 1) names this person, so it can neither be claimed by someone else nor moved.
+ */
+async function ensureConquered(uid: string, snapshot: TerritorySnapshot, pub: { name: string; photo: string; username?: string }): Promise<void> {
+  if (!snapshot.state.wins?.some((w) => w.reign === 1 && w.kind === "conquest")) return;
+  const [{ db }, f] = await Promise.all([import("../firebase"), import("firebase/firestore")]);
+  const ref = f.doc(db, "territoryAchievements", snapshot.def.id);
+  if ((await f.getDoc(ref)).exists()) return;
+  const first = await f.getDoc(f.doc(db, "territories", snapshot.def.id, "events", "1"));
+  if (!first.exists() || (first.data() as { ownerUid?: string }).ownerUid !== uid) return;
+  await f.setDoc(ref, { areaId: snapshot.def.id, uid, name: publicName(pub.name), photo: pub.photo, username: pub.username ?? "", kind: "conquered", at: f.serverTimestamp() });
+}
+
+/** What the Territory screen shows beneath the Owner: who explores it, who held it, who conquered it first. Loaded after the core page. */
+export interface TerritoryBoard {
+  status: "ok" | "unavailable";
+  explorers: Explorer[];
+  history: ReignEvent[];
+  conquered: ConqueredRecord | null;
+}
+
+export async function loadTerritoryBoard(areaId: string): Promise<TerritoryBoard> {
+  try {
+    const [{ db }, f] = await Promise.all([import("../firebase"), import("firebase/firestore")]);
+    const [ex, ev, cq] = await Promise.all([
+      f.getDocs(f.query(f.collection(db, "territories", areaId, "explorers"), f.orderBy("exploredCells", "desc"), f.limit(EXPLORER_KEEP))),
+      f.getDocs(f.query(f.collection(db, "territories", areaId, "events"), f.orderBy("reign", "desc"), f.limit(10))),
+      f.getDoc(f.doc(db, "territoryAchievements", areaId)),
+    ]);
+    return {
+      status: "ok",
+      explorers: rankExplorers(ex.docs.map((d) => parseExplorer(d.id, d.data())).filter((e): e is Explorer => e !== null && e.exploredCells > 0)),
+      history: historyOf(ev.docs.map((d) => parseReignEvent(d.data()))),
+      conquered: cq.exists() ? parseConquered(areaId, cq.data()) : null,
+    };
+  } catch (err) {
+    console.warn("Territory board unavailable", err);
+    return { status: "unavailable", explorers: [], history: [], conquered: null };
+  }
+}
+
+/** Areas a person conquered first (their permanent achievements), for their profile. One small read per area they have played. */
+export async function loadConqueredBy(uid: string, areaIds: readonly string[]): Promise<ConqueredRecord[]> {
+  try {
+    const [{ db }, f] = await Promise.all([import("../firebase"), import("firebase/firestore")]);
+    const found = await Promise.all(areaIds.slice(0, 40).map((id) => f.getDoc(f.doc(db, "territoryAchievements", id)).then((s) => (s.exists() ? parseConquered(id, s.data()) : null)).catch(() => null)));
+    return found.filter((c): c is ConqueredRecord => c !== null && c.uid === uid);
+  } catch {
+    return [];
+  }
 }

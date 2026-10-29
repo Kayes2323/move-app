@@ -6,6 +6,10 @@ import { useEffect, useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import { Loading } from "../components/Loading";
 import { LoadError } from "../components/LoadError";
+import { Avatar } from "../components/Avatar";
+import { effectivePhoto, parseProfile, publicFields } from "../lib/profile/model";
+import { openAreaOf } from "../lib/territory/catalog";
+import { savedAreas, type ActiveFields } from "../lib/territory/active";
 import { activityDays, effectiveStreak, findRoute, formatKm, formatPace, nowMs, toKind, type RunEntry } from "../lib/activity";
 
 interface UserData {
@@ -18,6 +22,7 @@ interface UserData {
   currentRoute: string;
   lastRun?: string;
   runs: RunEntry[];
+  [key: string]: unknown;
 }
 
 const getRank = (km: number) => {
@@ -50,6 +55,7 @@ export default function Profile() {
 
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [conquered, setConquered] = useState<{ areaId: string; name: string }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +75,14 @@ export default function Profile() {
           try {
             const snap = await getDoc(doc(db, "users", firebaseUser.uid));
             if (cancelled) return;
-            if (snap.exists()) setUser(snap.data() as UserData);
+            if (snap.exists()) {
+              const data = snap.data() as UserData;
+              setUser(data);
+              // permanent "Territory Conquered" achievements: a few small reads, after the profile is already on screen
+              void import("../lib/territoryState").then(({ loadConqueredBy }) => loadConqueredBy(firebaseUser.uid, savedAreas(data as ActiveFields).map((a) => a.areaId))).then((list) => {
+                if (!cancelled) setConquered(list.map((c) => ({ areaId: c.areaId, name: openAreaOf(c.areaId)?.name ?? c.areaId })));
+              }).catch(() => undefined);
+            }
             setFailed(false);
           } catch (err) {
             console.error(err);
@@ -102,7 +115,8 @@ export default function Profile() {
   const streak = effectiveStreak(user?.streak, user?.lastRun, nowMs());
   const runs = user?.runs || [];
   const rank = getRank(totalKm);
-  const initials = (user?.name || "R").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const profile = parseProfile("me", user);
+  const pub = publicFields(profile);
   // Last 35 days, by real activity date (it used to light up cells by run count instead).
   const grid = activityDays(runs, 35, nowMs());
   const real = runs.filter((r) => r.km > 0);
@@ -118,15 +132,11 @@ export default function Profile() {
     <main className="app">
       <header className="bar" style={{ alignItems: "flex-start" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-          {user?.photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="av" src={user.photo} alt="" width={72} height={72} style={{ width: 72, height: 72, border: "2px solid var(--accent)", padding: 2 }} />
-          ) : (
-            <div className="av" style={{ width: 72, height: 72, fontSize: 24 }}>{initials}</div>
-          )}
+          <Avatar name={user?.name || "Runner"} photo={effectivePhoto(user ?? {})} size={72} ring="0 0 0 2px var(--accent)" priority />
           <div style={{ minWidth: 0 }}>
             <h1 className="h1" style={{ fontSize: 24, overflow: "hidden", textOverflow: "ellipsis" }}>{user?.name || "Runner"}</h1>
-            <p className="mute" style={{ fontSize: 13, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>{user?.email || ""}</p>
+            {profile.username && <p className="mute" style={{ fontSize: 13, marginTop: 2 }}>@{profile.username}</p>}
+            <p className="mute" style={{ fontSize: 12, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>{user?.email || ""}</p>
             <span className="lab" style={{ display: "inline-block", marginTop: 8, padding: "4px 10px", borderRadius: 10, background: "var(--surf)", color: "var(--acc-text)" }}>{rank}</span>
           </div>
         </div>
@@ -134,6 +144,12 @@ export default function Profile() {
           <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4" /></svg>
         </Link>
       </header>
+
+      {profile.bio && <p className="body" style={{ marginTop: 14, lineHeight: "20px" }}>{profile.bio}</p>}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 14 }}>
+        <Link href="/profile/edit" className="btn btn-line" style={{ width: "auto", minHeight: 40, padding: "0 18px", fontSize: 13.5 }}>Edit profile</Link>
+        <span className="mute" style={{ fontSize: 12 }}>{profile.privacy.showInTerritory ? `Others see: ${pub.name}${pub.username ? ` · @${pub.username}` : ""}` : "You appear as “Move athlete”"}</span>
+      </div>
 
       <div style={{ marginTop: 22 }}>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }} className="mute">
@@ -208,6 +224,13 @@ export default function Profile() {
               </div>
             );
           })}
+          {conquered.map((c) => (
+            <div key={c.areaId} data-testid="conquered-badge" className="card" style={{ padding: "14px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, border: "1px solid rgba(217,165,32,.45)" }}>
+              <span aria-hidden="true" style={{ fontSize: 22 }}>👑</span>
+              <p style={{ fontSize: 12, fontWeight: 800, textAlign: "center", lineHeight: 1.25 }}>Territory Conquered</p>
+              <p className="mute" style={{ fontSize: 11, textAlign: "center", lineHeight: 1.2 }}>{c.name}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -215,6 +238,7 @@ export default function Profile() {
         <p className="lab">Settings</p>
         <div style={{ marginTop: 4 }}>
           <Link href="/profile/appearance" className="row"><span>Appearance</span><span className="mute" style={{ fontSize: 14 }}>Theme and accent</span></Link>
+          <Link href="/profile/edit" className="row"><span>Edit profile and privacy</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <Link href="/onboarding" className="row"><span>Update weight</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <Link href="/share" className="row"><span>Share your journey</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
           <InstallApp />

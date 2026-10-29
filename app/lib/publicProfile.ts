@@ -5,6 +5,9 @@ export interface PublicProfile {
   photo: string;
   totalKm: number;
   streak: number;
+  /** Only what the person chose to show (see profile/model.ts publicFields); "" clears a field they no longer share. */
+  username?: string;
+  bio?: string;
 }
 
 /**
@@ -17,7 +20,7 @@ export async function syncPublicProfile(uid: string, profile: PublicProfile): Pr
     const [{ db }, { doc, setDoc }] = await Promise.all([import("../firebase"), import("firebase/firestore")]);
     await setDoc(
       doc(db, "publicProfiles", uid),
-      { name: profile.name || "Runner", photo: profile.photo || "", totalKm: profile.totalKm || 0, streak: profile.streak || 0, updatedAt: nowMs() },
+      { name: profile.name || "Runner", photo: profile.photo || "", totalKm: profile.totalKm || 0, streak: profile.streak || 0, username: profile.username ?? "", bio: profile.bio ?? "", updatedAt: nowMs() },
       { merge: true }
     );
     return true;

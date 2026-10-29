@@ -1,5 +1,7 @@
 "use client";
 import type { Ownership } from "../lib/territory/coverage/ownership";
+import { shownPercent } from "../lib/territory/coverage/rules";
+import type { Explorer } from "../lib/territory/explorers";
 
 const initials = (name: string) => name.trim().slice(0, 1).toUpperCase() || "M";
 const GOLD = "#D9A520";
@@ -17,7 +19,7 @@ export function KingAvatar({ name, photo, size }: { name: string; photo: string;
 const since = (ms: number) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 /** Who holds the Territory: the King's public name and photo, and how long they've held it. */
-export function KingCard({ ownership, you, territory }: { ownership: Ownership | null; you: boolean; territory: string }) {
+export function KingCard({ ownership, you, territory, explorer }: { ownership: Ownership | null; you: boolean; territory: string; explorer?: Explorer | null }) {
   if (!ownership) {
     return (
       <section aria-label="King" className="king-card king-empty">
@@ -40,6 +42,12 @@ export function KingCard({ ownership, you, territory }: { ownership: Ownership |
           King since {since(ownership.reignStartedAt)}
           {takeovers > 0 ? ` · ${takeovers} takeover${takeovers > 1 ? "s" : ""}` : ""}
         </p>
+        {explorer && (
+          <p data-testid="owner-detail" style={{ fontSize: 12.5, marginTop: 6 }}>
+            {explorer.username ? <span className="mute">@{explorer.username} · </span> : null}
+            <b>{explorer.exploredCells.toLocaleString("en-US")}</b> <span className="mute">cells explored · {shownPercent(explorer.exploredCells, explorer.requiredCells).percent.toFixed(1)}% of the requirement</span>
+          </p>
+        )}
       </div>
     </section>
   );

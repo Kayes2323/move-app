@@ -48,6 +48,7 @@ const snap = (path: string, d: Json | undefined) => ({ id: path.split("/").pop()
 export const getDoc = async (r: Ref) => { gate("getDoc"); return snap(r.path, load()[r.path]); };
 export const setDoc = async (r: Ref, data: Json, o?: { merge?: boolean }) => { gate("setDoc"); check(data); const db = load(); db[r.path] = apply(o?.merge ? db[r.path] || {} : {}, data, Boolean(o?.merge)); save(db); };
 export const updateDoc = async (r: Ref, data: Json) => { gate("updateDoc"); check(data); const db = load(); if (!db[r.path]) throw new Error("not-found"); db[r.path] = apply(db[r.path], data); save(db); };
+export const deleteDoc = async (r: Ref) => { gate("deleteDoc"); const db = load(); delete db[r.path]; save(db); };
 export const writeBatch = (_d: unknown) => {
   const ops: { r: Ref; data: Json }[] = [];
   return { set: (r: Ref, data: Json) => { ops.push({ r, data }); }, commit: async () => { gate("batch"); const db = load(); for (const o of ops) db[o.r.path] = apply({}, o.data); save(db); } };
@@ -58,17 +59,19 @@ export const runTransaction = async <T,>(_d: unknown, fn: (tx: any) => Promise<T
     gate("transaction");
     const db = load();
     const reads = new Map<string, string>();
-    const writes: { r: Ref; data: Json; update: boolean; merge?: boolean }[] = [];
+    const writes: { r: Ref; data: Json; update: boolean; merge?: boolean; del?: boolean }[] = [];
     const tx = {
       get: async (r: Ref) => { reads.set(r.path, JSON.stringify(db[r.path] ?? null)); return snap(r.path, db[r.path]); },
       set: (r: Ref, data: Json, o?: { merge?: boolean }) => { check(data); writes.push({ r, data, update: false, merge: o?.merge }); },
       update: (r: Ref, data: Json) => { check(data); writes.push({ r, data, update: true }); },
+      delete: (r: Ref) => { writes.push({ r, data: {}, update: false, del: true }); },
     };
     const result = await fn(tx);
     if (flags().includes("tx_delay")) await new Promise((res) => setTimeout(res, 400));
     const fresh = load(); // commit against the current state, atomically
     if ([...reads].some(([path, before]) => JSON.stringify(fresh[path] ?? null) !== before)) continue;
     for (const w of writes) {
+      if (w.del) { delete fresh[w.r.path]; continue; }
       if (w.update && !fresh[w.r.path]) throw new Error("not-found");
       fresh[w.r.path] = apply(w.update || w.merge ? fresh[w.r.path] || {} : {}, w.data, Boolean(w.merge));
     }
@@ -80,6 +83,7 @@ export const runTransaction = async <T,>(_d: unknown, fn: (tx: any) => Promise<T
 };
 export const getDocs = async (q: { path: string; cs?: any[] }) => {
   gate("getDocs");
+  if (flags().includes("getDocs_slow")) await new Promise((res) => setTimeout(res, 4000)); // lets a test see the screen before slow data arrives
   const cs = q.cs ?? [];
   let docs = Object.entries(load()).filter(([p]) => p.startsWith(q.path + "/") && !p.slice(q.path.length + 1).includes("/")).map(([p, v]) => ({ id: p.split("/").pop(), data: () => v as Json }));
   const o = cs.find((c) => c.t === "order");

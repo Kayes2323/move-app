@@ -29,38 +29,15 @@ export default function Login() {
   setError("");
   signingIn.current = true;
   try {
-    const { auth, db } = await import("../firebase");
+    const { auth } = await import("../firebase");
     const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
-    const { doc, setDoc, getDoc, serverTimestamp } = await import("firebase/firestore");
-    
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
+    const { onSignedIn } = await import("../lib/profile/store");
 
-    // Check if user already exists
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-  await setDoc(userRef, {
-    uid: user.uid,
-    name: user.displayName,
-    email: user.email,
-    photo: user.photoURL,
-    createdAt: serverTimestamp(),
-    totalKm: 0,
-    streak: 0,
-    completedKm: 0,
-    runs: [],
-    weight: 0,
-    onboarded: false,
-  });
-  window.location.href = "/onboarding";
-  return;
-} else {
-  window.location.href = "/";
-  return;
-}
+    const result = await signInWithPopup(auth, new GoogleAuthProvider());
+    // A new account starts from Google's name and photo; an existing one keeps what the person edited (see onSignedIn).
+    const { created } = await onSignedIn(result.user);
+    window.location.href = created ? "/onboarding" : "/";
+    return;
   } catch (err) {
     console.error(err);
     signingIn.current = false;

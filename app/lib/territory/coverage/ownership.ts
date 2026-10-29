@@ -2,6 +2,7 @@ import type { CellScope } from "../exploration/explore";
 import type { EligibilityMask } from "../mask/types";
 import { campaignProgress, coverageProgress, newCampaign, type Campaign, type CoverageChoice, type CoverageState } from "./coverage";
 import { requiredCells, takeoverCredits } from "./rules";
+import { ANONYMOUS_NAME } from "../../profile/model";
 
 /**
  * Ownership of a Territory: who is King, since when, and how a King is made or replaced. Pure decisions only; the
@@ -105,6 +106,7 @@ export function parseOwnership(raw: unknown, areaId: string): Ownership | null {
 
 /** The public face of a King: first name only, and a photo only if it is an https URL. */
 export function publicName(name: string | null | undefined): string {
+  if (name === ANONYMOUS_NAME) return name; // someone who chose not to be shown stays "Move athlete", not "Move"
   const first = (name ?? "").trim().split(/\s+/)[0] ?? "";
   return first.slice(0, 24) || "Runner";
 }

@@ -14,12 +14,13 @@ import { placeLine, type AreaIndex } from "../../lib/territory/hierarchy";
 import { locateArea } from "../../lib/territory/locate";
 import { stateLabel, stateOf, useClosedStatuses } from "../../lib/territory/status";
 import type { GeoArea, Geometry } from "../../lib/territory/types";
-import { loadTerritoryHome, TerritoryOfflineError, type TerritoryHome } from "../../lib/territoryState";
+import { loadTerritoryBoard, loadTerritoryHome, TerritoryOfflineError, type TerritoryBoard as Board, type TerritoryHome } from "../../lib/territoryState";
 import { resolveMode, useThemePrefs } from "../../lib/theme";
 import { sizeLabelOf } from "../../lib/territory/catalog";
 import { Celebration } from "../Celebration";
 import { KingCard } from "../KingCard";
 import { TerritoryHeroMap } from "../TerritoryHeroMap";
+import { TerritoryBoard } from "../TerritoryBoard";
 
 interface Loaded extends TerritoryHome {
   uid: string;
@@ -82,6 +83,8 @@ export default function TerritoryHub() {
   const [attempt, setAttempt] = useState(0);
   const [loadedGeometry, setGeometry] = useState<{ id: string; geometry: Geometry } | null>(null);
   const [here, setHere] = useState<{ area: GeoArea | null; at: LngLat } | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [boardTry, setBoardTry] = useState(0);
   const [celebrate, setCelebrate] = useState<{ kind: "conquest" | "takeover"; reign: number; activityId: string | null } | null>(null);
   const prefs = useThemePrefs();
   const dark = resolveMode(prefs.mode) === "dark";
@@ -140,6 +143,17 @@ export default function TerritoryHub() {
   }, [refresh, attempt]);
 
   const active = data?.activeId ? data.index.get(data.activeId) : undefined;
+
+  // Explorers, history and the first conqueror load AFTER the page above them is on screen: pictures never hold up the core Territory page
+  const boardArea = data?.open && data.snapshot ? data.snapshot.def.id : null;
+  useEffect(() => {
+    if (!boardArea) return;
+    let dead = false;
+    loadTerritoryBoard(boardArea).then((b) => !dead && setBoard(b));
+    return () => {
+      dead = true;
+    };
+  }, [boardArea, boardTry, data]);
 
   // the real boundary of the active area: the bundled pilot carries its own; every other area comes from the boundary data (all its parts, not just the largest)
   useEffect(() => {
@@ -307,8 +321,10 @@ export default function TerritoryHub() {
 
         <h2 className="lab" style={{ marginTop: 28 }}>King</h2>
         <div style={{ marginTop: 10 }}>
-          {data.ownershipStatus === "ok" ? <KingCard ownership={snap.ownership} you={king} territory={def.name} /> : <p className="mute body">Kings can&apos;t be shown right now. Your exploration is still counted.</p>}
+          {data.ownershipStatus === "ok" ? <KingCard ownership={snap.ownership} you={king} territory={def.name} explorer={snap.ownership ? board?.explorers.find((e) => e.uid === snap.ownership!.ownerUid) ?? null : null} /> : <p className="mute body">Kings can&apos;t be shown right now. Your exploration is still counted.</p>}
         </div>
+
+        <TerritoryBoard board={board} uid={data.uid} territory={def.name} onRetry={() => { setBoard(null); setBoardTry((n) => n + 1); }} />
 
         <h2 className="lab" style={{ marginTop: 28 }}>Your progress</h2>
         <div className="stat-row" style={{ marginTop: 10 }}>

@@ -1,0 +1,18 @@
+// PROPOSED Firebase Storage rules for Move. NOT applied automatically: enable Storage in the Firebase console, then paste these
+// into Storage > Rules (or `firebase deploy --only storage`).
+//
+// A profile picture is one small JPEG per person at avatars/{uid}/avatar.jpg. Only its owner can write or delete it; the app
+// shrinks it to 512 px and about 400 KB before uploading, and these rules refuse anything bigger or not a JPEG.
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /avatars/{uid}/avatar.jpg {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 500 * 1024
+        && request.resource.contentType == 'image/jpeg';
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

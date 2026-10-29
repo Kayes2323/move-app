@@ -3,7 +3,8 @@
 //
 // - A user's private document (email, weight, totals) and everything beneath it (their activities and GPS
 //   tracks) is readable and writable only by that user.
-// - The leaderboard reads `publicProfiles`, which holds just name, photo and totals.
+// - The leaderboard reads `publicProfiles`, which holds just name, photo, optional username and bio, and totals. Height, weight and BMI
+//   live only in the private users/{uid} document and the rules below cannot write them anywhere public.
 //
 // Known limit: totals are written by the client, so a determined user could fake their own leaderboard entry.
 // Preventing that needs server-side validation (e.g. a Cloud Function that recomputes totals from activities).
@@ -93,14 +94,66 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['areaId', 'reign', 'kind', 'ownerUid', 'ownerName', 'ownerPhoto', 'previousOwnerUid', 'at']);
         allow update, delete: if false;
       }
+
+      // Each explorer's own public summary: a projection of their validated coverage, written as an absolute value (never an increment),
+      // so a duplicate sync or a retry leaves the same number. Known limit, as for claims: computed on the phone, so bounded and
+      // sanity-checked here but not independently verified.
+      match /explorers/{uid} {
+        allow read: if request.auth != null;
+        allow create, update: if request.auth != null
+          && request.auth.uid == uid
+          && requiredCells(areaId) < 1000000000
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'username', 'exploredCells', 'requiredCells', 'moves', 'lastGainAt', 'updatedAt'])
+          && request.resource.data.uid == uid
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
+          && request.resource.data.photo is string && request.resource.data.photo.size() <= 600 && (request.resource.data.photo == '' || request.resource.data.photo.matches('https://.*'))
+          && request.resource.data.username is string && request.resource.data.username.size() <= 20
+          && request.resource.data.exploredCells is int && request.resource.data.exploredCells >= 0 && request.resource.data.exploredCells <= 3 * requiredCells(areaId)
+          && request.resource.data.requiredCells == requiredCells(areaId)
+          && request.resource.data.moves is int && request.resource.data.moves >= 0 && request.resource.data.moves <= 100000
+          && request.resource.data.lastGainAt is number && request.resource.data.lastGainAt >= 0
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     match /publicProfiles/{uid} {
       allow read: if request.auth != null;
       allow create, update: if request.auth != null
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'photo', 'totalKm', 'streak', 'updatedAt']);
+        && request.resource.data.keys().hasOnly(['name', 'photo', 'totalKm', 'streak', 'updatedAt', 'username', 'bio'])
+        && (!('username' in request.resource.data) || (request.resource.data.username is string && (request.resource.data.username == '' || request.resource.data.username.matches('^[a-z][a-z0-9_]{2,19}$'))))
+        && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
+        && (!('photo' in request.resource.data) || (request.resource.data.photo is string && request.resource.data.photo.size() <= 600 && (request.resource.data.photo == '' || request.resource.data.photo.matches('https://.*'))));
       allow delete: if false;
+    }
+
+    // One document per taken username, so two people cannot hold the same one. The profile save is a transaction, so the
+    // reservation, the old one's release and the profile change commit together or not at all.
+    match /usernames/{handle} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && handle.matches('^[a-z][a-z0-9_]{2,19}$')
+        && request.resource.data.keys().hasOnly(['uid', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // "Territory Conquered": a permanent record of whoever completed a Territory's requirement first. Created once, by the person
+    // the conquest event (reign 1) names, in the same transaction as the conquest or afterwards; never changed or removed,
+    // and unaffected by later takeovers.
+    match /territoryAchievements/{areaId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['areaId', 'uid', 'name', 'photo', 'username', 'kind', 'at'])
+        && request.resource.data.areaId == areaId
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.kind == 'conquered'
+        && request.resource.data.at == request.time
+        && getAfter(/databases/$(database)/documents/territories/$(areaId)/events/1).data.ownerUid == request.auth.uid;
+      allow update, delete: if false;
     }
   }
 }

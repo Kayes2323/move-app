@@ -2088,6 +2088,407 @@ async function scenarioRegression() {
   await s.ctx.close();
 }
 
+
+/* ---------- Phase 1: Google sign-in, athlete profile, privacy, Territory board ---------- */
+const PNG_1PX = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+// pictures in these tests are fake addresses: answer them with a real 1-pixel PNG, as the real servers would
+const pfresh = async (o) => {
+  const s = await fresh(o);
+  await s.ctx.route(/googleusercontent\.test|storage\.mock|old\.google\.test/, (r) => r.fulfill({ status: 200, contentType: "image/png", body: PNG_1PX }));
+  return s;
+};
+async function scenarioProfile() {
+  const GOOGLE_PHOTO = "https://lh3.googleusercontent.test/rafi.jpg";
+  const filled = async (pg) => {
+    await pg.waitForSelector("#ep-name", { timeout: 20000 });
+    await pg.waitForFunction(() => document.querySelector("#ep-name")?.value !== "");
+  };
+
+  // P1: first Google sign-in creates the account from Google's name and photo, and goes to onboarding
+  {
+    const s = await pfresh({ db: {}, user: null });
+    await s.pg.goto(`${BASE}/login`);
+    await s.pg.evaluate(() => localStorage.setItem("__mock_google", JSON.stringify({ photoURL: "https://lh3.googleusercontent.test/rafi.jpg" })));
+    await s.pg.getByRole("button", { name: /Start Free with Google/ }).click();
+    await s.pg.waitForURL(/onboarding/, { timeout: 15000 });
+    const u = (await dbOf(s.pg))["users/u1"];
+    check("P1. first Google sign-in: account created from Google's name and photo, then onboarding", u && u.name === "Rafi Ahmed" && u.photo === GOOGLE_PHOTO && u.email === "r@x.com" && u.onboarded === false && !u.photoCustom && !u.username, JSON.stringify(u).slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // P2: an existing account keeps what its owner edited; only Google's own photo is refreshed
+  {
+    const db = baseDb();
+    db["users/u1"] = { ...db["users/u1"], name: "Rafi the Runner", photo: "https://old.google.test/a.jpg", photoCustom: "https://storage.mock/avatars/u1/avatar.jpg?v=1", username: "rafi_a", bio: "Hello" };
+    const s = await pfresh({ db, user: null });
+    await s.pg.goto(`${BASE}/login`);
+    await s.pg.evaluate(() => localStorage.setItem("__mock_google", JSON.stringify({ photoURL: "https://lh3.googleusercontent.test/rafi.jpg" })));
+    await s.pg.getByRole("button", { name: /Start Free with Google/ }).click();
+    await s.pg.waitForURL((u) => !/login/.test(u.pathname), { timeout: 15000 });
+    const u = (await dbOf(s.pg))["users/u1"];
+    check("P2. existing account: edited name, username, bio and uploaded photo survive sign-in; Google photo refreshed", u.name === "Rafi the Runner" && u.username === "rafi_a" && u.bio === "Hello" && u.photoCustom.includes("avatars/u1") && u.photo === GOOGLE_PHOTO && u.onboarded === true, JSON.stringify(u).slice(0, 220));
+    await s.ctx.close();
+  }
+
+  // P3-P6: edit the profile (an account from before profiles existed)
+  {
+    const db = baseDb();
+    db["users/u1"].photo = GOOGLE_PHOTO;
+    db["publicProfiles/u1"] = { name: "Rafi Ahmed", photo: GOOGLE_PHOTO, totalKm: 5, streak: 2 };
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await filled(s.pg);
+    check("P3. an account from before profiles opens the editor with its name, Google photo and no required fitness fields", (await s.pg.inputValue("#ep-name")) === "Rafi Ahmed" && (await s.pg.inputValue("#ep-user")) === "" && (await s.pg.inputValue("#ep-h")) === "" && (await s.pg.locator("[data-testid=bmi]").innerText()).includes("—") && (await s.pg.locator("img.av").first().getAttribute("src")) === GOOGLE_PHOTO);
+
+    // validation
+    await s.pg.fill("#ep-user", "ab");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    check("P4a. a too-short username is explained and nothing is saved", /at least 3/.test(await text(s.pg)) && !(await dbOf(s.pg))["users/u1"].username);
+    await s.pg.fill("#ep-user", "Rafi_A");
+    await s.pg.fill("#ep-h", "500");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    check("P4b. an impossible height is explained and nothing is saved", /Height should be between 100 and 250/.test(await text(s.pg)) && !(await dbOf(s.pg))["users/u1"].heightCm);
+    await s.pg.fill("#ep-name", "   ");
+    await s.pg.fill("#ep-h", "175");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    check("P4c. an empty display name is refused", /Add a name/.test(await text(s.pg)));
+
+    // a valid save: private fields stay private, public projection has only what is allowed
+    await s.pg.fill("#ep-name", "Rafi Ahmed");
+    await s.pg.fill("#ep-w", "70");
+    await s.pg.fill("#ep-bio", "Mohammadpur morning runner.");
+    check("P5a. BMI is calculated live from height and weight (175 cm, 70 kg = 22.9)", (await s.pg.locator("[data-testid=bmi]").innerText()).includes("22.9"));
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForSelector("text=Profile saved", { timeout: 8000 });
+    const m = await dbOf(s.pg);
+    const pubDoc = m["publicProfiles/u1"];
+    check("P5b. saved: username, bio, height and weight stored in the private account document", m["users/u1"].username === "rafi_a" && m["users/u1"].bio === "Mohammadpur morning runner." && m["users/u1"].heightCm === 175 && m["users/u1"].weight === 70, JSON.stringify(m["users/u1"]).slice(0, 200));
+    check("P5c. PRIVACY: the public profile has username and bio but no height, weight or BMI, and keeps its totals", pubDoc.username === "rafi_a" && pubDoc.bio.startsWith("Mohammadpur") && pubDoc.totalKm === 5 && !JSON.stringify(pubDoc).match(/175|heightCm|weight|bmi|r@x\.com/i), JSON.stringify(pubDoc));
+    check("P5d. the username is reserved for this account", m["usernames/rafi_a"]?.uid === "u1");
+
+    // changing the username releases the old one
+    await s.pg.fill("#ep-user", "rafi_b");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForFunction(() => JSON.parse(localStorage.getItem("__mock_db") || "{}")["usernames/rafi_b"], null, { timeout: 8000 });
+    const m2 = await dbOf(s.pg);
+    check("P6. changing the username releases the old one and reserves the new one", !m2["usernames/rafi_a"] && m2["usernames/rafi_b"]?.uid === "u1" && m2["publicProfiles/u1"].username === "rafi_b");
+
+    // emptying the fitness fields removes them (they are never required)
+    await s.pg.fill("#ep-h", "");
+    await s.pg.fill("#ep-w", "");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForFunction(() => !("heightCm" in (JSON.parse(localStorage.getItem("__mock_db") || "{}")["users/u1"] || {})), null, { timeout: 8000 });
+    const m3 = await dbOf(s.pg);
+    check("P7. clearing height and weight is allowed; the app still works without them", !("heightCm" in m3["users/u1"]) && !("weight" in m3["users/u1"]) && m3["users/u1"].onboarded === true);
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.waitForSelector("text=Start moving", { timeout: 15000 });
+    check("P7b. no weight does not send a signed-in athlete back to onboarding", !/onboarding/.test(s.pg.url()));
+    check("P8. no uncaught page errors while editing", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    await s.ctx.close();
+  }
+
+  // P9: a username someone else holds is refused, even if they take it between the check and the save (transaction)
+  {
+    const db = baseDb();
+    db["usernames/taken_name"] = { uid: "u2", at: 1 };
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await filled(s.pg);
+    await s.pg.fill("#ep-user", "taken_name");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForSelector("text=That username is taken", { timeout: 8000 });
+    const m = await dbOf(s.pg);
+    check("P9a. a taken username is refused and nothing else is changed", m["usernames/taken_name"].uid === "u2" && !m["users/u1"].username);
+    // the race: free when checked, taken by someone else before our save commits
+    await s.pg.fill("#ep-user", "race_name");
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", "tx_delay"));
+    const saving = s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForTimeout(150);
+    await s.pg.evaluate(() => { const d = JSON.parse(localStorage.getItem("__mock_db")); d["usernames/race_name"] = { uid: "u2", at: 2 }; localStorage.setItem("__mock_db", JSON.stringify(d)); });
+    await saving;
+    await s.pg.waitForSelector("text=That username is taken", { timeout: 8000 });
+    const r = await dbOf(s.pg);
+    check("P9b. CONCURRENT: someone claims the name mid-save; the save re-checks, loses cleanly and writes nothing", r["usernames/race_name"].uid === "u2" && !r["users/u1"].username && r["publicProfiles/u1"] === undefined, JSON.stringify(r["users/u1"]).slice(0, 120));
+    await s.ctx.close();
+  }
+
+  // P10-P14: profile picture: upload, failure, precedence, fallback
+  {
+    const db = baseDb();
+    db["users/u1"].photo = GOOGLE_PHOTO;
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await filled(s.pg);
+    await s.pg.locator("[data-testid=photo-input]").setInputFiles({ name: "x.gif", mimeType: "image/gif", buffer: PNG_1PX });
+    check("P10a. a GIF is refused with a clear message", /JPEG, PNG or WebP/.test(await text(s.pg)));
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", "storage_upload"));
+    await s.pg.locator("[data-testid=photo-input]").setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG_1PX });
+    await s.pg.waitForSelector("text=Couldn't upload. Check your connection", { timeout: 8000 });
+    let u = (await dbOf(s.pg))["users/u1"];
+    check("P10b. UPLOAD FAILURE (network): the old picture stays and the user is told", !u.photoCustom && (await s.pg.locator("img.av").first().getAttribute("src")) === GOOGLE_PHOTO);
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", "storage_denied"));
+    await s.pg.locator("[data-testid=photo-input]").setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG_1PX });
+    await s.pg.waitForSelector("text=aren't switched on", { timeout: 8000 });
+    check("P10c. UPLOAD FAILURE (Storage not enabled): explained, nothing changes", !(await dbOf(s.pg))["users/u1"].photoCustom);
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", ""));
+    await s.pg.locator("[data-testid=photo-input]").setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG_1PX });
+    await s.pg.waitForSelector("text=Photo updated", { timeout: 8000 });
+    const m = await dbOf(s.pg);
+    check("P11. a good upload: the uploaded picture takes precedence over Google's, which is kept", m["users/u1"].photoCustom.startsWith("https://storage.mock/avatars/u1/avatar.jpg") && m["users/u1"].photo === GOOGLE_PHOTO && m["publicProfiles/u1"].photo === m["users/u1"].photoCustom, JSON.stringify(m["publicProfiles/u1"]));
+    check("P11b. the editor now shows the uploaded picture", (await s.pg.locator("img.av").first().getAttribute("src")).startsWith("https://storage.mock/avatars/u1"));
+    await s.pg.goto(`${BASE}/profile`);
+    await s.pg.waitForSelector("text=Personal records", { timeout: 15000 });
+    check("P12. the Profile screen shows the uploaded picture too", (await s.pg.locator("header img.av").first().getAttribute("src")).startsWith("https://storage.mock/avatars/u1"));
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await filled(s.pg);
+    await s.pg.getByRole("button", { name: "Use my Google photo" }).click();
+    await s.pg.waitForSelector("text=Using your Google photo", { timeout: 8000 });
+    const m2 = await dbOf(s.pg);
+    check("P13. 'Use my Google photo' removes the uploaded picture and falls back to Google's", !m2["users/u1"].photoCustom && m2["publicProfiles/u1"].photo === GOOGLE_PHOTO);
+    await s.ctx.close();
+
+    // no photo at all: initials fallback, no broken image
+    const n = await pfresh();
+    await n.pg.goto(`${BASE}/profile/edit`);
+    await filled(n.pg);
+    check("P14. no photo anywhere: initials are drawn, no broken image", (await n.pg.locator("section[aria-label=Photo] img").count()) === 0 && /RA/.test(await n.pg.locator("section[aria-label=Photo] .av").innerText()));
+    await n.ctx.close();
+  }
+
+  // P15: privacy switch: hidden athletes are anonymous in public data
+  {
+    const db = baseDb();
+    db["users/u1"].photo = GOOGLE_PHOTO;
+    db["users/u1"].username = "rafi_a";
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await filled(s.pg);
+    await s.pg.getByRole("switch", { name: /Show me in Territory/ }).uncheck();
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForSelector("text=Profile saved", { timeout: 8000 });
+    const m = await dbOf(s.pg);
+    check("P15. 'Show me in Territory' off: public profile is anonymous (no name, photo, username or bio)", m["publicProfiles/u1"].name === "Move athlete" && m["publicProfiles/u1"].photo === "" && m["publicProfiles/u1"].username === "" && m["users/u1"].privacy.showInTerritory === false, JSON.stringify(m["publicProfiles/u1"]));
+    await s.ctx.close();
+  }
+
+  // P16: offline: editing works, saving explains instead of failing silently
+  {
+    const s = await pfresh();
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await filled(s.pg);
+    await s.ctx.setOffline(true);
+    await s.pg.waitForSelector("text=You're offline", { timeout: 5000 });
+    await s.pg.fill("#ep-bio", "offline edit");
+    await s.pg.getByRole("button", { name: "Save profile" }).click();
+    await s.pg.waitForSelector("text=You're offline. Connect and save again", { timeout: 8000 });
+    check("P16. offline: a notice shows, and saving explains instead of pretending it worked", !(await dbOf(s.pg).catch(() => ({})))["users/u1"]?.bio);
+    await s.ctx.close();
+  }
+
+  // P17: database failure loading the editor: a retry screen
+  {
+    const s = await pfresh();
+    await s.pg.goto(`${BASE}/`);
+    await s.pg.waitForSelector("text=Start moving", { timeout: 15000 });
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", "getDoc"));
+    await s.pg.goto(`${BASE}/profile/edit`);
+    await s.pg.waitForSelector("text=Couldn't load your profile", { timeout: 15000 });
+    check("P17. loading failure: a retry screen, not an endless spinner", (await s.pg.getByRole("button", { name: "Try again" }).count()) === 1);
+    await s.ctx.close();
+  }
+
+  /* ---------- the Territory board ---------- */
+  const MOH = "bd-upa-dhaka-mohammadpur";
+  const now = Date.now();
+  const day = 86400000;
+  const kingDoc = (uid, name, reign, startedAt) => ({ areaId: MOH, name: "Mohammadpur", ownerUid: uid, ownerName: name, ownerPhoto: "", reign, kind: reign === 1 ? "conquest" : "takeover", reignStartedAt: startedAt, updatedAt: startedAt, requiredCells: 3104, requiredCredits: 6208, rulesVersion: "territory-rules/1", maskVersion: MASK.maskVersion });
+  const evt = (uid, name, reign, at, prev = null) => ({ areaId: MOH, reign, kind: reign === 1 ? "conquest" : "takeover", ownerUid: uid, ownerName: name, ownerPhoto: "", previousOwnerUid: prev, at });
+  const explorerDoc = (uid, name, cells, lastGainAt, extra = {}) => ({ uid, name, photo: "", username: "", exploredCells: cells, requiredCells: 3104, moves: 4, lastGainAt, ...extra });
+  const board = (over = (d) => d) => {
+    const db = baseDb();
+    db["users/u1"].territory = stored({ selectedAt: now - 5 * day, cells: runsOf(ELIGIBLE.slice(0, 300)), applied: [ap("r0", 300, now - 2 * day)] });
+    db["users/u1"].territoryActive = { areaId: MOH, at: now - 5 * day };
+    db[`territories/${MOH}`] = kingDoc("u2", "Tania", 2, now - day);
+    db[`territories/${MOH}/events/1`] = evt("u3", "Karim", 1, now - 9 * day);
+    db[`territories/${MOH}/events/2`] = evt("u2", "Tania", 2, now - day, "u3");
+    db[`territoryAchievements/${MOH}`] = { areaId: MOH, uid: "u3", name: "Karim", photo: "", username: "karim_k", kind: "conquered", at: now - 9 * day };
+    db[`territories/${MOH}/explorers/u2`] = explorerDoc("u2", "Tania", 3300, now - day, { username: "tania_t" });
+    db[`territories/${MOH}/explorers/u3`] = explorerDoc("u3", "Karim", 3104, now - 9 * day);
+    return over(db);
+  };
+  const openBoard = async (db) => {
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/territory/current`);
+    await s.pg.waitForSelector("text=Active explorers", { timeout: 30000 });
+    await s.pg.waitForSelector("[data-testid=explorers], [data-testid=explorers-empty]", { timeout: 15000 });
+    await s.pg.waitForTimeout(600);
+    return s;
+  };
+
+  {
+    const s = await openBoard(board());
+    const t = await text(s.pg);
+    const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
+    check("B1. Active explorers are ranked by real stored cells: Tania (3,300), Karim (3,104), then you (300)", order.join(",") === "u2,u3,u1", order.join(","));
+    check("B2. the Owner card shows the Owner's name, username, explored cells and share of the requirement", /Tania/.test(t) && /@tania_t/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()) && /3,300/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()) && /100\.0%/.test(await s.pg.locator("[data-testid=owner-detail]").innerText()));
+    check("B3. ownership history lists the current owner and the former one, newest first", (await s.pg.locator("[data-testid=history] li").count()) === 2 && /CURRENT/.test(await s.pg.locator("[data-testid=history] li").first().innerText()) && /Karim/.test(await s.pg.locator("[data-testid=history] li").nth(1).innerText()));
+    check("B4. 'Territory Conquered' names the first conqueror (Karim), who is no longer the Owner", /Karim/.test(await s.pg.locator("[data-testid=conquered-record]").innerText()) && /stays even if/.test(await s.pg.locator("[data-testid=conquered-record]").innerText()));
+    const mem = await dbOf(s.pg);
+    check("B5. your own projection was published as an absolute value of your validated cells, with no position data", mem[`territories/${MOH}/explorers/u1`]?.exploredCells === 300 && !JSON.stringify(mem[`territories/${MOH}/explorers/u1`]).match(/lat|lng|route|point/i), JSON.stringify(mem[`territories/${MOH}/explorers/u1`]));
+    check("B6. the permanent achievement was not touched by the takeover", mem[`territoryAchievements/${MOH}`].uid === "u3");
+    check("B7. no uncaught page errors on the Territory screen", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+    // duplicate sync / reload: same projection, no second writes needed
+    const before = JSON.stringify(mem[`territories/${MOH}/explorers/u1`]);
+    await s.pg.reload();
+    await s.pg.waitForSelector("[data-testid=explorers]", { timeout: 30000 });
+    await s.pg.waitForTimeout(600);
+    check("B8. RESTART / DUPLICATE SYNC: reloading leaves the projection identical", JSON.stringify((await dbOf(s.pg))[`territories/${MOH}/explorers/u1`]) === before);
+    await s.ctx.close();
+  }
+
+  // tie: equal cells rank by who got there first; the list is stable
+  {
+    const s = await openBoard(board((d) => {
+      d[`territories/${MOH}/explorers/u2`] = explorerDoc("u2", "Tania", 400, now - 1 * day);
+      d[`territories/${MOH}/explorers/u3`] = explorerDoc("u3", "Karim", 400, now - 6 * day);
+      d["users/u1"].territory = stored({ selectedAt: now - 9 * day, cells: runsOf(ELIGIBLE.slice(0, 400)), applied: [ap("r0", 400, now - 3 * day)] });
+      return d;
+    }));
+    const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
+    check("B9. TIE on 400 cells: whoever reached it first ranks higher (Karim, then you, then Tania)", order.join(",") === "u3,u1,u2", order.join(","));
+    await s.ctx.close();
+  }
+
+  // a later contribution overtakes
+  {
+    const s = await openBoard(board((d) => {
+      d["users/u1"].territory = stored({ selectedAt: now - 9 * day, cells: runsOf(ELIGIBLE.slice(0, 3400)), applied: [ap("r0", 3400, now - 1000)] });
+      return d;
+    }));
+    const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
+    check("B10. DYNAMIC: your later contribution (3,400 cells) overtakes the Owner's 3,300 on the explorers list", order[0] === "u1", order.join(","));
+    check("B10b. but the Owner is still the Owner: the list is exploration, takeover rules are unchanged", /Tania/.test(await s.pg.locator("section[aria-label=King]").innerText()));
+    await s.ctx.close();
+  }
+
+  // privacy: someone hidden is not listed, and removing yourself deletes your entry
+  {
+    const s = await openBoard(board((d) => {
+      d["users/u1"].privacy = { showInTerritory: false };
+      d[`territories/${MOH}/explorers/u1`] = explorerDoc("u1", "Rafi", 200, now - 3 * day);
+      return d;
+    }));
+    const order = await s.pg.locator("[data-testid=explorers] li").evaluateAll((els) => els.map((e) => e.getAttribute("data-uid")));
+    check("B11. PRIVACY: an athlete who hid themselves has no explorer entry (an old one is removed)", !order.includes("u1") && !(await dbOf(s.pg))[`territories/${MOH}/explorers/u1`], order.join(","));
+    await s.ctx.close();
+  }
+
+  // empty: no one explored yet
+  {
+    const s = await openBoard(board((d) => {
+      delete d[`territories/${MOH}/explorers/u2`];
+      delete d[`territories/${MOH}/explorers/u3`];
+      d["users/u1"].territory = stored({ selectedAt: now - 5 * day });
+      return d;
+    }));
+    check("B12. EMPTY: nobody has explored it yet is stated plainly, no invented names", /No one has explored Mohammadpur yet/.test(await text(s.pg)) && (await s.pg.locator("[data-testid=explorers] li").count()) === 0);
+    await s.ctx.close();
+  }
+
+  // unavailable: the board fails, the core Territory screen does not
+  {
+    const db = board();
+    const s = await pfresh({ db });
+    await s.pg.route("**/*", (r) => r.continue());
+    await s.pg.goto(`${BASE}/territory/current`);
+    await s.pg.waitForSelector("text=Active explorers", { timeout: 30000 });
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", "getDocs"));
+    await s.pg.getByRole("button", { name: "Try again" }).first().click({ timeout: 2000 }).catch(() => undefined);
+    await s.pg.reload();
+    await s.pg.waitForSelector("text=Take over", { timeout: 30000 });
+    await s.pg.waitForSelector("text=Explorers can't be shown right now", { timeout: 15000 });
+    check("B13. ERROR: if the board can't load, a retry card shows while the core Territory screen (King, progress, action) stays usable", /Tania/.test(await text(s.pg)) && (await s.pg.getByRole("link", { name: /take over/i }).count()) === 1);
+    await s.pg.evaluate(() => localStorage.setItem("__mock_fail", ""));
+    await s.pg.getByRole("button", { name: "Try again" }).click();
+    await s.pg.waitForSelector("[data-testid=explorers]", { timeout: 15000 });
+    check("B14. retry recovers the board", (await s.pg.locator("[data-testid=explorers] li").count()) >= 2);
+    await s.ctx.close();
+  }
+
+  // pictures never delay the core page: the board is still loading (skeleton) when the core page is already complete
+  {
+    const s = await pfresh({ db: board() });
+    await s.ctx.addInitScript(() => localStorage.setItem("__mock_fail", "getDocs_slow"));
+    await s.pg.goto(`${BASE}/territory/current`);
+    await s.pg.waitForSelector("text=Take over", { timeout: 30000 });
+    const skeleton = await s.pg.locator("[aria-label='Loading explorers']").count();
+    check("B15. the core Territory page (King, progress, action) is complete while the explorers are still loading", (await s.pg.getByRole("link", { name: /take over/i }).count()) === 1 && skeleton === 1, `skeleton=${skeleton}`);
+    await s.pg.waitForSelector("[data-testid=explorers]", { timeout: 15000 });
+    await s.ctx.close();
+  }
+
+  // permanent achievement: conquering writes it once; a later takeover by someone else leaves it
+  {
+    const db = board((d) => {
+      delete d[`territories/${MOH}`]; delete d[`territories/${MOH}/events/1`]; delete d[`territories/${MOH}/events/2`]; delete d[`territoryAchievements/${MOH}`];
+      delete d[`territories/${MOH}/explorers/u2`]; delete d[`territories/${MOH}/explorers/u3`];
+      d["users/u1"].territory = stored({ cells: runsOf(ELIGIBLE.slice(0, 3104)), applied: [ap("r0", 3104, now - 2 * day)] });
+      return d;
+    });
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/territory/current`);
+    await s.pg.waitForSelector("text=CONQUERED", { timeout: 30000 });
+    await s.pg.waitForTimeout(800);
+    const m = await dbOf(s.pg);
+    check("A1. CONQUEST writes the permanent 'Territory Conquered' record once, for the conqueror", m[`territoryAchievements/${MOH}`]?.uid === "u1" && m[`territoryAchievements/${MOH}`].kind === "conquered", JSON.stringify(m[`territoryAchievements/${MOH}`]));
+    await s.pg.reload();
+    await s.pg.waitForSelector("text=Share your Territory", { timeout: 30000 });
+    await s.pg.waitForTimeout(500);
+    check("A2. reloading does not create it twice or change it", (await dbOf(s.pg))[`territoryAchievements/${MOH}`].at === m[`territoryAchievements/${MOH}`].at);
+    await s.pg.goto(`${BASE}/profile`);
+    await s.pg.waitForSelector("[data-testid=conquered-badge]", { timeout: 15000 });
+    check("A3. the Profile shows 'Territory Conquered · Mohammadpur' among achievements", /Mohammadpur/.test(await s.pg.locator("[data-testid=conquered-badge]").innerText()));
+    // someone takes over: ownership moves, the achievement does not
+    await s.pg.evaluate((moh) => { const d = JSON.parse(localStorage.getItem("__mock_db")); d["territories/" + moh] = { ...d["territories/" + moh], ownerUid: "u2", ownerName: "Tania", reign: 2, kind: "takeover" }; localStorage.setItem("__mock_db", JSON.stringify(d)); }, MOH);
+    await s.pg.goto(`${BASE}/profile`);
+    await s.pg.waitForSelector("[data-testid=conquered-badge]", { timeout: 15000 });
+    check("A4. PERMANENT: after losing the Territory the 'Territory Conquered' achievement is still there", (await s.pg.locator("[data-testid=conquered-badge]").count()) === 1 && (await dbOf(s.pg))[`territoryAchievements/${MOH}`].uid === "u1");
+    await s.ctx.close();
+  }
+
+  // an existing King from before achievements existed is given theirs, once
+  {
+    const db = board((d) => {
+      d[`territories/${MOH}`] = kingDoc("u1", "Rafi", 1, now - 3 * day);
+      d[`territories/${MOH}/events/1`] = evt("u1", "Rafi", 1, now - 3 * day);
+      delete d[`territories/${MOH}/events/2`]; delete d[`territoryAchievements/${MOH}`];
+      d["users/u1"].territory = stored({ cells: runsOf(ELIGIBLE.slice(0, 3104)), applied: [ap("r0", 3104, now - 4 * day)], wins: [{ reign: 1, kind: "conquest", activityId: "r0", atMs: now - 3 * day }] });
+      return d;
+    });
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/territory/current`);
+    await s.pg.waitForSelector("text=Share your Territory", { timeout: 30000 });
+    await s.pg.waitForTimeout(900);
+    check("A5. MIGRATION: an existing King gets their achievement from the existing conquest event; nothing was rewritten", (await dbOf(s.pg))[`territoryAchievements/${MOH}`]?.uid === "u1" && (await dbOf(s.pg))[`territories/${MOH}`].reign === 1);
+    await s.ctx.close();
+  }
+
+  // leaderboard: first names, usernames, hidden athletes
+  {
+    const db = baseDb();
+    db["publicProfiles/u3"] = { name: "Move athlete", photo: "", totalKm: 10, streak: 0, username: "", bio: "" };
+    db["publicProfiles/u4"] = { name: "Karim Khan", photo: "", totalKm: 7, streak: 0, username: "karim_k", bio: "" };
+    db["publicProfiles/u5"] = { name: "Nila Das", photo: "", totalKm: 90, streak: 0 };
+    db["publicProfiles/u6"] = { name: "Omar Sheikh", photo: "", totalKm: 80, streak: 0 };
+    const s = await pfresh({ db });
+    await s.pg.goto(`${BASE}/leaderboard`);
+    await s.pg.waitForSelector("text=Tania", { timeout: 15000 });
+    const t = await text(s.pg);
+    check("L1. the leaderboard shows first names and usernames, and hidden athletes as 'Move athlete'; no email or fitness data", /Move athlete/.test(t) && /Karim/.test(t) && /@karim_k/.test(t) && !/Khan/.test(t) && !/private@x/.test(t));
+    await s.ctx.close();
+  }
+}
+
 /* ---------- run ---------- */
 
 async function waitForServer() {
@@ -2109,7 +2510,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa, profile: scenarioProfile };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);
