@@ -110,14 +110,17 @@ body {
   color: var(--ink);
   font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-weight: 500;
+  /* no sideways scrolling, WITHOUT turning html/body into scroll containers of their own (overflow:hidden on both did that, which can
+     swallow touch scrolling in an installed app); `hidden` stays as the fallback for browsers without `clip` */
   overflow-x: hidden;
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
-  /* feels like an app, not a web page: no pull-to-refresh bounce, no tap flash, no text-selection handles or long-press menus on controls */
-  overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
 }
-body { -webkit-user-select: none; user-select: none; }
+/* feels like an app: no pull-to-refresh on the page itself (set on the page's scroller only, never on body, so scrolling can't be affected),
+   no long-press menu or text-selection handles on controls. Text in inputs and anything marked .selectable stays selectable. */
+html { overscroll-behavior-y: contain; }
+button, a, nav, header, .card, .row, .tile, .seg { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 input, textarea, [contenteditable="true"], .selectable { -webkit-user-select: text; user-select: text; }
 
 

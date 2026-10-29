@@ -2003,6 +2003,21 @@ async function scenarioPwa() {
   const noExternalCss = await m.pg.evaluate(() => [...document.querySelectorAll('link[rel=stylesheet]')].every((l) => !/unpkg\.com/.test(l.href)));
   check("P12. no render-blocking stylesheet from another website", noExternalCss);
   await m.ctx.close();
+
+  // scrolling by touch, on a phone whose screen is shorter than the page
+  const sc = await fresh({ db: (() => { const d = baseDb(); d["users/u1"].runs = [{ id: "r1", km: 1, duration: "10:00", pace: 10, calories: 50, steps: 1000, activity: "walking", date: new Date().toISOString() }]; return d; })() });
+  await sc.pg.setViewportSize({ width: 390, height: 600 });
+  await sc.pg.goto(`${BASE}/`);
+  await sc.pg.getByRole("button", { name: "Start moving" }).waitFor({ timeout: 20000 });
+  const own = await sc.pg.evaluate(() => ({ h: getComputedStyle(document.documentElement).overflowY, b: getComputedStyle(document.body).overflowY, tall: document.scrollingElement.scrollHeight > innerHeight, sideways: document.scrollingElement.scrollWidth > innerWidth }));
+  check("P13. neither html nor body is a scroll container of its own, and the page never scrolls sideways", own.h === "visible" && own.b === "visible" && !own.sideways, JSON.stringify(own));
+  const cdp = await sc.ctx.newCDPSession(sc.pg);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 195, y: 500 }] });
+  for (let i = 1; i <= 10; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 195, y: 500 - i * 30 }] }); await sc.pg.waitForTimeout(16); }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await sc.pg.waitForTimeout(500);
+  check("P14. a finger drag scrolls the Home screen when it is taller than the phone", own.tall && (await sc.pg.evaluate(() => scrollY)) > 20, `scrollY ${await sc.pg.evaluate(() => scrollY)}`);
+  await sc.ctx.close();
 }
 
 async function scenarioRegression() {
