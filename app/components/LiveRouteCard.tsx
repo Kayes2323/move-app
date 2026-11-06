@@ -6,6 +6,7 @@ import { trackSegments } from "../lib/share/trackPath";
 import { resolveMode, useThemePrefs } from "../lib/theme";
 import type { TrackPoint } from "../lib/tracking/types";
 import { LiveMap, type LiveMapTerritory } from "./LiveMap";
+import { JourneyStrip } from "./JourneyStrip";
 
 export type GpsStatus = "waiting" | "active" | "error";
 
@@ -16,6 +17,8 @@ export interface LiveRouteCardProps {
   journeyStartKm: number;
   /** Route km where the user's journey began. */
   routeStartKm: number;
+  /** Checkpoint index the journey began at (0 = Dhaka). */
+  startIdx?: number;
   distanceKm: number;
   seconds: number;
   pace: number;
@@ -45,7 +48,7 @@ export interface LiveRouteCardProps {
   header?: React.ReactNode;
 }
 
-export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose, points, here, steps, calories, territory, header }: LiveRouteCardProps) {
+export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, startIdx = 0, distanceKm, seconds, pace, gps, paused, gpsMessage, note, gapSeconds, onResolveGap, onOpenSettings, onPause, onFinish, onClose, points, here, steps, calories, territory, header }: LiveRouteCardProps) {
   const meta = ACTIVITY_META[kind];
   // Quantised so the map only re-renders when the dot would visibly move.
   const progressKm = Math.round((journeyStartKm + distanceKm) * 100) / 100;
@@ -64,8 +67,8 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
   const last = points.length ? points[points.length - 1] : null;
   const pos = here ?? last;
   const point = pos ? { lat: pos.lat, lng: pos.lng } : null;
-  // the next checkpoint belongs to a Journey move only: a Territory or free move has no route to point at
-  const nextTarget = route && !territory ? nextCheckpoint(route, progressKm) : null;
+  // the journey belongs to a Route move only: a Territory or free move has no route to point at
+  const showJourney = Boolean(route && !territory);
 
   return (
     <main className="app nonav" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden", paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
@@ -82,6 +85,7 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
         </button>
       </header>
       {header}
+      {showJourney && route && <JourneyStrip route={route} startIdx={startIdx} routeStartKm={routeStartKm} progressKm={progressKm} />}
       {note && <p className="mute" style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, margin: "6px 0 0" }}>{note}</p>}
 
       <section aria-label="Live map" style={{ flex: "1 1 0", minHeight: 200, margin: "10px 0", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden", isolation: "isolate" }}>
@@ -109,11 +113,6 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
       ) : null}
 
       <section style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}>
-        {nextTarget && (
-          <p className="mute" style={{ fontSize: 12, fontWeight: 600 }}>
-            Next · <span style={{ color: "var(--ink)" }}>{nextTarget.name}</span> · {nextTarget.km.toFixed(1)} km
-          </p>
-        )}
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
           <div>
             <p className="lab">Distance</p>
@@ -157,7 +156,3 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, dista
   );
 }
 
-function nextCheckpoint(route: Route, progressKm: number): { name: string; km: number } | null {
-  const next = route.checkpoints.find((c) => c.distanceFromStart > progressKm);
-  return next ? { name: next.name, km: next.distanceFromStart - progressKm } : null;
-}

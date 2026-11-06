@@ -313,6 +313,7 @@ export default function RunPage() {
       calories: metrics.calories,
       journeyStartKm: routeStartKm + (activity.journey?.completedKmBefore ?? 0),
       routeStartKm,
+      startIdx: activity.journey?.startIdx ?? 0,
       distanceKm: live.distanceKm,
       seconds: live.durationSec,
       pace: live.paceMin,

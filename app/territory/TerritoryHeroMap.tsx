@@ -1,4 +1,5 @@
 "use client";
+import { safeLeaflet } from "../lib/leafletSafe";
 import { addBaseLayers } from "../lib/leafletTiles";
 import { useMapStyle } from "../lib/useMapStyle";
 import "leaflet/dist/leaflet.css";
@@ -26,7 +27,7 @@ export function TerritoryHeroMap({ geometry, bbox, explored = [], dark, you, pad
   useEffect(() => {
     let dead = false;
     (async () => {
-      const lib = (await import("leaflet")).default;
+      const lib = safeLeaflet((await import("leaflet")).default);
       if (dead || !host.current) return;
       L.current = lib;
       map.current = lib.map(host.current, { zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, zoomSnap: 0.1, preferCanvas: true });

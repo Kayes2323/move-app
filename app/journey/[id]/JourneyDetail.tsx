@@ -1,4 +1,5 @@
 "use client";
+import { safeLeaflet } from "../../lib/leafletSafe";
 import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -41,7 +42,7 @@ function MapComponent({ route, completedKm, startIdx, dark, accent, mapStyle, on
     let stopTiles = () => {};
     const init = async () => {
       try {
-        const L = (await import("leaflet")).default;
+        const L = safeLeaflet((await import("leaflet")).default);
         if (cancelled || !mapRef.current) return;
         const map = L.map(mapRef.current, {
           zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 14,

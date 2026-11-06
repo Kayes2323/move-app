@@ -1,4 +1,5 @@
 "use client";
+import { removeMap, safeLeaflet } from "../lib/leafletSafe";
 import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
@@ -70,7 +71,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
   useEffect(() => {
     let dead = false;
     (async () => {
-      const lib = (await import("leaflet")).default;
+      const lib = safeLeaflet((await import("leaflet")).default);
       if (dead || !host.current) return;
       L.current = lib;
       const m = lib.map(host.current, { zoomControl: false, attributionControl: false, minZoom: 3, maxZoom: 19, preferCanvas: true, zoomSnap: 0.5, center: [0, 0], zoom: 2 });
@@ -86,9 +87,7 @@ export function LiveMap({ point, accuracy, segments, dark, gps, territory }: Liv
       const m = map.current as (Leaflet.Map & { _ro?: ResizeObserver }) | null;
       m?._ro?.disconnect();
       // a pan or zoom animation still running when the screen closes would redraw a canvas that is already gone
-      m?.stop();
-      m?.off();
-      m?.remove();
+      if (m && L.current) removeMap(L.current, m);
       map.current = null;
       layers.current = {};
       centred.current = false;

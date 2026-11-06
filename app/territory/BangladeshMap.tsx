@@ -1,4 +1,5 @@
 "use client";
+import { safeLeaflet } from "../lib/leafletSafe";
 import { addBaseLayers } from "../lib/leafletTiles";
 import { useMapStyle } from "../lib/useMapStyle";
 import { useEffect, useRef, useState } from "react";
@@ -65,7 +66,7 @@ export function BangladeshMap({ index, focusId, activeId, openIds, dark, accent,
     let disposed = false;
     (async () => {
       try {
-        const L = (await import("leaflet")).default;
+        const L = safeLeaflet((await import("leaflet")).default);
         if (disposed || !host.current) return;
         libRef.current = L;
         const [w, s, e, n] = index.root.bbox ?? [88, 20.5, 92.8, 26.7];

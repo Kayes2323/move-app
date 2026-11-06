@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { Route } from "../data/routes";
-import { evaluateMilestones, type MilestoneEvent } from "./journeyMilestones";
+import { evaluateMilestones, headline, type MilestoneEvent } from "./journeyMilestones";
 import type { TrackPoint } from "./tracking/types";
 
 interface Params {
@@ -53,7 +53,8 @@ export function useJourneyMilestones({ uid, ctx, route, kmNow, points, active, r
     } catch {
       // storage unavailable: the in-memory set still prevents repeats until the page closes
     }
-    setToast(events[events.length - 1]);
+    const show = headline(events);
+    if (show) setToast(show);
     if (active && active.journeyId === journeyId) {
       void (async () => {
         try {

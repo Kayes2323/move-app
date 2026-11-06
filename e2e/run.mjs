@@ -1684,13 +1684,16 @@ async function scenarioRoutes() {
   for (let i = 0; i < 280; i++) { lng += LNG_STEP; await emitAt(m.pg, 23.6, lng); if (i % 10 === 0) await seen(); }
   await m.pg.waitForTimeout(500); await seen();
   const km1 = bigKm(await text(m.pg));
-  check("R14. about 4.5 km recorded so far: no distance milestone yet", km1 > 4.3 && km1 < 5 && toastIds.size === 0, `${km1} ${[...toastIds]}`);
+  check("R14. about 4.5 km recorded so far: only the first-km message has appeared, no 5 km one yet", km1 > 4.3 && km1 < 5 && [...toastIds].join(",") === "c1:km:1", `${km1} ${[...toastIds]}`);
   for (let i = 0; i < 60; i++) { lng += LNG_STEP; await emitAt(m.pg, 23.6, lng); if (i % 5 === 0) await seen(); }
   await m.pg.waitForSelector('[data-milestone-kind="distance"]', { timeout: 10000 });
   await seen();
   const kmDone = bigKm(await text(m.pg));
-  check("R15. at 5 km the milestone appears once, worded for distance only", kmDone >= 5 && [...toastIds].length === 1 && /c1:km:5$/.test([...toastIds][0]) && /5 km of your journey to Chandpur/.test(await m.pg.locator("[data-milestone]").innerText()), `${kmDone} ${[...toastIds]}`);
+  check("R15. at 5 km the milestone appears once, worded for distance only", kmDone >= 5 && [...toastIds].join(",") === "c1:km:1,c1:km:5" && /5 km of your journey to Chandpur/.test(await m.pg.locator("[data-milestone]").innerText()), `${kmDone} ${[...toastIds]}`);
   check("R16. 5 km walked in the middle of nowhere never says you arrived somewhere", (await m.pg.locator('[data-milestone-kind="arrival"]').count()) === 0);
+  const stripKm = parseFloat(await m.pg.locator("[data-testid=journey-km]").innerText());
+  const dotLeft = await m.pg.locator("[data-testid=journey-dot]").evaluate((e) => parseFloat(e.style.left));
+  check("R16b. the live Journey strip moves with the move: Dhaka → Chandpur, the dot past 5 km of 132, next checkpoint Jatrabari", stripKm >= 5 && dotLeft > 3.5 && dotLeft < 5 && /Dhaka → Chandpur/i.test(await m.pg.locator("[data-testid=journey-strip]").innerText()) && /Next · Jatrabari/.test(await m.pg.locator("[data-testid=journey-strip]").innerText()), `${stripKm} ${dotLeft}`);
   await shot(m.pg, "r4-milestone-5km-390x800");
   const keptLocally = await m.pg.evaluate(() => Object.entries(localStorage).filter(([k]) => k.startsWith("move.milestones.")).map(([, v]) => v));
   check("R17. the milestone is remembered on the phone", keptLocally.some((v) => v.includes("c1:km:5")), JSON.stringify(keptLocally));
@@ -1705,6 +1708,8 @@ async function scenarioRoutes() {
   await m.pg.waitForSelector("text=Save image", { timeout: 20000 });
   await m.pg.waitForTimeout(800);
   const done = await userDoc(m.pg);
+  const summary = await m.pg.locator("[data-testid=journey-summary]").innerText().catch(() => "");
+  check("R19b. the finish screen says what this move did for the journey and what is next", /Journey to Chandpur/i.test(summary) && /now 5\.\d of 132 km/.test(summary) && /Next: Jatrabari in 2\.\d km/.test(summary), summary.replace(/\n/g, " | "));
   check("R19. the finished move added its distance to the journey exactly once", done.completedKm > 5.1 && done.completedKm < 5.7 && done.totalKm === done.completedKm, `${done.completedKm}/${done.totalKm}`);
   check("R20. no uncaught page errors", m.pg.errors.length === 0, m.pg.errors.join(" | ").slice(0, 200));
   await m.ctx.close();

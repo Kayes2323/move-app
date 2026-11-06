@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ROUTE_MAP } from "../data/routes";
 import { ARRIVAL_MILESTONES } from "../data/milestones";
-import { evaluateMilestones, arrivalId, distanceId, type Fix } from "./journeyMilestones";
+import { evaluateMilestones, arrivalId, checkpointId, distanceId, headline, journeyMoveSummary, type Fix } from "./journeyMilestones";
 import { nearbyStartOffer } from "./journeyStart";
 import { journeyOf } from "./journey";
 
@@ -28,21 +28,53 @@ test("starting a journey in Hajiganj is only offered when the user really is at 
   assert.equal(nearbyStartOffer(chandpur, 23.30, 90.85), null, "5+ km away from Hajiganj: not 'near'");
 });
 
+const ids = (e: { id: string }[]) => e.map((x) => x.id);
+const news = (e: { id: string; past?: boolean }[]) => e.filter((x) => !x.past).map((x) => x.id);
+
+test("the first distance milestone comes at 1 km, so a first short walk already gets a message", () => {
+  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 0.95 }), []);
+  const first = evaluateMilestones({ ...base, kmNow: 1.02 });
+  assert.deepEqual(ids(first), [distanceId("j1", 1)]);
+  assert.match(first[0].message, /1 km of your journey to Chandpur done! 131 km to go/);
+});
+
 test("distance milestone: 5 km of recorded walking fires once, 4.9 km does not", () => {
-  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 4.9 }), []);
-  const first = evaluateMilestones({ ...base, kmNow: 5.02 });
-  assert.deepEqual(first.map((e) => e.id), [distanceId("j1", 5)]);
+  const fired1 = new Set([distanceId("j1", 1)]);
+  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 4.9, fired: fired1 }), []);
+  const first = evaluateMilestones({ ...base, kmNow: 5.02, fired: fired1 });
+  assert.deepEqual(ids(first), [distanceId("j1", 5)]);
   assert.match(first[0].message, /5 km of your journey/);
-  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 7, fired: new Set([distanceId("j1", 5)]) }), [], "already celebrated: never again (restart, re-render, duplicate sync)");
-  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 10.1, fired: new Set([distanceId("j1", 5)]) }).map((e) => e.id), [distanceId("j1", 10)]);
+  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 7, fired: new Set([...fired1, distanceId("j1", 5)]) }), [], "already celebrated: never again (restart, re-render, duplicate sync)");
+  assert.deepEqual(ids(evaluateMilestones({ ...base, kmNow: 10.1, fired: new Set([...fired1, distanceId("j1", 5), checkpointId("j1", "Jatrabari")]) })), [distanceId("j1", 10)]);
 });
 
 test("distance counts from the journey's km so far, so a later move continues where it left off", () => {
-  assert.deepEqual(evaluateMilestones({ ...base, kmBefore: 3.5, kmNow: 1.6 }).map((e) => e.id), [distanceId("j1", 5)]);
+  const e = evaluateMilestones({ ...base, kmBefore: 3.5, kmNow: 1.6 });
+  assert.deepEqual(news(e), [distanceId("j1", 5)]);
+  assert.deepEqual(e.filter((x) => x.past).map((x) => x.id), [distanceId("j1", 1)], "a step passed on an earlier move is recorded, not announced as news now");
 });
 
-test("a long catch-up (several steps at once) reports every id so none is repeated later", () => {
-  assert.deepEqual(evaluateMilestones({ ...base, kmNow: 16 }).map((e) => e.id), [distanceId("j1", 5), distanceId("j1", 10), distanceId("j1", 15)]);
+test("a long catch-up (several steps at once) reports every id so none is repeated later, and shows the most meaningful one", () => {
+  const e = evaluateMilestones({ ...base, kmNow: 16 });
+  assert.deepEqual(ids(e), [distanceId("j1", 1), distanceId("j1", 5), distanceId("j1", 10), distanceId("j1", 15), checkpointId("j1", "Jatrabari")]);
+  assert.equal(headline(e)?.id, checkpointId("j1", "Jatrabari"));
+});
+
+test("VIRTUAL checkpoint: the journey's distance passing Kanchpur (25 km) is announced as the journey's progress, with its story", () => {
+  const e = evaluateMilestones({ ...base, kmBefore: 24, kmNow: 1.2, fired: new Set([distanceId("j1", 1), distanceId("j1", 5), distanceId("j1", 10), distanceId("j1", 15), distanceId("j1", 20), checkpointId("j1", "Jatrabari")]) });
+  const k = e.find((x) => x.kind === "checkpoint");
+  assert.equal(k?.id, checkpointId("j1", "Kanchpur"));
+  assert.match(k!.message, /Your journey to Chandpur has reached Kanchpur\. 107 km to go/);
+  assert.ok(k!.detail && k!.detail.length > 5, "the checkpoint's story");
+  assert.ok(!/you are|you're in|you've reached/i.test(k!.message), "never claims the user is physically there");
+  assert.equal(headline(e)?.id, checkpointId("j1", "Kanchpur"), "a checkpoint beats a plain distance step");
+});
+
+test("a journey started at Kanchpur counts places from there: Jatrabari and Kanchpur are never announced", () => {
+  const kIdx = chandpur.checkpoints.findIndex((c) => c.name === "Kanchpur");
+  const e = evaluateMilestones({ ...base, startIdx: kIdx, kmNow: 21 }); // Kanchpur 25 -> Mograpara 45
+  const cps = e.filter((x) => x.kind === "checkpoint").map((x) => x.id);
+  assert.deepEqual(cps, [checkpointId("j1", "Mograpara")]);
 });
 
 test("geographic arrival: two good fixes at verified Jatrabari after real movement fire once", () => {
@@ -55,8 +87,8 @@ test("geographic arrival: two good fixes at verified Jatrabari after real moveme
 
 test("distance alone never says you arrived anywhere", () => {
   const e = evaluateMilestones({ ...base, kmNow: 25, fixes: [at(23.9, 90.2), at(23.9, 90.2)] }); // 25 km walked, but nowhere near a listed place
-  assert.ok(e.every((x) => x.kind === "distance"));
-  assert.ok(!e.some((x) => /Jatrabari|Hajiganj|Kachpur|Kanchpur/.test(x.message)));
+  assert.ok(e.every((x) => x.kind === "distance" || x.kind === "checkpoint"), "no arrival without being there");
+  assert.ok(!e.some((x) => /you've reached|you are in/i.test(x.message)));
 });
 
 test("arrival is not triggered by noise: one fix, poor accuracy, no real movement, or a lost-signal jump", () => {
@@ -86,12 +118,22 @@ test("the place a journey started from is never an arrival; places before it are
 });
 
 test("a new journey run has its own milestones (ids carry the journey id)", () => {
-  const fired = new Set([distanceId("old", 5)]);
-  assert.deepEqual(evaluateMilestones({ ...base, journeyId: "new", kmNow: 5.1, fired }).map((e) => e.id), [distanceId("new", 5)]);
+  const fired = new Set([distanceId("old", 5), distanceId("old", 1)]);
+  assert.deepEqual(evaluateMilestones({ ...base, journeyId: "new", kmNow: 5.1, fired }).map((e) => e.id), [distanceId("new", 1), distanceId("new", 5)]);
 });
 
 test("completion fires once when the journey's distance is done", () => {
   const e = evaluateMilestones({ ...base, kmBefore: 130, kmNow: 3 });
   assert.equal(e.at(-1)?.kind, "complete");
+  assert.equal(headline(e)?.kind, "complete");
   assert.deepEqual(evaluateMilestones({ ...base, kmBefore: 130, kmNow: 3, fired: new Set(e.map((x) => x.id)) }), []);
+});
+
+test("finish screen: a move that took the journey from 23.5 to 26.8 km passed Kanchpur (25 km); next is Mograpara", () => {
+  const s = journeyMoveSummary(chandpur, 26.8, 3.3);
+  assert.deepEqual(s.passed, ["Kanchpur"]);
+  assert.deepEqual(s.next, { name: "Mograpara", km: 18.2 });
+  assert.equal(s.complete, false);
+  assert.deepEqual(journeyMoveSummary(chandpur, 20, 2).passed, [], "nothing passed: nothing claimed");
+  assert.equal(journeyMoveSummary(chandpur, 132, 4).complete, true);
 });

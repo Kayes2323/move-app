@@ -3,6 +3,8 @@
  *
  *  - DISTANCE milestones: "5 km of your journey done". Driven only by the distance Move recorded on the journey. Say nothing about
  *    where the user is.
+ *  - CHECKPOINT milestones: "your journey has reached Kanchpur". The journey's recorded distance passing a checkpoint's place on the
+ *    route. Worded as the journey's progress, never as "you are in Kanchpur".
  *  - ARRIVAL milestones: "you've reached Jatrabari". Driven only by the phone's GPS being at a place, and only configured here for
  *    places whose coordinates were CHECKED against a source (name it in `source`). A checkpoint that is on the route but not listed
  *    here has no arrival milestone: its coordinates in routes.ts are approximate or unchecked, and an arrival message must never be
@@ -28,6 +30,8 @@ export interface ArrivalMilestone {
 
 /** Every this many km of recorded journey distance. */
 export const DISTANCE_MILESTONE_KM = 5;
+/** The first one comes early, so a new journey gets its first message on the first real walk. */
+export const FIRST_MILESTONE_KM = 1;
 
 export const ARRIVAL_MILESTONES: Record<string, ArrivalMilestone[]> = {
   chandpur: [

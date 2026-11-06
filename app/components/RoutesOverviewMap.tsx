@@ -1,4 +1,5 @@
 "use client";
+import { safeLeaflet } from "../lib/leafletSafe";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
 import { ROUTES } from "../data/routes";
@@ -36,7 +37,7 @@ export function RoutesOverviewMap({ activeRouteId, selectedRouteId }: { activeRo
     let map: import("leaflet").Map | null = null;
     (async () => {
       try {
-        const L = (await import("leaflet")).default;
+        const L = safeLeaflet((await import("leaflet")).default);
         if (dead || !host.current) return;
         map = L.map(host.current, { zoomControl: false, attributionControl: false, minZoom: 5, maxZoom: 12, zoomSnap: 0.5, scrollWheelZoom: false });
         map.fitBounds([[20.6, 88.0], [26.7, 92.7]]);

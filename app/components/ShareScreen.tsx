@@ -1,4 +1,5 @@
 "use client";
+import { journeyMoveSummary } from "../lib/journeyMilestones";
 import { showToast } from "../lib/appToast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -297,6 +298,18 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
         </div>
         <button className="btn btn-ghost" style={{ width: "auto", minHeight: 44, padding: "0 12px", fontSize: 14, textTransform: "none", letterSpacing: 0 }} onClick={() => router.push("/")}>Later</button>
       </div>
+
+      {facts?.route && facts.run.km > 0 && (facts.run.journeyKm ?? 0) > 0 && (() => {
+        const j = journeyMoveSummary(facts.route, facts.run.journeyKm ?? 0, facts.run.km);
+        return (
+          <section aria-label="Journey progress" data-testid="journey-summary" className="card" style={{ width: "100%", maxWidth: 440, marginBottom: 14, padding: "12px 14px" }}>
+            <p className="lab" style={{ color: "var(--acc-text)" }}>Journey to {facts.route.name}</p>
+            <p style={{ fontSize: 15, fontWeight: 800, marginTop: 4 }}>+{facts.run.km.toFixed(2)} km · now {j.after.toFixed(1)} of {facts.route.totalKm} km</p>
+            {j.passed.length > 0 && <p style={{ fontSize: 13, marginTop: 4 }}>📍 Your journey passed {j.passed.join(", ")} on this move</p>}
+            <p className="mute" style={{ fontSize: 12.5, marginTop: 4 }}>{j.complete ? `Journey complete: you reached ${facts.route.name}.` : j.next ? `Next: ${j.next.name} in ${j.next.km} km` : ""}</p>
+          </section>
+        );
+      })()}
 
       <div
         data-testid="card-preview"
