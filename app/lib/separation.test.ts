@@ -160,5 +160,5 @@ test("the live Territory and free-move views never draw a Journey route", () => 
   assert.match(run, /liveMode === "TERRITORY"[\s\S]*route=\{undefined\}/);
   assert.match(run, /liveMode === "NORMAL"\) return <LiveRouteCard[^\n]*route=\{undefined\}/);
   const card = readFileSync(join(process.cwd(), "app", "components", "LiveRouteCard.tsx"), "utf8");
-  assert.match(card, /const nextTarget = route && !territory/);
+  assert.match(card, /const showJourney = Boolean\(route && !territory\)/);
 });
