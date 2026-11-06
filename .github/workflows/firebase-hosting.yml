@@ -1,0 +1,57 @@
+# Serves the app from Firebase Hosting (move-app-f730d.web.app) as well as Vercel.
+# Why: in November 2026 several Vercel edge IPs time out from Bangladeshi mobile networks (Robi, Airtel), so the app does not
+# open on mobile data without a VPN. Firebase Hosting runs on Google's network, which Bangladeshi operators reach directly.
+#
+# - push to master            -> the live site, https://move-app-f730d.web.app
+# - push to a claude/* branch -> a preview channel (its URL is printed in the job log), for testing on mobile data first
+#
+# Needs one repository secret, FIREBASE_SERVICE_ACCOUNT_MOVE_APP_F730D (see docs/HOSTING-BD.md). Without it the job is skipped.
+name: Firebase Hosting
+
+on:
+  push:
+    branches: [master, "claude/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: firebase-hosting-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOVE_APP_F730D != '' }}
+    steps:
+      - name: No deploy key yet
+        if: env.HAS_KEY != 'true'
+        run: echo "::notice::FIREBASE_SERVICE_ACCOUNT_MOVE_APP_F730D is not set; skipping Firebase Hosting (see docs/HOSTING-BD.md)."
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+      - uses: actions/setup-node@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build the static app
+        if: env.HAS_KEY == 'true'
+        run: |
+          npm ci
+          npm run build:static
+      - name: Deploy (live)
+        if: env.HAS_KEY == 'true' && github.ref == 'refs/heads/master'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOVE_APP_F730D }}
+          projectId: move-app-f730d
+          channelId: live
+      - name: Deploy (preview channel)
+        if: env.HAS_KEY == 'true' && github.ref != 'refs/heads/master'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOVE_APP_F730D }}
+          projectId: move-app-f730d
+          channelId: preview
+          expires: 30d
