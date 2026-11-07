@@ -8,7 +8,7 @@
 // territoryAchievements) and the Phase 2 ownership rules: the Owner is whoever leads the published Territory score.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { doc, setDoc, getDoc, deleteDoc, writeBatch, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, deleteDoc, writeBatch, serverTimestamp, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 
 const env = await initializeTestEnvironment({ projectId: "move-rules-test", firestore: { rules: readFileSync(new URL("../../firestore.rules", import.meta.url), "utf8"), host: "127.0.0.1", port: 8080 } });
 const AREA = "bd-upa-dhaka-mohammadpur"; // requiredCells 3104
@@ -211,6 +211,52 @@ await t("private score ledger: owner only", async () => {
   await assertSucceeds(setDoc(doc(as("u1"), "users", "u1", "territoryScores", AREA), { ledger: "a.1.2" }));
   await assertFails(getDoc(doc(as("u2"), "users", "u1", "territoryScores", AREA)));
   await assertFails(setDoc(doc(as("u2"), "users", "u1", "territoryScores", AREA), { ledger: "x" }));
+});
+
+
+/* ---- MOVE Shop orders: catalogue prices only, cash on delivery, own orders only ---- */
+const order = (uid, o = {}) => ({
+  uid,
+  items: [{ id: "performance-tee", name: "MOVE Performance Tee", size: "M", qty: 2, unitPrice: 990 }, { id: "electrolyte-lemon", name: "MOVE Electrolyte Drink · Lemon", size: "", qty: 3, unitPrice: 90 }],
+  subtotal: 2 * 990 + 3 * 90,
+  delivery: 70,
+  total: 2 * 990 + 3 * 90 + 70,
+  payment: "cod",
+  status: "requested",
+  contact: { name: "Rafi Ahmed", phone: "01712345678", address: "House 12, Road 5, Dhanmondi, Dhaka", area: "inside", note: "" },
+  createdAt: serverTimestamp(),
+  ...o,
+});
+await t("orders: a correct order request at catalogue prices is accepted", () => assertSucceeds(setDoc(doc(as("u1"), "orders", "o1"), order("u1"))));
+await t("orders: a lower price than the catalogue is refused", () => assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { items: [{ id: "performance-tee", name: "x", size: "M", qty: 2, unitPrice: 1 }], subtotal: 2, total: 72 }))));
+await t("orders: an unknown product is refused", () => assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { items: [{ id: "free-iphone", name: "x", size: "", qty: 1, unitPrice: 990 }], subtotal: 990, total: 1060 }))));
+await t("orders: a subtotal or total that doesn't add up is refused", async () => {
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { subtotal: 100 })));
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { total: 10 })));
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { delivery: 0, total: 2 * 990 + 3 * 90 })));
+});
+await t("orders: outside Dhaka needs the outside delivery charge", async () => {
+  const c = { name: "Rafi Ahmed", phone: "01712345678", address: "House 12, Road 5, Chandpur Sadar", area: "outside", note: "" };
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { contact: c })));
+  await assertSucceeds(setDoc(doc(as("u1"), "orders", "o2"), order("u1", { contact: c, delivery: 130, total: 2 * 990 + 3 * 90 + 130 })));
+});
+await t("orders: silly quantities, more than 6 lines, a bad phone, or a 'paid'/'confirmed' status are refused", async () => {
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { items: [{ id: "performance-tee", name: "x", size: "M", qty: 50, unitPrice: 990 }], subtotal: 49500, total: 49570 })));
+  const seven = Array.from({ length: 7 }, () => ({ id: "electrolyte-lemon", name: "x", size: "", qty: 1, unitPrice: 90 }));
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { items: seven, subtotal: 630, total: 700 })));
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { contact: { name: "Rafi", phone: "12345", address: "House 12, Road 5, Dhaka", area: "inside", note: "" } })));
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { status: "confirmed" })));
+  await assertFails(setDoc(doc(as("u1"), "orders", "o1"), order("u1", { payment: "paid" })));
+});
+await t("orders: nobody orders in someone else's name, reads someone else's order, or edits/deletes one", async () => {
+  await assertFails(setDoc(doc(as("u2"), "orders", "o1"), order("u1")));
+  await assertSucceeds(setDoc(doc(as("u1"), "orders", "o1"), order("u1")));
+  await assertSucceeds(getDoc(doc(as("u1"), "orders", "o1")));
+  await assertFails(getDoc(doc(as("u2"), "orders", "o1")));
+  await assertSucceeds(getDocs(query(collection(as("u1"), "orders"), where("uid", "==", "u1"))));
+  await assertFails(getDocs(collection(as("u2"), "orders")));
+  await assertFails(updateDoc(doc(as("u1"), "orders", "o1"), { status: "delivered" }));
+  await assertFails(deleteDoc(doc(as("u1"), "orders", "o1")));
 });
 
 await env.cleanup();
