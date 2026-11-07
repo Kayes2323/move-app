@@ -8,7 +8,7 @@ import { cleanTrack, trackSegments } from "../app/lib/share/trackPath.ts";
 
 const PORT = process.env.E2E_PORT || "3333";
 const BASE = `http://localhost:${PORT}`;
-const CHROME = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+const CHROME = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium";
 
 const results = [];
 const check = (name, ok, extra = "") => {
@@ -2521,6 +2521,49 @@ async function scenarioProfile() {
   }
 }
 
+
+/* ---------- story card: photo + stats + the real route on the ground, or a sticker ---------- */
+async function scenarioStory() {
+  const now = Date.now();
+  const M = 1 / 111320;
+  const flat = [];
+  let lat = 23.7465, lng = 90.376, t = now - 3600_000;
+  for (const [e, n] of [[0, 620], [420, 0], [0, 300], [-260, 0], [0, 500]]) {
+    const steps = Math.round(Math.hypot(e, n) / 2.8);
+    for (let i = 0; i < steps; i++) { lat += (n / steps) * M; lng += (e / steps) * M / Math.cos((23.75 * Math.PI) / 180); t += 2000; flat.push(t, lat, lng, 6, -9999, 0); }
+  }
+  const db = baseDb();
+  db["users/u1"].runs = [{ id: "r1", km: 2.1, duration: "18:30", pace: 8.81, calories: 150, steps: 2700, activity: "walking", date: new Date(now - 1800_000).toISOString(), mode: "NORMAL" }];
+  db["users/u1/activities/r1/tracks/0"] = { seq: 0, count: flat.length / 6, flat };
+  const s = await fresh({ db });
+  await s.pg.goto(`${BASE}/share?a=r1`);
+  await s.pg.waitForSelector("text=Save image", { timeout: 20000 });
+  check("ST1. the share screen offers the photo story card for this move", (await s.pg.locator("[data-testid=story-link]").getAttribute("href")) === "/share/story?a=r1");
+  await s.pg.locator("[data-testid=story-link]").click();
+  await s.pg.waitForSelector("[data-testid=story-preview]", { timeout: 20000 });
+  await s.pg.waitForFunction(() => /Your real recorded route/.test(document.querySelector("[data-testid=story-route-note]")?.textContent || ""), null, { timeout: 15000 });
+  const lit = await s.pg.evaluate(() => { const c = document.querySelector("canvas[aria-label='Story card preview']"); const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i + 1] > 180 && d[i] < 200) n++; return n; });
+  check("ST2. the card is drawn with the real route glowing on it", lit > 50, String(lit));
+  const statChips = await s.pg.getByRole("group", { name: "Stats" }).getByRole("button").allInnerTexts();
+  check("ST3. only real stats are offered: distance, pace, time, calories, steps; no elevation without altitude data", JSON.stringify(statChips) === JSON.stringify(["Distance", "Pace", "Time", "Calories", "Steps"]) && /No elevation/.test(await text(s.pg)), JSON.stringify(statChips));
+  check("ST4. hiding the start and finish is on by default", await s.pg.getByLabel(/Hide where I started and finished/).isChecked());
+  await s.pg.getByRole("button", { name: "Sticker" }).click();
+  await s.pg.waitForTimeout(400);
+  const transparent = await s.pg.evaluate(() => { const c = document.querySelector("canvas[aria-label='Story card preview']"); return c.width === 1080 && c.height === 1080 && c.getContext("2d").getImageData(5, 5, 1, 1).data[3] === 0; });
+  check("ST5. the sticker is a transparent 1080x1080 image", transparent);
+  check("ST6. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+  await s.ctx.close();
+
+  // a move with no recorded track: no route is drawn, and the screen says so
+  const db2 = baseDb();
+  db2["users/u1"].runs = [{ id: "r9", km: 1.2, duration: "12:00", pace: 10, activity: "walking", date: new Date(now).toISOString() }];
+  const n = await fresh({ db: db2 });
+  await n.pg.goto(`${BASE}/share/story?a=r9`);
+  await n.pg.waitForSelector("text=This move has no recorded route", { timeout: 20000 });
+  check("ST7. no recorded track: no route is drawn or invented, and the route options are disabled", await n.pg.getByRole("button", { name: "On the ground" }).isDisabled());
+  await n.ctx.close();
+}
+
 /* ---------- run ---------- */
 
 async function waitForServer() {
@@ -2542,7 +2585,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa, profile: scenarioProfile };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa, profile: scenarioProfile, story: scenarioStory };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);

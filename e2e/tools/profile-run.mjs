@@ -5,7 +5,7 @@ const db = { "users/u1": { uid: "u1", name: "R", email: "r@x.com", totalKm: 0, s
 const init = `localStorage.setItem("__seeded","1");localStorage.setItem("__mock_db",${JSON.stringify(JSON.stringify(db))});localStorage.setItem("__mock_user",${JSON.stringify(JSON.stringify({ uid: "u1", displayName: "R", email: "r@x.com", photoURL: "" }))});
 const subs=new Map();let id=0;window.__gps={subs,emit:(f)=>subs.forEach((s)=>s.ok({coords:{latitude:f.lat,longitude:f.lng,accuracy:6,altitude:null},timestamp:Date.now()}))};
 navigator.geolocation.watchPosition=(ok,err)=>{subs.set(++id,{ok,err});return id};navigator.permissions.query=async()=>({state:"granted",addEventListener(){}});navigator.geolocation.clearWatch=(i)=>subs.delete(i);navigator.geolocation.getCurrentPosition=(ok,err)=>setTimeout(()=>err&&err({code:2}),0);`;
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await b.newContext({ viewport: { width: 390, height: 800 } });
 await ctx.addInitScript(init);
 await ctx.route(/tile\.openstreetmap\.org/, (r) => r.abort());

@@ -71,33 +71,69 @@ const lighten = (hex: string) => {
   return `rgb(${mix((n >> 16) & 255)},${mix((n >> 8) & 255)},${mix(n & 255)})`;
 };
 
-/** The route laid on the ground: a dark under-edge, a wide glow and a bright core, thicker near the viewer. */
-function groundRoute(ctx: CanvasRenderingContext2D, d: StoryDraw, nearY: number, farY: number) {
-  const g = { cx: d.width / 2, nearY, farY, nearW: d.width * 1.02, depth: 2.6 };
-  const stretches = d.route.map((s) => s.map((p) => projectOnGround(p, g)));
-  const pass = (width: number, style: string, blur: number, dy: number) => {
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = style;
-    ctx.shadowColor = blur ? d.color : "transparent";
-    ctx.shadowBlur = blur;
-    for (const s of stretches) {
-      for (let i = 1; i < s.length; i++) {
-        const a = s[i - 1];
-        const b = s[i];
-        ctx.lineWidth = width * ((a.scale + b.scale) / 2);
+const shade = (hex: string, k: number) => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const f = (c: number) => Math.round(c * k);
+  return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`;
+};
+
+/**
+ * Strokes projected stretches with a width that follows depth. Consecutive segments of similar depth are drawn as ONE path, so the
+ * glow does not pile up into beads at every joint.
+ */
+function strokeByDepth(ctx: CanvasRenderingContext2D, stretches: { x: number; y: number; scale: number }[][], width: number, dy: number) {
+  const BANDS = 10;
+  for (const s of stretches) {
+    let band = -1;
+    let open = false;
+    for (let i = 1; i < s.length; i++) {
+      const a = s[i - 1];
+      const b = s[i];
+      const bnd = Math.round(((a.scale + b.scale) / 2) * BANDS);
+      if (bnd !== band) {
+        if (open) ctx.stroke();
+        band = bnd;
+        ctx.lineWidth = (width * bnd) / BANDS;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y + dy * a.scale);
-        ctx.lineTo(b.x, b.y + dy * b.scale);
-        ctx.stroke();
+        open = true;
       }
+      ctx.lineTo(b.x, b.y + dy * b.scale);
     }
-    ctx.restore();
-  };
-  pass(30, "rgba(0,0,0,0.5)", 0, 12); // the edge of the raised line
-  pass(26, hexA(d.color, 0.95), 48, 0);
-  pass(12, lighten(d.color), 16, 0);
+    if (open) ctx.stroke();
+  }
+}
+
+/** The route laid on the ground like a raised neon strip: a dark side wall, a wide glow and a bright core, thicker near the viewer. */
+function groundRoute(ctx: CanvasRenderingContext2D, d: StoryDraw, nearY: number, farY: number) {
+  const g = { cx: d.width / 2, nearY, farY, nearW: d.width * 1.4, depth: 3.4 };
+  const stretches = d.route.map((s) => s.map((p) => projectOnGround(p, g)));
+  const w = d.width / 1080;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  // a soft shadow where the strip touches the ground
+  ctx.strokeStyle = "rgba(0,0,0,0.45)";
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 30 * w;
+  strokeByDepth(ctx, stretches, 46 * w, 22 * w);
+  // the side wall of the raised strip
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = shade(d.color, 0.42);
+  strokeByDepth(ctx, stretches, 38 * w, 14 * w);
+  // glow
+  ctx.strokeStyle = hexA(d.color, 0.95);
+  ctx.shadowColor = d.color;
+  ctx.shadowBlur = 55 * w;
+  strokeByDepth(ctx, stretches, 36 * w, 0);
+  // top face and bright core
+  ctx.shadowBlur = 12 * w;
+  ctx.strokeStyle = d.color;
+  strokeByDepth(ctx, stretches, 30 * w, 0);
+  ctx.shadowBlur = 8 * w;
+  ctx.strokeStyle = lighten(d.color);
+  strokeByDepth(ctx, stretches, 11 * w, 0);
+  ctx.restore();
 }
 
 /** Top-down, for a sticker or a "flat" card: the shape as recorded, framed in a box. */
@@ -210,7 +246,7 @@ export function drawStory(ctx: CanvasRenderingContext2D, d: StoryDraw) {
 
   const story = h / w > 1.5;
   if (d.route.length) {
-    if (d.routeStyle === "ground") groundRoute(ctx, d, h * (story ? 0.93 : 0.94), h * (story ? 0.6 : 0.5));
+    if (d.routeStyle === "ground") groundRoute(ctx, d, h * (story ? 0.95 : 0.95), h * (story ? 0.57 : 0.47));
     else flatRoute(ctx, d, { x: w * 0.08, y: h * (story ? 0.52 : 0.4), size: Math.min(w * 0.6, h * 0.42) });
   }
   if (d.panel && d.stats.length) {

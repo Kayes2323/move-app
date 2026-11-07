@@ -32,7 +32,7 @@ const db = {
 };
 const U1 = { uid: "u1", displayName: "Rafi Ahmed", email: "r@x.com", photoURL: "https://lh3.googleusercontent.test/rafi.jpg" };
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
 async function shot(name, path, { wait, scheme = "light", full = false, fail = "", prep, data = db } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: scheme });
   await ctx.addInitScript(`sessionStorage.setItem("move.intro","1"); if(!localStorage.getItem("__seeded")){localStorage.setItem("__seeded","1");localStorage.setItem("__mock_db",${JSON.stringify(JSON.stringify(data))});localStorage.setItem("__mock_user",${JSON.stringify(JSON.stringify(U1))});${fail ? `localStorage.setItem("__mock_fail",${JSON.stringify(fail)});` : ""}}`);

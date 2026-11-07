@@ -2,7 +2,7 @@
 import { chromium } from "playwright-core";
 import { execSync } from "node:child_process";
 const BASE = "http://localhost:3334";
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await b.newContext({ viewport: { width: 390, height: 800 } });
 await ctx.addInitScript(`try{sessionStorage.setItem("move.intro","1")}catch{}`);
 const pg = await ctx.newPage();

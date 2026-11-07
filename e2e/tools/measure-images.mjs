@@ -2,7 +2,7 @@ import { chromium } from "playwright-core";
 const BASE = process.env.BASE || "http://localhost:3333";
 const path = process.argv[2] || "/journey";
 const slow = process.argv[3] === "slow";
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await b.newContext({ viewport: { width: 390, height: 800 } });
 await ctx.addInitScript(`localStorage.setItem("__seeded","1");localStorage.setItem("__mock_db",${JSON.stringify(JSON.stringify({"users/u1":{uid:"u1",name:"R",email:"r@x.com",totalKm:0,streak:0,currentRoute:"Chandpur",completedKm:3,runs:[],weight:70,onboarded:true}}))});localStorage.setItem("__mock_user",${JSON.stringify(JSON.stringify({uid:"u1",displayName:"R",email:"r@x.com",photoURL:""}))});`);
 const pg = await ctx.newPage();
