@@ -2564,6 +2564,55 @@ async function scenarioStory() {
   await n.ctx.close();
 }
 
+
+/* ---------- MOVE Shop: catalogue, cart, cash-on-delivery order request ---------- */
+async function scenarioShop() {
+  const s = await fresh();
+  await s.pg.goto(`${BASE}/shop`);
+  await s.pg.waitForSelector("[data-testid=products]", { timeout: 20000 });
+  const names = await s.pg.locator("[data-testid=products] li").allInnerTexts();
+  check("SH1. the shop lists the 7 MOVE products with taka prices", names.length === 7 && names.some((t) => /Performance Tee/.test(t) && /৳990/.test(t)) && names.some((t) => /Running Shoes/.test(t) && /৳4,490/.test(t)), names.map((t) => t.replace(/\n/g, " ")).join(" | ").slice(0, 300));
+  check("SH2. a product without its photo yet shows a plain MOVE tile, not an invented picture", (await s.pg.locator("[data-testid=product-placeholder]").count()) >= 1);
+  await s.pg.locator("a[href='/shop/item?id=performance-tee']").click();
+  await s.pg.waitForSelector("[data-testid=price]", { timeout: 15000 });
+  await s.pg.getByRole("button", { name: /Add to cart/ }).click();
+  check("SH3. apparel needs a size before it goes in the cart", /Choose a size first/.test(await text(s.pg)));
+  await s.pg.getByRole("group", { name: "Size" }).getByRole("button", { name: "M", exact: true }).click();
+  await s.pg.getByRole("button", { name: "One more" }).click();
+  await s.pg.getByRole("button", { name: /Add to cart · ৳1,980/ }).click();
+  await s.pg.goto(`${BASE}/shop/item?id=electrolyte-lemon`);
+  await s.pg.waitForSelector("[data-testid=price]", { timeout: 15000 });
+  await s.pg.getByRole("button", { name: /Add to cart/ }).click();
+  await s.pg.evaluate(() => { const c = JSON.parse(localStorage.getItem("move.cart")); c.push({ id: "fake", qty: 1 }); c[0].price = 1; localStorage.setItem("move.cart", JSON.stringify(c)); });
+  await s.pg.goto(`${BASE}/shop/cart`);
+  await s.pg.waitForSelector("[data-testid=cart-lines]", { timeout: 15000 });
+  check("SH4. the cart holds the tee (M x2) and the drink; a tampered cart entry is ignored", (await s.pg.locator("[data-testid=cart-lines] li").count()) === 2);
+  await s.pg.getByRole("button", { name: /Place order/ }).click();
+  const errs = await text(s.pg);
+  check("SH5. checkout explains every missing detail and sends nothing", /Enter a Bangladeshi mobile number/.test(errs) && /full address/.test(errs) && /inside or outside Dhaka/.test(errs) && !Object.keys(await dbOf(s.pg)).some((k) => k.startsWith("orders/")));
+  await s.pg.fill("#o-phone", "+880 1712-345678");
+  await s.pg.fill("#o-addr", "House 12, Road 5, Dhanmondi, Dhaka");
+  await s.pg.getByRole("radio", { name: /Inside Dhaka/ }).click();
+  check("SH6. totals: 2 x ৳990 + ৳90 + ৳70 delivery = ৳2,140", /৳2,140/.test(await s.pg.locator("[data-testid=totals]").innerText()));
+  await s.pg.getByRole("button", { name: /Place order/ }).click();
+  await s.pg.waitForSelector("[data-testid=order-placed]", { timeout: 15000 });
+  const db = await dbOf(s.pg);
+  const key = Object.keys(db).find((k) => k.startsWith("orders/"));
+  const o = key && db[key];
+  check("SH7. the order request is saved with catalogue prices, COD, status requested, a normalised phone, the right total", o && o.uid === "u1" && o.total === 2140 && o.delivery === 70 && o.payment === "cod" && o.status === "requested" && o.contact.phone === "01712345678" && o.items.length === 2 && o.items[0].unitPrice === 990 && o.items[0].size === "M" && o.items[0].qty === 2, JSON.stringify(o).slice(0, 240));
+  check("SH8. after ordering the cart is empty", JSON.parse((await s.pg.evaluate(() => localStorage.getItem("move.cart"))) || "[]").length === 0);
+  await s.pg.getByRole("link", { name: "My orders" }).click();
+  await s.pg.waitForSelector("[data-testid=orders]", { timeout: 15000 });
+  check("SH9. My orders shows it: waiting for our call, ৳2,140, 2 × the tee", /Waiting for our call/.test(await text(s.pg)) && /৳2,140/.test(await text(s.pg)) && /2 × MOVE Performance Tee \(M\)/.test(await text(s.pg)));
+  check("SH10. no uncaught page errors", s.pg.errors.length === 0, s.pg.errors.join(" | ").slice(0, 200));
+  await s.ctx.close();
+  const u = await fresh();
+  await u.pg.goto(`${BASE}/shop/item?id=nope`);
+  await u.pg.waitForSelector("text=That product isn't in the shop", { timeout: 15000 });
+  check("SH11. an unknown product address says so", true);
+  await u.ctx.close();
+}
+
 /* ---------- run ---------- */
 
 async function waitForServer() {
@@ -2585,7 +2634,7 @@ try {
   if (!(await waitForServer())) throw new Error("dev server did not start");
   browser = await chromium.launch({ executablePath: CHROME });
   const only = process.argv[2];
-  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa, profile: scenarioProfile, story: scenarioStory };
+  const all = { navigation: scenarioNavigation, lock: async () => { await scenarioScreenLock(true); await scenarioScreenLock(false); }, pause: scenarioPause, offline: scenarioOfflineThenSync, syncFailures: scenarioSyncFailures, crash: scenarioCrashRecovery, permissions: scenarioPermissions, backgroundFinish: scenarioBackgroundFinish, regression: scenarioRegression, territory: scenarioTerritory, conquest: scenarioConquest, share: scenarioShare, liveTerritory: scenarioLiveTerritory, switching: scenarioSwitch, separation: scenarioSeparation, expansion: scenarioExpansion, liveMap: scenarioLiveMap, routes: scenarioRoutes, routesImages: scenarioRoutesImages, satellite: scenarioSatellite, dialogs: scenarioDialogs, pwa: scenarioPwa, profile: scenarioProfile, story: scenarioStory, shop: scenarioShop };
   for (const [name, fn] of Object.entries(all)) {
     if (only && only !== name) continue;
     console.log(`\n== ${name}`);
