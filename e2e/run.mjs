@@ -403,6 +403,10 @@ async function scenarioBackgroundFinish() {
   await hidden(pg, false);
   await pg.waitForSelector("text=couldn't track");
   await pg.getByRole("button", { name: "Finish activity" }).dblclick(); // finish straight away, and double-tap
+  await pg.waitForTimeout(300);
+  check("10a. the second tap of a double tap does not answer the Finish dialog by accident", (await pg.getByRole("alertdialog").count()) === 1);
+  await pg.waitForTimeout(300);
+  await pg.getByRole("alertdialog").getByRole("button", { name: "Finish and save" }).click();
   await pg.waitForSelector("text=Story 9:16", { timeout: 10000 }).then(() => check("10. finish after returning from the background", true)).catch(() => check("10. finish", false));
   await pg.waitForTimeout(1500);
   const db = await dbOf(pg);

@@ -71,7 +71,7 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, start
   const showJourney = Boolean(route && !territory);
 
   return (
-    <main className="app nonav" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden", paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
+    <main className="app nonav" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflowX: "hidden", overflowY: "auto", paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
       <header className="bar">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/move-mark.png" alt="Move" width={38} height={26} style={{ width: 38, height: "auto", filter: "var(--mark-filter, none)" }} />
@@ -88,7 +88,7 @@ export function LiveRouteCard({ kind, route, journeyStartKm, routeStartKm, start
       {showJourney && route && <JourneyStrip route={route} startIdx={startIdx} routeStartKm={routeStartKm} progressKm={progressKm} />}
       {note && <p className="mute" style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, margin: "6px 0 0" }}>{note}</p>}
 
-      <section aria-label="Live map" style={{ flex: "1 1 0", minHeight: 200, margin: "10px 0", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden", isolation: "isolate" }}>
+      <section aria-label="Live map" style={{ flex: "1 1 0", minHeight: 140, margin: "10px 0", position: "relative", borderRadius: 24, background: "var(--land)", overflow: "hidden", isolation: "isolate" }}>
         <LiveMap point={point} accuracy={pos && "acc" in pos ? pos.acc : null} segments={segments} dark={dark} gps={gps} territory={territory} />
         {gps === "error" && (
           <div role="alert" style={{ position: "absolute", top: 10, left: 10, right: 10, zIndex: 700, textAlign: "center", background: "var(--dangerbg)", borderRadius: 14, padding: "10px 12px" }}>

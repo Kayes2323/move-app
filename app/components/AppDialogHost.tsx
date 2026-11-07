@@ -14,9 +14,17 @@ export function AppDialogHost() {
     return () => registerDialogHost(null);
   }, []);
 
+  // A double tap on the button that opened the dialog must not answer it: taps in the first moments after it opens are ignored.
+  const openedAt = useRef(0);
+  useEffect(() => {
+    if (current) openedAt.current = performance.now();
+  }, [current]);
+
   const close = useCallback(
-    (ok: boolean) => {
+    (ok: boolean, e?: { detail: number }) => {
       if (!current) return;
+      // the second tap of a double tap (click count 2) that lands right after opening is the same gesture, not an answer
+      if (e && e.detail > 1 && performance.now() - openedAt.current < 600) return;
       current.resolve(ok);
       setQueue((q) => q.slice(1));
     },
@@ -37,14 +45,14 @@ export function AppDialogHost() {
   if (!current) return null;
   const danger = current.tone === "danger";
   return (
-    <div role="presentation" onClick={() => close(false)} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "var(--scrim)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div role="presentation" onClick={(e) => close(false, e)} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "var(--scrim)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div role="alertdialog" aria-modal="true" aria-labelledby="app-dialog-title" aria-describedby={current.message ? "app-dialog-msg" : undefined} onClick={(e) => e.stopPropagation()} className="mv-rise" style={{ width: "100%", maxWidth: 480, background: "var(--bg)", borderRadius: "28px 28px 0 0", padding: "14px 22px calc(env(safe-area-inset-bottom, 0px) + 22px)", boxShadow: "0 -10px 40px rgba(0,0,0,.35)" }}>
         <div aria-hidden="true" style={{ width: 40, height: 4, borderRadius: 2, background: "var(--surf2)", margin: "0 auto 18px" }} />
         <h2 id="app-dialog-title" className="h2">{current.title}</h2>
         {current.message && <p id="app-dialog-msg" className="body mute" style={{ marginTop: 8, lineHeight: 1.45 }}>{current.message}</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 20 }}>
-          <button ref={okRef} className="btn btn-solid" style={danger ? { background: "var(--danger)", color: "#fff" } : undefined} onClick={() => close(true)}>{current.confirmLabel ?? "OK"}</button>
-          {current.kind === "confirm" && <button ref={cancelRef} className="btn btn-soft" onClick={() => close(false)}>{current.cancelLabel ?? "Cancel"}</button>}
+          <button ref={okRef} className="btn btn-solid" style={danger ? { background: "var(--danger)", color: "#fff" } : undefined} onClick={(e) => close(true, e)}>{current.confirmLabel ?? "OK"}</button>
+          {current.kind === "confirm" && <button ref={cancelRef} className="btn btn-soft" onClick={(e) => close(false, e)}>{current.cancelLabel ?? "Cancel"}</button>}
         </div>
       </div>
     </div>
