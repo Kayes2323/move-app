@@ -20,6 +20,8 @@ export const doc = (_d: unknown, ...parts: string[]): Ref => ({ path: parts.join
 export const collection = (_d: unknown, ...parts: string[]) => ({ path: parts.join("/") });
 export const orderBy = (field: string, dir = "asc") => ({ t: "order", field, dir });
 export const limit = (n: number) => ({ t: "limit", n });
+export const where = (field: string, op: string, value: unknown) => ({ t: "where", field, op, value });
+export const addDoc = async (c: { path: string }, data: Json) => { const id = "o" + Math.random().toString(36).slice(2, 10); await setDoc({ path: `${c.path}/${id}`, id }, data); return { id, path: `${c.path}/${id}` }; };
 export const query = (c: { path: string }, ...cs: any[]) => ({ path: c.path, cs });
 // `deep`: set(..., { merge: true }) merges nested maps like the real SDK (keys absent from `data` survive); update() and plain set() replace each field.
 const apply = (cur: Json, data: Json, deep = false): Json => {
@@ -86,6 +88,7 @@ export const getDocs = async (q: { path: string; cs?: any[] }) => {
   if (flags().includes("getDocs_slow")) await new Promise((res) => setTimeout(res, 4000)); // lets a test see the screen before slow data arrives
   const cs = q.cs ?? [];
   let docs = Object.entries(load()).filter(([p]) => p.startsWith(q.path + "/") && !p.slice(q.path.length + 1).includes("/")).map(([p, v]) => ({ id: p.split("/").pop(), data: () => v as Json }));
+  for (const w of cs.filter((c) => c.t === "where")) docs = docs.filter((d) => w.op === "==" && d.data()[w.field] === w.value);
   const o = cs.find((c) => c.t === "order");
   if (o) docs.sort((a, b) => (o.dir === "desc" ? -1 : 1) * ((a.data()[o.field] || 0) - (b.data()[o.field] || 0)));
   const l = cs.find((c) => c.t === "limit");

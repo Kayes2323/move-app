@@ -183,7 +183,8 @@ export default function Profile() {
           </span>
           <svg className="ic mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
         </Link>
-        <Link href="/leaderboard" className="row" style={{ marginTop: 4 }}><span>Leaderboard</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
+        <Link href="/shop" className="row" style={{ marginTop: 4 }}><span>MOVE Shop</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
+        <Link href="/leaderboard" className="row" style={{ marginTop: 0 }}><span>Leaderboard</span><svg className="ic mute" viewBox="0 0 24 24" style={{ width: 20, height: 20 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></Link>
       </section>
 
       <section style={{ marginTop: 24 }}>
