@@ -396,6 +396,7 @@ export function ShareScreen({ activityId, hint }: { activityId?: string; hint?: 
           {exporting ? "Preparing…" : "Share"}
         </button>
         <button className="btn btn-soft" onClick={save} disabled={exporting}>Save image</button>
+        {run?.id && <a className="btn btn-line" data-testid="story-link" href={`/share/story?a=${encodeURIComponent(run.id)}`}>Photo story card (route on the ground)</a>}
         <p role="status" className="mute" style={{ minHeight: 18, textAlign: "center", fontSize: 12 }}>
           {notice ?? (run?.id && pendingIds.has(run.id) ? "Saved on this phone. It will sync when you're online." : activityId ? "Saved. The card is ready whenever you want it: share it now, or later from Home." : "")}
         </p>
