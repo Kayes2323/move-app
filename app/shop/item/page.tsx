@@ -1,21 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { productById, type Product } from "../../data/shop";
 import { showToast } from "../../lib/appToast";
 import { addToCart } from "../../lib/shop/cart";
 import { readCart, taka, writeCart } from "../../lib/shop/store";
 import { ProductImage } from "../ProductImage";
 
+const noSubscribe = () => () => undefined;
+
 export default function ShopItem() {
-  const [product, setProduct] = useState<Product | null | undefined>(undefined);
+  // the product named in the address (?id=...): read on the client only, the page itself is static
+  const id = useSyncExternalStore(noSubscribe, () => new URLSearchParams(window.location.search).get("id"), () => undefined);
+  const product: Product | null | undefined = id === undefined ? undefined : productById(id) ?? null;
   const [size, setSize] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    setProduct(productById(new URLSearchParams(window.location.search).get("id")) ?? null);
-  }, []);
 
   if (product === undefined) return <main className="app nonav" aria-busy="true" />;
   if (product === null) {
