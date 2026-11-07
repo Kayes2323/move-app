@@ -144,6 +144,51 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // MOVE Shop order requests. Cash on delivery; the MOVE team confirms each one by phone. A customer creates their own request and
+    // reads only their own; nobody can change or delete one from the app. Every line's price must be the catalogue price, and the
+    // subtotal, delivery charge and total must add up, so a modified phone cannot order at its own price.
+    match /orders/{orderId} {
+      // generated:begin shopPrices (tools/shop/rules.ts)
+      function shopPrice(id) {
+        return ({ 'electrolyte-lemon': 90, 'rehydrate-lemon': 100, 'performance-tee': 990, 'training-pants': 1490, 'track-pants': 1690, 'running-shoes': 4490, 'activewear-set': 2290 }).get(id, -1);
+      }
+      function deliveryFee(area) {
+        return ({ 'inside': 70, 'outside': 130 }).get(area, -1);
+      }
+      // generated:end shopPrices
+      function lineOk(items, i) {
+        return i >= items.size() || (
+          items[i].keys().hasOnly(['id', 'name', 'size', 'qty', 'unitPrice'])
+          && items[i].id is string && shopPrice(items[i].id) > 0 && items[i].unitPrice == shopPrice(items[i].id)
+          && items[i].qty is int && items[i].qty >= 1 && items[i].qty <= 10
+          && items[i].name is string && items[i].name.size() <= 80
+          && items[i].size is string && items[i].size.size() <= 4);
+      }
+      function lineAmount(items, i) {
+        return i < items.size() ? items[i].unitPrice * items[i].qty : 0;
+      }
+      function validOrder(d) {
+        return d.keys().hasOnly(['uid', 'items', 'subtotal', 'delivery', 'total', 'payment', 'status', 'contact', 'createdAt'])
+          && d.uid == request.auth.uid
+          && d.items is list && d.items.size() >= 1 && d.items.size() <= 6
+          && lineOk(d.items, 0) && lineOk(d.items, 1) && lineOk(d.items, 2) && lineOk(d.items, 3) && lineOk(d.items, 4) && lineOk(d.items, 5)
+          && d.subtotal == lineAmount(d.items, 0) + lineAmount(d.items, 1) + lineAmount(d.items, 2) + lineAmount(d.items, 3) + lineAmount(d.items, 4) + lineAmount(d.items, 5)
+          && d.contact.keys().hasOnly(['name', 'phone', 'address', 'area', 'note'])
+          && d.delivery == deliveryFee(d.contact.area)
+          && d.total == d.subtotal + d.delivery
+          && d.payment == 'cod'
+          && d.status == 'requested'
+          && d.createdAt == request.time
+          && d.contact.name is string && d.contact.name.size() >= 2 && d.contact.name.size() <= 60
+          && d.contact.phone is string && d.contact.phone.matches('^01[3-9][0-9]{8}$')
+          && d.contact.address is string && d.contact.address.size() >= 10 && d.contact.address.size() <= 300
+          && d.contact.note is string && d.contact.note.size() <= 300;
+      }
+      allow create: if request.auth != null && validOrder(request.resource.data);
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     // One document per taken username, so two people cannot hold the same one. The profile save is a transaction, so the
     // reservation, the old one's release and the profile change commit together or not at all.
     match /usernames/{handle} {
