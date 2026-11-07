@@ -16,6 +16,15 @@ export function ProductImage({ product, height }: { product: Product; height: nu
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={product.image} alt={product.name} loading="lazy" decoding="async" onError={() => setMissing(true)} style={{ width: "100%", height, objectFit: "cover", borderRadius: 16, display: "block", background: "#0A0C0A" }} />
+    <img
+      ref={(el) => {
+        // the picture may have failed before the page became interactive, when onError was not listening yet
+        if (el && el.complete && el.naturalWidth === 0) setMissing(true);
+      }}
+      src={product.image}
+      alt={product.name}
+      loading="lazy"
+      decoding="async"
+      onError={() => setMissing(true)} style={{ width: "100%", height, objectFit: "cover", borderRadius: 16, display: "block", background: "#0A0C0A" }} />
   );
 }

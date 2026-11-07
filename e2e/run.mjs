@@ -2572,7 +2572,10 @@ async function scenarioShop() {
   await s.pg.waitForSelector("[data-testid=products]", { timeout: 20000 });
   const names = await s.pg.locator("[data-testid=products] li").allInnerTexts();
   check("SH1. the shop lists the 7 MOVE products with taka prices", names.length === 7 && names.some((t) => /Performance Tee/.test(t) && /৳990/.test(t)) && names.some((t) => /Running Shoes/.test(t) && /৳4,490/.test(t)), names.map((t) => t.replace(/\n/g, " ")).join(" | ").slice(0, 300));
-  check("SH2. a product without its photo yet shows a plain MOVE tile, not an invented picture", (await s.pg.locator("[data-testid=product-placeholder]").count()) >= 1);
+  await s.pg.waitForTimeout(800);
+  const tiles = await s.pg.locator("[data-testid=product-placeholder]").count();
+  const broken = await s.pg.evaluate(() => [...document.querySelectorAll("[data-testid=products] img")].filter((i) => i.complete && i.naturalWidth === 0).length);
+  check("SH2. products whose photo isn't added yet show a plain MOVE tile (no broken image, no invented picture)", tiles === 7 && broken === 0, `${tiles} tiles, ${broken} broken`);
   await s.pg.locator("a[href='/shop/item?id=performance-tee']").click();
   await s.pg.waitForSelector("[data-testid=price]", { timeout: 15000 });
   await s.pg.getByRole("button", { name: /Add to cart/ }).click();
